@@ -606,7 +606,7 @@ async function getTimezone(lat, lon) {
 // =============================================
 // CARTA NATAL via Worker
 // =============================================
-async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre) {
+async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad, pais) {
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
   const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: pais } };
@@ -927,7 +927,7 @@ async function calcularCarta() {
     const timezone = await getTimezone(coords.lat, coords.lon);
 
     setLoaderText('calculando posiciones planetarias...');
-    const chartData = await obtenerCartaNatal(fecha, hora, coords.lat, coords.lon, timezone, nombre);
+    const chartData = await obtenerCartaNatal(fecha, hora, coords.lat, coords.lon, timezone, nombre, ciudad, pais));
     cartaData = chartData;
 
     setLoaderText('escribiendo tu lectura esencial...');

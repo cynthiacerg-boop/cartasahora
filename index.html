@@ -609,7 +609,7 @@ async function getTimezone(lat, lon) {
 async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre) {
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
-  const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone } };
+  const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: pais } };
   const res = await fetch(`${WORKER_URL}/carta`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
   return await res.json();

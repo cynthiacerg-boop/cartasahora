@@ -16,7 +16,6 @@
       overflow-x: hidden;
     }
 
-    /* ESTRELLAS */
     #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .star {
       position: absolute;
@@ -26,7 +25,6 @@
     }
     @keyframes twinkle { from { opacity: 0.05; } to { opacity: 0.5; } }
 
-    /* LAYOUT */
     .container {
       position: relative;
       z-index: 1;
@@ -37,58 +35,19 @@
 
     /* HEADER */
     .header { text-align: center; margin-bottom: 48px; }
-    .brand {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.35em;
-      color: #82B366;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-      opacity: 0.9;
-    }
-    h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(36px, 7vw, 58px);
-      font-weight: 300;
-      color: #f0ede8;
-      line-height: 1.1;
-      letter-spacing: 0.02em;
-      margin-bottom: 14px;
-    }
-    .subtitle {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 17px;
-      color: rgba(255,255,255,0.45);
-      font-style: italic;
-      line-height: 1.6;
-    }
-    .divider {
-      width: 48px;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, #82B366, transparent);
-      margin: 20px auto 0;
-    }
+    .brand { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.35em; color: #82B366; text-transform: uppercase; margin-bottom: 14px; opacity: 0.9; }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 7vw, 58px); font-weight: 300; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
+    .subtitle { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.6; }
+    .divider { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, #82B366, transparent); margin: 20px auto 0; }
 
     /* CARD */
-    .card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 16px;
-      padding: 36px 32px;
-      backdrop-filter: blur(10px);
-      margin-bottom: 20px;
-    }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 36px 32px; backdrop-filter: blur(10px); margin-bottom: 20px; }
 
     /* FORM */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 7px; }
     .form-group.full { grid-column: 1 / -1; }
-    label {
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-    }
+    label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
     .opt { opacity: 0.5; font-size: 10px; }
     input, select {
       background: rgba(255,255,255,0.04);
@@ -106,7 +65,6 @@
     input::placeholder { color: rgba(255,255,255,0.2); }
     select option { background: #1a1a2e; }
 
-    /* BOTÓN PRINCIPAL */
     .btn-primary {
       width: 100%;
       margin-top: 24px;
@@ -126,38 +84,19 @@
     .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* ERROR */
-    .error-msg {
-      color: #e07070;
-      font-size: 13px;
-      margin-top: 12px;
-      text-align: center;
-    }
+    .error-msg { color: #e07070; font-size: 13px; margin-top: 12px; text-align: center; }
+    .success-msg { color: #82B366; font-size: 13px; margin-top: 12px; text-align: center; }
 
     /* LOADER */
     .loader { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 40px 0; }
-    .orbit {
-      position: relative;
-      width: 80px;
-      height: 80px;
-    }
-    .orbit-ring {
-      position: absolute;
-      border-radius: 50%;
-      border: 1px solid;
-    }
+    .orbit { position: relative; width: 80px; height: 80px; }
+    .orbit-ring { position: absolute; border-radius: 50%; border: 1px solid; }
     .r1 { inset: 0; border-color: rgba(130,179,102,0.3); animation: spin 3s linear infinite; }
     .r2 { inset: 10px; border-color: rgba(138,77,171,0.3); animation: spin 2s linear infinite reverse; }
     .r3 { inset: 22px; border-color: rgba(130,179,102,0.5); animation: spin 1.5s linear infinite; }
     .r4 { inset: 35px; background: #82B366; box-shadow: 0 0 12px rgba(130,179,102,0.6); }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .loader p {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 15px;
-      letter-spacing: 0.15em;
-      color: #82B366;
-      opacity: 0.8;
-    }
+    .loader p { font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.15em; color: #82B366; opacity: 0.8; }
 
     /* SECCIÓN TÍTULO */
     .section-title {
@@ -171,64 +110,30 @@
       align-items: center;
       gap: 10px;
     }
-    .section-title::after {
-      content: '';
-      flex: 1;
-      height: 1px;
-      background: rgba(130,179,102,0.2);
-    }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(130,179,102,0.2); }
 
     /* TABLA PLANETAS */
     .planets-table { width: 100%; border-collapse: collapse; }
-    .planets-table th {
-      font-family: 'Cinzel', serif;
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      color: rgba(255,255,255,0.3);
-      text-transform: uppercase;
-      padding: 8px 12px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
-    .planets-table td {
-      padding: 10px 12px;
-      font-size: 13px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
+    .planets-table th { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; color: rgba(255,255,255,0.3); text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .planets-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .planets-table tr:last-child td { border-bottom: none; }
     .planet-name { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.75); }
     .planet-symbol { font-size: 16px; width: 22px; text-align: center; }
     .planet-sign { color: #8A4DAB; font-weight: 500; }
     .planet-degree { color: rgba(255,255,255,0.4); font-size: 12px; }
     .planet-house { color: rgba(255,255,255,0.35); font-size: 12px; }
-    .retro-badge {
-      font-size: 10px;
-      color: #e07070;
-      letter-spacing: 0.05em;
-    }
+    .retro-badge { font-size: 10px; color: #e07070; letter-spacing: 0.05em; }
 
     /* TABLA ASPECTOS */
     .aspects-table { width: 100%; border-collapse: collapse; }
-    .aspects-table td {
-      padding: 10px 12px;
-      font-size: 13px;
-      border-bottom: 1px solid rgba(255,255,255,0.04);
-    }
+    .aspects-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .aspects-table tr:last-child td { border-bottom: none; }
     .aspect-name { color: rgba(255,255,255,0.75); display: flex; align-items: center; gap: 8px; }
-    .aspect-bar {
-      width: 4px;
-      height: 18px;
-      border-radius: 2px;
-      flex-shrink: 0;
-    }
+    .aspect-bar { width: 4px; height: 18px; border-radius: 2px; flex-shrink: 0; }
     .aspect-bar.armonico { background: #82B366; }
     .aspect-bar.poderoso { background: #f0c040; }
     .aspect-bar.desafiante { background: #e06060; }
-    .aspect-quality {
-      font-size: 12px;
-      font-weight: 500;
-    }
+    .aspect-quality { font-size: 12px; font-weight: 500; }
     .aspect-quality.armonico { color: #82B366; }
     .aspect-quality.poderoso { color: #f0c040; }
     .aspect-quality.desafiante { color: #e06060; }
@@ -237,86 +142,123 @@
 
     /* INTERPRETACIÓN */
     .interp-block { margin-bottom: 24px; }
-    .interp-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 19px;
+    .interp-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #82B366; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(130,179,102,0.15); letter-spacing: 0.03em; }
+    .interp-text { font-family: 'Jost', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.72); }
+
+    /* PRODUCTOS UPSELL */
+    .productos-grid { display: grid; gap: 16px; margin-top: 8px; }
+
+    .producto-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 24px;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+    }
+    .producto-card:hover { border-color: rgba(138,77,171,0.4); background: rgba(138,77,171,0.05); }
+    .producto-card.destacado { border-color: rgba(138,77,171,0.35); background: linear-gradient(135deg, rgba(138,77,171,0.1), rgba(130,179,102,0.05)); }
+
+    .producto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .producto-nombre { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: #f0ede8; }
+    .producto-precio { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #8A4DAB; font-weight: 300; }
+    .producto-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 16px; }
+    .producto-items { list-style: none; margin-bottom: 16px; }
+    .producto-items li { font-size: 12px; color: rgba(255,255,255,0.55); padding: 3px 0; display: flex; align-items: center; gap: 7px; }
+    .producto-items li::before { content: '✦'; color: #8A4DAB; font-size: 9px; }
+
+    .badge-popular {
+      display: inline-block;
+      background: rgba(130,179,102,0.2);
+      border: 1px solid rgba(130,179,102,0.4);
+      border-radius: 20px;
+      padding: 3px 12px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
       color: #82B366;
       margin-bottom: 10px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid rgba(130,179,102,0.15);
-      letter-spacing: 0.03em;
-    }
-    .interp-text {
-      font-family: 'Jost', sans-serif;
-      font-size: 14px;
-      line-height: 1.85;
-      color: rgba(255,255,255,0.72);
     }
 
-    /* GANCHO PAGO */
-    .upsell-card {
-      background: linear-gradient(135deg, rgba(138,77,171,0.12), rgba(130,179,102,0.08));
-      border: 1px solid rgba(138,77,171,0.3);
-      border-radius: 16px;
-      padding: 32px;
-      text-align: center;
-      margin-top: 24px;
-    }
-    .upsell-title {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 26px;
-      font-weight: 300;
-      color: #f0ede8;
-      margin-bottom: 12px;
-    }
-    .upsell-text {
-      font-size: 14px;
-      color: rgba(255,255,255,0.55);
-      line-height: 1.7;
-      margin-bottom: 20px;
-    }
-    .upsell-list {
-      list-style: none;
-      margin-bottom: 24px;
-      text-align: left;
-      display: inline-block;
-    }
-    .upsell-list li {
+    /* FORMULARIO DE COMPRA */
+    .compra-form { margin-top: 16px; }
+    .compra-form input { margin-bottom: 10px; }
+
+    .promo-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .promo-row input { margin-bottom: 0; flex: 1; }
+    .btn-promo {
+      padding: 13px 16px;
+      background: transparent;
+      border: 1px solid rgba(130,179,102,0.3);
+      border-radius: 8px;
+      color: #82B366;
+      font-family: 'Jost', sans-serif;
       font-size: 13px;
-      color: rgba(255,255,255,0.65);
-      padding: 5px 0;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s;
     }
-    .upsell-list li::before { content: '✦'; color: #8A4DAB; font-size: 10px; }
-    .price-tag {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: 42px;
-      color: #f0ede8;
-      font-weight: 300;
-      margin-bottom: 4px;
-    }
-    .price-sub { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 24px; }
-    .btn-pay {
-      display: inline-block;
-      padding: 16px 40px;
+    .btn-promo:hover { background: rgba(130,179,102,0.1); }
+
+    .btn-paypal {
+      width: 100%;
+      padding: 16px;
       background: linear-gradient(135deg, #8A4DAB, #6a3a85);
       border: none;
       border-radius: 10px;
       color: white;
       font-family: 'Cinzel', serif;
       font-size: 13px;
-      letter-spacing: 0.2em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
       cursor: pointer;
       transition: opacity 0.2s, transform 0.1s;
-      box-shadow: 0 4px 20px rgba(138,77,171,0.4);
-      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(138,77,171,0.35);
+      margin-top: 4px;
     }
-    .btn-pay:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-paypal:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-paypal:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-    /* VERSIÓN PAGA */
+    .paypal-note { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
+
+    /* SECCIÓN PREGUNTAS */
+    .preguntas-section { margin-top: 8px; }
+    .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .pregunta-chip {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .pregunta-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.8); }
+    textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(130,179,102,0.2);
+      border-radius: 8px;
+      padding: 13px 16px;
+      color: #e8e8e8;
+      font-family: 'Jost', sans-serif;
+      font-size: 14px;
+      outline: none;
+      resize: vertical;
+      min-height: 90px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { border-color: rgba(130,179,102,0.5); }
+    textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+    /* LECTURA DESBLOQUEADA */
+    .lectura-desbloqueada {
+      background: linear-gradient(135deg, rgba(138,77,171,0.08), rgba(130,179,102,0.05));
+      border: 1px solid rgba(138,77,171,0.25);
+      border-radius: 16px;
+      padding: 32px;
+      margin-top: 20px;
+    }
     .paid-badge {
       display: inline-flex;
       align-items: center;
@@ -332,14 +274,7 @@
     }
 
     /* FOOTER */
-    .footer {
-      text-align: center;
-      margin-top: 48px;
-      font-family: 'Cinzel', serif;
-      font-size: 10px;
-      letter-spacing: 0.25em;
-      color: rgba(255,255,255,0.12);
-    }
+    .footer { text-align: center; margin-top: 48px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
 
     .hidden { display: none !important; }
 
@@ -347,6 +282,7 @@
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
       .card { padding: 24px 18px; }
+      .producto-header { flex-direction: column; gap: 6px; }
     }
   </style>
 </head>
@@ -364,7 +300,7 @@
     <div class="divider"></div>
   </div>
 
-  <!-- FORMULARIO -->
+  <!-- FORMULARIO DATOS -->
   <div class="card" id="section-form">
     <div class="form-grid">
       <div class="form-group full">
@@ -390,7 +326,7 @@
     </div>
     <p class="error-msg hidden" id="error-msg"></p>
     <button class="btn-primary" id="btn-calcular" onclick="calcularCarta()">
-      ✦ Calcular mi carta natal
+      ✦ Calcular mi carta natal gratis
     </button>
   </div>
 
@@ -407,7 +343,7 @@
     </div>
   </div>
 
-  <!-- RESULTADO GRATIS -->
+  <!-- RESULTADO -->
   <div id="section-result" class="hidden">
 
     <!-- PLANETAS -->
@@ -416,10 +352,7 @@
       <table class="planets-table">
         <thead>
           <tr>
-            <th>Planeta</th>
-            <th>Signo</th>
-            <th>Grado</th>
-            <th>Casa</th>
+            <th>Planeta</th><th>Signo</th><th>Grado</th><th>Casa</th>
           </tr>
         </thead>
         <tbody id="tabla-planetas"></tbody>
@@ -436,38 +369,170 @@
 
     <!-- INTERPRETACIÓN BÁSICA -->
     <div class="card">
-      <div class="section-title">Tu lectura esencial</div>
+      <div class="section-title">Tu lectura esencial · Gratis</div>
       <div id="interpretacion-basica"></div>
     </div>
 
-    <!-- UPSELL -->
-    <div class="upsell-card" id="upsell-section">
-      <p style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.25em;color:#8A4DAB;margin-bottom:16px;">✦ LECTURA COMPLETA ✦</p>
-      <div class="upsell-title">Hay mucho más en tu carta</div>
-      <p class="upsell-text">Esta es solo la superficie. Tu carta natal es un mapa complejo con capas de significado que van mucho más allá del Sol, la Luna y el Ascendente.</p>
-      <ul class="upsell-list">
-        <li>Interpretación profunda de los 10 planetas</li>
-        <li>Análisis de todas las casas astrológicas</li>
-        <li>Quirón, Lilith y Nodos del destino</li>
-        <li>Todos los aspectos y su impacto en tu vida</li>
-        <li>Síntesis evolutiva de tu camino de alma</li>
-        <li>Patrones dominantes y dones ocultos</li>
-      </ul>
-      <div class="price-tag">USD 6</div>
-      <div class="price-sub">pago único · entrega inmediata</div>
-      <a id="btn-pago" href="#" class="btn-pay" target="_blank">
-        ✦ Quiero mi lectura completa
-      </a>
-      <p style="font-size:11px;color:rgba(255,255,255,0.25);margin-top:16px;">Pago seguro vía PayPal · Se desbloquea al instante</p>
+    <!-- UPSELL PRODUCTOS -->
+    <div class="card" id="section-upsell">
+      <div class="section-title">Lecturas completas</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
+        Elegí la lectura que más te resuena. Ingresás tu email, pagás y la recibís en menos de 5 minutos.
+      </p>
+
+      <div class="productos-grid">
+
+        <!-- CARTA COMPLETA -->
+        <div class="producto-card destacado">
+          <div class="badge-popular">✦ Más elegida</div>
+          <div class="producto-header">
+            <div class="producto-nombre">Carta Natal Completa</div>
+            <div class="producto-precio">USD 6</div>
+          </div>
+          <p class="producto-desc">Interpretación profunda de los 10 planetas, casas, aspectos y síntesis evolutiva de tu camino de alma.</p>
+          <ul class="producto-items">
+            <li>Los 10 planetas en profundidad</li>
+            <li>Análisis de todas las casas astrológicas</li>
+            <li>Quirón, Lilith y Nodos del destino</li>
+            <li>Síntesis evolutiva de tu camino de alma</li>
+            <li>Patrones dominantes y dones ocultos</li>
+          </ul>
+          <div class="compra-form" id="form-carta-completa">
+            <input type="email" id="email-carta-completa" placeholder="Tu email para recibir la lectura" />
+            <div class="promo-row">
+              <input type="text" id="promo-carta-completa" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('carta-completa')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-carta-completa"></p>
+            <p class="success-msg hidden" id="success-carta-completa"></p>
+            <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">
+              ✦ Obtener mi lectura · USD 6
+            </button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
+          </div>
+        </div>
+
+        <!-- REVOLUCIÓN SOLAR -->
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Revolución Solar 2025–2026</div>
+            <div class="producto-precio">USD 9</div>
+          </div>
+          <p class="producto-desc">Tu año personal desde tu último cumpleaños. Qué viene, qué se activa, cuáles son tus meses clave.</p>
+          <ul class="producto-items">
+            <li>Carta de revolución solar interpretada</li>
+            <li>Meses clave del año</li>
+            <li>Amor, trabajo y crecimiento personal</li>
+            <li>Temas centrales de tu año evolutivo</li>
+          </ul>
+          <div class="compra-form" id="form-revolucion-solar">
+            <input type="email" id="email-revolucion-solar" placeholder="Tu email para recibir la lectura" />
+            <div class="promo-row">
+              <input type="text" id="promo-revolucion-solar" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('revolucion-solar')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-revolucion-solar"></p>
+            <p class="success-msg hidden" id="success-revolucion-solar"></p>
+            <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">
+              ✦ Obtener mi lectura · USD 9
+            </button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
+          </div>
+        </div>
+
+        <!-- SINASTRÍA -->
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Sinastría · Compatibilidad</div>
+            <div class="producto-precio">USD 9</div>
+          </div>
+          <p class="producto-desc">La química real entre dos cartas natales. Qué los une, qué los desafía, el karma compartido.</p>
+          <ul class="producto-items">
+            <li>Análisis de aspectos cruzados entre ambas cartas</li>
+            <li>Venus, Marte, Sol y Luna en relación</li>
+            <li>Karma compartido y Nodos</li>
+            <li>Desafíos y dones de la relación</li>
+          </ul>
+          <div class="compra-form" id="form-sinastria">
+            <input type="email" id="email-sinastria" placeholder="Tu email para recibir la lectura" />
+            <div class="form-group" style="margin:10px 0;">
+              <label>Nombre y fecha de nacimiento de la otra persona</label>
+              <input type="text" id="sinastria-persona2" placeholder="Ej: Juan, 15/03/1990, Buenos Aires" />
+            </div>
+            <div class="promo-row">
+              <input type="text" id="promo-sinastria" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('sinastria')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-sinastria"></p>
+            <p class="success-msg hidden" id="success-sinastria"></p>
+            <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">
+              ✦ Obtener mi lectura · USD 9
+            </button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
+          </div>
+        </div>
+
+        <!-- TRÁNSITOS -->
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Tránsitos Actuales</div>
+            <div class="producto-precio">USD 5</div>
+          </div>
+          <p class="producto-desc">Qué están activando los planetas en tu carta ahora mismo. Por qué sentís lo que sentís hoy.</p>
+          <ul class="producto-items">
+            <li>Planetas en tránsito sobre tu carta natal</li>
+            <li>Qué área de tu vida está siendo activada</li>
+            <li>Duración y cómo trabajar cada tránsito</li>
+          </ul>
+          <div class="compra-form" id="form-transitos">
+            <input type="email" id="email-transitos" placeholder="Tu email para recibir la lectura" />
+            <div class="promo-row">
+              <input type="text" id="promo-transitos" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('transitos')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-transitos"></p>
+            <p class="success-msg hidden" id="success-transitos"></p>
+            <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">
+              ✦ Obtener mi lectura · USD 5
+            </button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
+          </div>
+        </div>
+
+      </div>
     </div>
 
-    <!-- VERSIÓN PAGA -->
-    <div class="card hidden" id="section-paga">
-      <div style="text-align:center;margin-bottom:24px;">
-        <span class="paid-badge">✦ Lectura completa desbloqueada</span>
+    <!-- PREGUNTAS PUNTUALES -->
+    <div class="card">
+      <div class="section-title">Pregunta Puntual</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
+        Una pregunta específica respondida con tu carta natal. Amor, trabajo, decisiones, momentos clave.
+      </p>
+      <div class="pregunta-ejemplos">
+        <span class="pregunta-chip" onclick="setEjemplo('¿Por qué me cuesta tanto tomar decisiones importantes?')">¿Por qué me cuesta decidir?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Qué dice mi carta sobre el amor y los vínculos?')">¿Qué dice mi carta del amor?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Cuál es mi mayor fortaleza según mi carta natal?')">¿Cuál es mi mayor fortaleza?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Qué área de mi vida necesita más atención ahora?')">¿Qué necesita atención ahora?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Qué dice mi carta sobre mi propósito de vida?')">¿Mi propósito de vida?</span>
       </div>
-      <div id="interpretacion-completa"></div>
+      <div class="preguntas-section">
+        <textarea id="pregunta-texto" placeholder="Escribí tu pregunta aquí..."></textarea>
+        <input type="email" id="email-pregunta" placeholder="Tu email para recibir la respuesta" style="margin-top:10px;" />
+        <div class="promo-row" style="margin-top:10px;">
+          <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
+          <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
+        </div>
+        <p class="error-msg hidden" id="error-pregunta"></p>
+        <p class="success-msg hidden" id="success-pregunta"></p>
+        <button class="btn-paypal" onclick="procesarCompra('pregunta', 2)" style="margin-top:10px;">
+          ✦ Obtener respuesta · USD 2
+        </button>
+        <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
+      </div>
     </div>
+
+    <!-- LECTURAS DESBLOQUEADAS -->
+    <div id="section-lecturas-desbloqueadas"></div>
 
     <div style="text-align:center;margin-top:20px;">
       <button onclick="reiniciar()" style="background:transparent;border:1px solid rgba(130,179,102,0.25);border-radius:8px;padding:10px 24px;color:#82B366;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer;letter-spacing:0.05em;">
@@ -483,11 +548,13 @@
 
 <script>
 // =============================================
-// CONFIGURACIÓN — reemplazá con tus keys reales
+// CONFIGURACIÓN
 // =============================================
-const RAPIDAPI_KEY = "ddc34d80cemshf138807c2e53a6ap1e1b75jsn29f06cee7949";
-const ANTHROPIC_KEY = "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";
-const PAYPAL_LINK = "https://www.paypal.com/paypalme/cynthiacergneux"; // tu link de PayPal
+const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
+const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
+const CODIGO_PRUEBA = 'ESPACIO2025';
+
+const promoAplicada = {};
 
 // =============================================
 // ESTRELLAS
@@ -498,339 +565,121 @@ const PAYPAL_LINK = "https://www.paypal.com/paypalme/cynthiacergneux"; // tu lin
     const s = document.createElement('div');
     s.className = 'star';
     const size = Math.random() * 1.8 + 0.4;
-    s.style.cssText = `
-      left:${Math.random()*100}%;
-      top:${Math.random()*100}%;
-      width:${size}px;
-      height:${size}px;
-      --d:${(Math.random()*3+2).toFixed(1)}s;
-      animation-delay:${(Math.random()*3).toFixed(1)}s;
-    `;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--d:${(Math.random()*3+2).toFixed(1)}s;animation-delay:${(Math.random()*3).toFixed(1)}s;`;
     container.appendChild(s);
   }
 })();
 
 // =============================================
-// DATOS PLANETARIOS
+// DATOS ASTROLÓGICOS
 // =============================================
-const PLANET_SYMBOLS = {
-  'Sun': '☉', 'Moon': '☽', 'Mercury': '☿', 'Venus': '♀', 'Mars': '♂',
-  'Jupiter': '♃', 'Saturn': '♄', 'Uranus': '♅', 'Neptune': '♆', 'Pluto': '♇',
-  'Chiron': '⚷', 'Lilith': '⚸', 'North Node': '☊', 'South Node': '☋'
-};
-
-const PLANET_ES = {
-  'Sun': 'Sol', 'Moon': 'Luna', 'Mercury': 'Mercurio', 'Venus': 'Venus',
-  'Mars': 'Marte', 'Jupiter': 'Júpiter', 'Saturn': 'Saturno', 'Uranus': 'Urano',
-  'Neptune': 'Neptuno', 'Pluto': 'Plutón', 'Chiron': 'Quirón',
-  'Lilith': 'Lilith', 'North Node': 'Nodo Norte', 'South Node': 'Nodo Sur'
-};
-
-const SIGN_ES = {
-  'Aries': 'Aries', 'Taurus': 'Tauro', 'Gemini': 'Géminis', 'Cancer': 'Cáncer',
-  'Leo': 'Leo', 'Virgo': 'Virgo', 'Libra': 'Libra', 'Scorpio': 'Escorpio',
-  'Sagittarius': 'Sagitario', 'Capricorn': 'Capricornio', 'Aquarius': 'Acuario',
-  'Pisces': 'Piscis'
-};
-
-const ASPECT_ES = {
-  'conjunction': 'conjunción', 'opposition': 'oposición', 'trine': 'trígono',
-  'square': 'cuadratura', 'sextile': 'sextil', 'quincunx': 'quincuncio',
-  'semi-sextile': 'semisextil'
-};
+const PLANET_SYMBOLS = { 'Sun':'☉','Moon':'☽','Mercury':'☿','Venus':'♀','Mars':'♂','Jupiter':'♃','Saturn':'♄','Uranus':'♅','Neptune':'♆','Pluto':'♇','Chiron':'⚷','Lilith':'⚸','North Node':'☊','South Node':'☋' };
+const PLANET_ES = { 'Sun':'Sol','Moon':'Luna','Mercury':'Mercurio','Venus':'Venus','Mars':'Marte','Jupiter':'Júpiter','Saturn':'Saturno','Uranus':'Urano','Neptune':'Neptuno','Pluto':'Plutón','Chiron':'Quirón','Lilith':'Lilith','North Node':'Nodo Norte','South Node':'Nodo Sur' };
+const SIGN_ES = { 'Aries':'Aries','Taurus':'Tauro','Gemini':'Géminis','Cancer':'Cáncer','Leo':'Leo','Virgo':'Virgo','Libra':'Libra','Scorpio':'Escorpio','Sagittarius':'Sagitario','Capricorn':'Capricornio','Aquarius':'Acuario','Pisces':'Piscis' };
+const ASPECT_ES = { 'conjunction':'conjunción','opposition':'oposición','trine':'trígono','square':'cuadratura','sextile':'sextil','quincunx':'quincuncio','semi-sextile':'semisextil' };
 
 function aspectClass(type) {
   if (['conjunction'].includes(type)) return 'poderoso';
-  if (['trine', 'sextile'].includes(type)) return 'armonico';
-  return 'desafiante';
-}
-
-function aspectLabel(type) {
-  const cls = aspectClass(type);
-  if (cls === 'poderoso') return 'poderoso';
-  if (cls === 'armonico') return 'armónico';
+  if (['trine','sextile'].includes(type)) return 'armonico';
   return 'desafiante';
 }
 
 // =============================================
-// GEOCODING — obtener lat/lon de ciudad
+// GEOCODING Y TIMEZONE
 // =============================================
 async function getCoordenadas(ciudad, pais) {
   const query = encodeURIComponent(`${ciudad}, ${pais}`);
-  const url = `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`;
-  const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, { headers: { 'Accept-Language': 'es' } });
   const data = await res.json();
   if (!data || data.length === 0) throw new Error('No encontré esa ciudad. Probá con una ciudad más grande cercana.');
   return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
 }
 
-// =============================================
-// TIMEZONE — obtener timezone de coordenadas
-// =============================================
 async function getTimezone(lat, lon) {
-  // Usamos la API de timezone basada en coordenadas
-  const url = `https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(`https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`);
     const data = await res.json();
     return data.timeZone || 'America/Argentina/Buenos_Aires';
-  } catch {
-    return 'America/Argentina/Buenos_Aires';
-  }
+  } catch { return 'America/Argentina/Buenos_Aires'; }
 }
 
 // =============================================
-// CARTA NATAL via RapidAPI
+// CARTA NATAL via Worker
 // =============================================
 async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre) {
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
-
-  const body = {
-    subject: {
-      name: nombre,
-      year, month, day,
-      hour, minute,
-      longitude: lon,
-      latitude: lat,
-      timezone
-    }
-  };
-
-  const res = await fetch('https://astrologer.p.rapidapi.com/api/v5/chart/birth-chart', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-RapidAPI-Host': 'astrologer.p.rapidapi.com',
-      'X-RapidAPI-Key': RAPIDAPI_KEY
-    },
-    body: JSON.stringify(body)
-  });
-
+  const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone } };
+  const res = await fetch(`${WORKER_URL}/carta`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
   return await res.json();
 }
 
 // =============================================
-// RENDERIZAR PLANETAS
+// INTERPRETACIÓN via Worker
+// =============================================
+async function llamarClaude(prompt) {
+  const res = await fetch(`${WORKER_URL}/interpretar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+  const data = await res.json();
+  return data.content?.map(b => b.text || '').join('') || '';
+}
+
+// =============================================
+// RENDERIZADO
 // =============================================
 function renderPlanetas(chartData) {
   const tbody = document.getElementById('tabla-planetas');
   tbody.innerHTML = '';
-
-  const planetsOrder = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron','Lilith','North Node','South Node'];
-  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
-
-  const planetMap = {};
-  planets.forEach(p => { planetMap[p.name] = p; });
-
-  planetsOrder.forEach(pName => {
-    const p = planetMap[pName];
-    if (!p) return;
-
-    const symbol = PLANET_SYMBOLS[pName] || '•';
-    const nameEs = PLANET_ES[pName] || pName;
-    const signEs = SIGN_ES[p.sign] || p.sign || '—';
-    const degree = p.norm_degree ? p.norm_degree.toFixed(1) + '°' : '—';
-    const house = p.house ? 'Casa ' + p.house : '—';
-    const retro = p.is_retro === 'true' || p.is_retro === true;
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><div class="planet-name"><span class="planet-symbol">${symbol}</span>${nameEs}${retro ? ' <span class="retro-badge">Rx</span>' : ''}</div></td>
-      <td class="planet-sign">${signEs}</td>
-      <td class="planet-degree">${degree}</td>
-      <td class="planet-house">${house}</td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// =============================================
-// RENDERIZAR ASPECTOS
-// =============================================
-function renderAspectos(chartData) {
-  const tbody = document.getElementById('tabla-aspectos');
-  tbody.innerHTML = '';
-
-  const aspects = chartData?.chart_data?.aspects || chartData?.aspects || [];
-  const mainTypes = ['conjunction','opposition','trine','square','sextile'];
-  const filtered = aspects.filter(a => mainTypes.includes(a.aspect_type || a.type));
-
-  document.getElementById('aspectos-count').textContent = `Aspectos principales (${filtered.length})`;
-
-  filtered.forEach(a => {
-    const p1 = PLANET_ES[a.p1_name] || a.p1_name || '';
-    const p2 = PLANET_ES[a.p2_name] || a.p2_name || '';
-    const tipo = a.aspect_type || a.type || '';
-    const tipoEs = ASPECT_ES[tipo] || tipo;
-    const orb = a.orbit !== undefined ? Math.abs(a.orbit).toFixed(2) + '°' : '';
-    const cls = aspectClass(tipo);
-    const label = aspectLabel(tipo);
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div class="aspect-name">
-          <div class="aspect-bar ${cls}"></div>
-          ${p1} ${tipoEs} ${p2}
-        </div>
-      </td>
-      <td>
-        <div class="aspect-right">
-          <span class="aspect-quality ${cls}">${label}</span>
-          <span class="aspect-orb">${orb}</span>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
-  });
-}
-
-// =============================================
-// INTERPRETACIÓN BÁSICA via Claude
-// =============================================
-async function obtenerInterpretacionBasica(nombre, chartData) {
+  const order = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron','Lilith','North Node','South Node'];
   const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
   const pm = {};
   planets.forEach(p => { pm[p.name] = p; });
-
-  const sol = pm['Sun'];
-  const luna = pm['Moon'];
-  const asc = pm['Ascendant'] || pm['ASC'];
-  const jupiter = pm['Jupiter'];
-  const saturn = pm['Saturn'];
-
-  const aspectos = chartData?.chart_data?.aspects || chartData?.aspects || [];
-
-  // Aspectos relevantes Sol/Luna/Asc con Júpiter y Saturno
-  const aspectosKey = aspectos.filter(a => {
-    const names = [a.p1_name, a.p2_name];
-    const mainPlanets = ['Sun','Moon','Ascendant','ASC'];
-    const keyPlanets = ['Jupiter','Saturn'];
-    return names.some(n => mainPlanets.includes(n)) && names.some(n => keyPlanets.includes(n));
-  }).map(a => {
-    const p1 = PLANET_ES[a.p1_name] || a.p1_name;
-    const p2 = PLANET_ES[a.p2_name] || a.p2_name;
-    const tipo = ASPECT_ES[a.aspect_type || a.type] || a.aspect_type;
-    return `${p1} en ${ASPECT_ES[a.aspect_type||a.type]||''} con ${p2}`;
-  }).join(', ');
-
-  const contexto = `
-    Sol en ${SIGN_ES[sol?.sign]||sol?.sign||'?'} casa ${sol?.house||'?'}
-    Luna en ${SIGN_ES[luna?.sign]||luna?.sign||'?'} casa ${luna?.house||'?'}
-    ${asc ? `Ascendente en ${SIGN_ES[asc?.sign]||asc?.sign||'?'}` : ''}
-    ${jupiter ? `Júpiter en ${SIGN_ES[jupiter?.sign]||jupiter?.sign||'?'} casa ${jupiter?.house||'?'}` : ''}
-    ${saturn ? `Saturno en ${SIGN_ES[saturn?.sign]||saturn?.sign||'?'} casa ${saturn?.house||'?'}` : ''}
-    ${aspectosKey ? `Aspectos clave: ${aspectosKey}` : ''}
-  `;
-
-  const prompt = `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, con tono cálido, poético y directo. Hablás de vos a la persona.
-
-Escribí una interpretación breve de carta natal para ${nombre} con estos datos reales:
-${contexto}
-
-Estructura la respuesta con exactamente estas 3 secciones, cada una con su título en negrita:
-
-**Tu esencia solar**
-(2 párrafos sobre el Sol y lo que dice de su identidad profunda)
-
-**Tu mundo emocional**
-(2 párrafos sobre la Luna y cómo procesa las emociones)
-
-**Tu imagen ante el mundo**
-(2 párrafos sobre el Ascendente y la energía que proyecta. Si hay aspectos con Júpiter o Saturno mencioná brevemente qué expanden o limitan en su vida)
-
-Al final, sin título, agregá 2 líneas de gancho que inviten a descubrir más en la lectura completa, de forma sugerente pero sin revelar nada. Que suene a que falta lo más importante.`;
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
+  order.forEach(pName => {
+    const p = pm[pName];
+    if (!p) return;
+    const retro = p.is_retro === 'true' || p.is_retro === true;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="planet-name"><span class="planet-symbol">${PLANET_SYMBOLS[pName]||'•'}</span>${PLANET_ES[pName]||pName}${retro?` <span class="retro-badge">Rx</span>`:''}</div></td>
+      <td class="planet-sign">${SIGN_ES[p.sign]||p.sign||'—'}</td>
+      <td class="planet-degree">${p.norm_degree?p.norm_degree.toFixed(1)+'°':'—'}</td>
+      <td class="planet-house">${p.house?'Casa '+p.house:'—'}</td>
+    `;
+    tbody.appendChild(tr);
   });
-
-  const data = await res.json();
-  return data.content?.map(b => b.text || '').join('') || '';
 }
 
-// =============================================
-// INTERPRETACIÓN COMPLETA via Claude
-// =============================================
-async function obtenerInterpretacionCompleta(nombre, chartData) {
-  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
-  const aspectos = chartData?.chart_data?.aspects || chartData?.aspects || [];
-
-  const planetsText = planets.map(p => {
-    const nameEs = PLANET_ES[p.name] || p.name;
-    const signEs = SIGN_ES[p.sign] || p.sign;
-    return `${nameEs} en ${signEs} casa ${p.house||'?'}${p.is_retro==='true'||p.is_retro===true?' (Retrógrado)':''}`;
-  }).join('\n');
-
-  const aspectsText = aspectos.slice(0,20).map(a => {
-    const p1 = PLANET_ES[a.p1_name] || a.p1_name;
-    const p2 = PLANET_ES[a.p2_name] || a.p2_name;
-    const tipo = ASPECT_ES[a.aspect_type || a.type] || a.aspect_type;
-    return `${p1} ${tipo} ${p2}`;
-  }).join(', ');
-
-  const prompt = `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, cálido, poético y profundo. Hablás de vos a la persona.
-
-Escribí una lectura completa de carta natal para ${nombre}.
-
-POSICIONES PLANETARIAS REALES:
-${planetsText}
-
-ASPECTOS PRINCIPALES:
-${aspectsText}
-
-Estructura la respuesta con estas secciones, cada una con título en negrita:
-
-**Tu esencia solar**
-**Tu mundo emocional**  
-**Tu imagen ante el mundo**
-**Tu mente y tu voz**
-**El amor y los vínculos**
-**Tu fuerza y tu acción**
-**Expansión y abundancia · Júpiter**
-**Estructura y aprendizaje · Saturno**
-**Tu camino de alma · Nodos y Quirón**
-**Síntesis evolutiva**
-
-Cada sección 2-3 párrafos. Cerrá con una frase poderosa e inspiradora.`;
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 1000,
-      messages: [{ role: 'user', content: prompt }]
-    })
+function renderAspectos(chartData) {
+  const tbody = document.getElementById('tabla-aspectos');
+  tbody.innerHTML = '';
+  const aspects = chartData?.chart_data?.aspects || chartData?.aspects || [];
+  const mainTypes = ['conjunction','opposition','trine','square','sextile'];
+  const filtered = aspects.filter(a => mainTypes.includes(a.aspect_type||a.type));
+  document.getElementById('aspectos-count').textContent = `Aspectos principales (${filtered.length})`;
+  filtered.forEach(a => {
+    const p1 = PLANET_ES[a.p1_name]||a.p1_name||'';
+    const p2 = PLANET_ES[a.p2_name]||a.p2_name||'';
+    const tipo = a.aspect_type||a.type||'';
+    const tipoEs = ASPECT_ES[tipo]||tipo;
+    const orb = a.orbit!==undefined?Math.abs(a.orbit).toFixed(2)+'°':'';
+    const cls = aspectClass(tipo);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><div class="aspect-name"><div class="aspect-bar ${cls}"></div>${p1} ${tipoEs} ${p2}</div></td>
+      <td><div class="aspect-right"><span class="aspect-quality ${cls}">${cls==='poderoso'?'poderoso':cls==='armonico'?'armónico':'desafiante'}</span><span class="aspect-orb">${orb}</span></div></td>
+    `;
+    tbody.appendChild(tr);
   });
-
-  const data = await res.json();
-  return data.content?.map(b => b.text || '').join('') || '';
 }
 
-// =============================================
-// RENDERIZAR TEXTO DE INTERPRETACIÓN
-// =============================================
 function renderInterp(texto, containerId) {
   const container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = '';
   const lineas = texto.split('\n');
   let currentBlock = null;
-
   lineas.forEach(linea => {
-    if (!linea.trim()) {
-      if (currentBlock) { container.appendChild(currentBlock); currentBlock = null; }
-      return;
-    }
-
+    if (!linea.trim()) { if (currentBlock) { container.appendChild(currentBlock); currentBlock = null; } return; }
     if (linea.startsWith('**') && linea.endsWith('**')) {
       if (currentBlock) container.appendChild(currentBlock);
       currentBlock = document.createElement('div');
@@ -852,17 +701,207 @@ function renderInterp(texto, containerId) {
 }
 
 // =============================================
-// VERIFICAR SI VIENE DE PAYPAL (paid=true)
+// PROMPT INTERPRETACIÓN BÁSICA
 // =============================================
-function checkPaid() {
-  return new URLSearchParams(window.location.search).get('paid') === 'true';
+function buildPromptBasico(nombre, chartData) {
+  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
+  const pm = {};
+  planets.forEach(p => { pm[p.name] = p; });
+  const sol = pm['Sun'], luna = pm['Moon'], asc = pm['Ascendant']||pm['ASC'];
+  const contexto = `Sol en ${SIGN_ES[sol?.sign]||sol?.sign||'?'} casa ${sol?.house||'?'}, Luna en ${SIGN_ES[luna?.sign]||luna?.sign||'?'} casa ${luna?.house||'?'}${asc?`, Ascendente en ${SIGN_ES[asc?.sign]||asc?.sign||'?'}`:''}`;
+  return `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, con tono cálido, poético y directo. Hablás de vos a la persona.
+
+Escribí una interpretación breve de carta natal para ${nombre} con estos datos reales:
+${contexto}
+
+Estructura la respuesta con exactamente estas 3 secciones, cada una con su título en negrita entre dobles asteriscos:
+
+**Tu esencia solar**
+(2 párrafos sobre el Sol)
+
+**Tu mundo emocional**
+(2 párrafos sobre la Luna)
+
+**Tu imagen ante el mundo**
+(2 párrafos sobre el Ascendente. Si no hay hora, omitir esta sección)
+
+Al final, sin título, agregá 2 líneas de gancho que inviten a descubrir más.`;
+}
+
+// =============================================
+// PROMPTS POR PRODUCTO
+// =============================================
+function buildPrompt(producto, nombre, chartData, extras) {
+  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
+  const pm = {};
+  planets.forEach(p => { pm[p.name] = p; });
+  const planetsText = planets.map(p => `${PLANET_ES[p.name]||p.name} en ${SIGN_ES[p.sign]||p.sign} casa ${p.house||'?'}${p.is_retro==='true'||p.is_retro===true?' (Rx)':''}`).join(', ');
+
+  const base = `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, cálido, poético y profundo. Hablás de vos a la persona. Usá títulos de sección en negrita con dobles asteriscos.
+
+Carta natal de ${nombre}:
+${planetsText}`;
+
+  if (producto === 'carta-completa') return `${base}
+
+Escribí una lectura completa con estas secciones:
+**Tu esencia solar**
+**Tu mundo emocional**
+**Tu imagen ante el mundo**
+**Tu mente y tu voz**
+**El amor y los vínculos**
+**Tu fuerza y tu acción**
+**Expansión y abundancia · Júpiter**
+**Estructura y aprendizaje · Saturno**
+**Tu camino de alma · Nodos y Quirón**
+**Síntesis evolutiva**
+
+Cada sección 2-3 párrafos. Cerrá con una frase poderosa e inspiradora.`;
+
+  if (producto === 'revolucion-solar') return `${base}
+
+Escribí el pronóstico del año personal 2025-2026 basado en esta carta natal con estas secciones:
+**El tono del año · Tu revolución solar**
+**Los meses clave**
+**Amor y vínculos en este año**
+**Trabajo y propósito en este año**
+**Crecimiento personal y desafíos**
+**Cómo aprovechar esta energía**
+
+Cada sección 2-3 párrafos. Usá los tránsitos actuales de Saturno en Aries, Neptuno en Aries y Urano ingresando a Géminis para enriquecer el análisis.`;
+
+  if (producto === 'sinastria') return `${base}
+
+Persona 2: ${extras?.persona2||'datos no disponibles'}
+
+Escribí una sinastría entre estas dos personas con estas secciones:
+**La química inicial · Primera impresión**
+**Venus y Marte · La atracción y el deseo**
+**Sol y Luna · La compatibilidad profunda**
+**Los desafíos de esta relación**
+**El karma compartido · Nodos**
+**El potencial de esta unión**
+**Síntesis · ¿Qué tiene para enseñarles esta relación?**
+
+Cada sección 2 párrafos.`;
+
+  if (producto === 'transitos') return `${base}
+
+Escribí una lectura de tránsitos actuales (mayo 2026) con estas secciones:
+**El momento que estás viviendo**
+**Saturno en Aries · Lo que se consolida**
+**Neptuno en Aries · Lo que se disuelve y transforma**
+**Urano ingresando a Géminis · Los cambios que vienen**
+**Júpiter en Cáncer · Dónde está tu expansión ahora**
+**Cómo trabajar con estos tránsitos**
+
+Relacioná cada tránsito con la carta natal personal. 2 párrafos por sección.`;
+
+  if (producto === 'pregunta') return `${base}
+
+La persona pregunta: "${extras?.pregunta||''}"
+
+Respondé esta pregunta específica basándote en la carta natal. La respuesta debe ser:
+- Directa y clara, 3-4 párrafos
+- Basada en los planetas y casas relevantes para la pregunta
+- Con perspectiva evolutiva, no fatalista
+- Con un consejo práctico al final
+
+Usá el formato de un solo bloque de texto sin subtítulos, salvo un título inicial en negrita que reformule la pregunta.`;
+
+  return `${base}\n\nHacé una lectura general de la carta natal en 5 párrafos.`;
+}
+
+// =============================================
+// PROMO CODE
+// =============================================
+function aplicarPromo(producto) {
+  const codigoEl = document.getElementById(`promo-${producto}`);
+  const errorEl = document.getElementById(`error-${producto}`);
+  const successEl = document.getElementById(`success-${producto}`);
+  const codigo = codigoEl?.value?.trim().toUpperCase();
+
+  if (codigo === CODIGO_PRUEBA) {
+    promoAplicada[producto] = true;
+    if (successEl) { successEl.textContent = '✦ Código válido — lectura gratuita desbloqueada'; successEl.classList.remove('hidden'); }
+    if (errorEl) errorEl.classList.add('hidden');
+    // Cambiar botón
+    const btn = document.querySelector(`#form-${producto} .btn-paypal`) || document.querySelector(`#section-result .btn-paypal`);
+  } else {
+    if (errorEl) { errorEl.textContent = 'Código no válido.'; errorEl.classList.remove('hidden'); }
+    if (successEl) successEl.classList.add('hidden');
+    promoAplicada[producto] = false;
+  }
+}
+
+// =============================================
+// PROCESAR COMPRA
+// =============================================
+async function procesarCompra(producto, precio) {
+  const emailId = producto === 'pregunta' ? 'email-pregunta' : `email-${producto}`;
+  const email = document.getElementById(emailId)?.value?.trim();
+  const errorId = `error-${producto}`;
+  const successId = `success-${producto}`;
+
+  if (!email || !email.includes('@')) {
+    mostrarMensaje(errorId, 'Ingresá un email válido para recibir tu lectura.');
+    return;
+  }
+
+  const nombre = document.getElementById('nombre').value.trim();
+  const esPrueba = promoAplicada[producto] === true;
+
+  const extras = {};
+  if (producto === 'sinastria') extras.persona2 = document.getElementById('sinastria-persona2')?.value;
+  if (producto === 'pregunta') {
+    extras.pregunta = document.getElementById('pregunta-texto')?.value?.trim();
+    if (!extras.pregunta) { mostrarMensaje(errorId, 'Escribí tu pregunta antes de continuar.'); return; }
+  }
+
+  if (esPrueba) {
+    // Generar directamente sin pago
+    await generarYEnviarLectura(producto, email, nombre, extras, true);
+  } else {
+    // Guardar datos y redirigir a PayPal
+    const sesion = { producto, email, nombre, extras, precio };
+    sessionStorage.setItem('pendiente', JSON.stringify(sesion));
+    const returnUrl = encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&email=${encodeURIComponent(email)}&nombre=${encodeURIComponent(nombre)}`);
+    window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`, '_blank');
+    mostrarMensaje(successId, '✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
+  }
+}
+
+// =============================================
+// GENERAR Y ENVIAR LECTURA
+// =============================================
+async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) {
+  const errorId = `error-${producto}`;
+  const successId = `success-${producto}`;
+
+  mostrarMensaje(successId, '⟳ Generando tu lectura...');
+
+  try {
+    const prompt = buildPrompt(producto, nombre, cartaData, extras);
+    const res = await fetch(`${WORKER_URL}/enviar-lectura`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, nombre, producto, lectura: prompt, codigoPromo: esPrueba ? CODIGO_PRUEBA : '', pagado: true }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      mostrarMensaje(successId, `✦ ¡Listo! Tu lectura fue enviada a ${email}. Revisá tu bandeja de entrada.`);
+    } else {
+      mostrarMensaje(errorId, 'Error al enviar. Contactanos por WhatsApp.');
+    }
+  } catch (e) {
+    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
+  }
 }
 
 // =============================================
 // CALCULAR CARTA — FLUJO PRINCIPAL
 // =============================================
 let cartaData = null;
-let nombreGuardado = '';
 
 async function calcularCarta() {
   const nombre = document.getElementById('nombre').value.trim();
@@ -872,12 +911,11 @@ async function calcularCarta() {
   const pais = document.getElementById('pais').value.trim() || 'Argentina';
 
   if (!nombre || !fecha || !ciudad) {
-    mostrarError('Completá nombre, fecha y ciudad para continuar.');
+    mostrarMensaje('error-msg', 'Completá nombre, fecha y ciudad para continuar.');
     return;
   }
 
-  nombreGuardado = nombre;
-  ocultarError();
+  ocultarMsg('error-msg');
   mostrar('section-loader');
   ocultar('section-form');
 
@@ -888,79 +926,65 @@ async function calcularCarta() {
     setLoaderText('calculando tu zona horaria...');
     const timezone = await getTimezone(coords.lat, coords.lon);
 
-    setLoaderText('calculando posiciones planetarias con Swiss Ephemeris...');
+    setLoaderText('calculando posiciones planetarias...');
     const chartData = await obtenerCartaNatal(fecha, hora, coords.lat, coords.lon, timezone, nombre);
     cartaData = chartData;
 
-    setLoaderText('interpretando tu carta...');
-    const interpBasica = await obtenerInterpretacionBasica(nombre, chartData);
+    setLoaderText('escribiendo tu lectura esencial...');
+    const prompt = buildPromptBasico(nombre, chartData);
+    const interpBasica = await llamarClaude(prompt);
 
-    // Renderizar todo
     renderPlanetas(chartData);
     renderAspectos(chartData);
     renderInterp(interpBasica, 'interpretacion-basica');
 
-    // Link PayPal con nombre en la URL de retorno
-    const returnUrl = encodeURIComponent(`${window.location.href.split('?')[0]}?paid=true&nombre=${encodeURIComponent(nombre)}`);
-    document.getElementById('btn-pago').href = `${PAYPAL_LINK}?amount=6&currency_code=USD&return=${returnUrl}`;
-
     ocultar('section-loader');
     mostrar('section-result');
 
-    // Si ya pagó, cargar lectura completa
-    if (checkPaid()) {
-      cargarLecturaCompleta();
+    // Verificar si viene de PayPal
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('lectura') === 'ok') {
+      const prod = params.get('prod');
+      const emailParam = params.get('email');
+      const nombreParam = params.get('nombre') || nombre;
+      if (prod && emailParam) {
+        await generarYEnviarLectura(prod, emailParam, nombreParam, {}, false);
+      }
     }
 
   } catch (err) {
     ocultar('section-loader');
     mostrar('section-form');
-    mostrarError(err.message || 'Ocurrió un error. Intentá de nuevo.');
-  }
-}
-
-async function cargarLecturaCompleta() {
-  if (!cartaData) return;
-  ocultar('upsell-section');
-  const secPaga = document.getElementById('section-paga');
-  secPaga.classList.remove('hidden');
-  secPaga.innerHTML = `
-    <div style="text-align:center;margin-bottom:24px;">
-      <span class="paid-badge">✦ Lectura completa desbloqueada</span>
-    </div>
-    <div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p>escribiendo tu lectura completa...</p></div>
-  `;
-
-  try {
-    const interpCompleta = await obtenerInterpretacionCompleta(nombreGuardado, cartaData);
-    secPaga.innerHTML = `
-      <div style="text-align:center;margin-bottom:24px;">
-        <span class="paid-badge">✦ Lectura completa desbloqueada</span>
-      </div>
-      <div id="interpretacion-completa"></div>
-    `;
-    renderInterp(interpCompleta, 'interpretacion-completa');
-  } catch {
-    secPaga.innerHTML = '<p class="error-msg">Error al cargar la lectura. Contactanos por WhatsApp.</p>';
+    mostrarMensaje('error-msg', err.message || 'Ocurrió un error. Intentá de nuevo.');
   }
 }
 
 // =============================================
 // UTILIDADES
 // =============================================
-function mostrar(id) { document.getElementById(id).classList.remove('hidden'); }
-function ocultar(id) { document.getElementById(id).classList.add('hidden'); }
-function mostrarError(msg) { const e = document.getElementById('error-msg'); e.textContent = msg; e.classList.remove('hidden'); }
-function ocultarError() { document.getElementById('error-msg').classList.add('hidden'); }
+function mostrar(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function ocultar(id) { document.getElementById(id)?.classList.add('hidden'); }
+function mostrarMensaje(id, msg) {
+  const el = document.getElementById(id);
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+function ocultarMsg(id) { document.getElementById(id)?.classList.add('hidden'); }
 function setLoaderText(txt) { document.getElementById('loader-text').textContent = txt; }
-function reiniciar() { ocultar('section-result'); mostrar('section-form'); cartaData = null; window.history.replaceState({}, '', window.location.pathname); }
+function reiniciar() {
+  ocultar('section-result');
+  mostrar('section-form');
+  cartaData = null;
+  window.history.replaceState({}, '', window.location.pathname);
+}
+function setEjemplo(texto) {
+  document.getElementById('pregunta-texto').value = texto;
+}
 
-// Chequear si viene de PayPal al cargar la página
+// Chequear si viene de PayPal al cargar
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
-  if (params.get('paid') === 'true') {
-    const nombre = params.get('nombre');
-    if (nombre) document.getElementById('nombre').value = nombre;
+  if (params.get('nombre')) {
+    document.getElementById('nombre').value = decodeURIComponent(params.get('nombre'));
   }
 });
 </script>

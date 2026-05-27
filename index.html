@@ -7,87 +7,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: #0a0a12;
-      color: #e8e4de;
-      font-family: 'Jost', sans-serif;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
+    body { background: #0a0a12; color: #e8e4de; font-family: 'Jost', sans-serif; min-height: 100vh; overflow-x: hidden; }
     #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
-    .star {
-      position: absolute;
-      background: white;
-      border-radius: 50%;
-      animation: twinkle var(--d) ease-in-out infinite alternate;
-    }
+    .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite alternate; }
     @keyframes twinkle { from { opacity: 0.05; } to { opacity: 0.5; } }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 680px;
-      margin: 0 auto;
-      padding: 48px 20px 80px;
-    }
-
-    /* HEADER */
+    .container { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
     .header { text-align: center; margin-bottom: 48px; }
     .brand { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.35em; color: #82B366; text-transform: uppercase; margin-bottom: 14px; opacity: 0.9; }
     h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 7vw, 58px); font-weight: 300; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
     .subtitle { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.6; }
     .divider { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, #82B366, transparent); margin: 20px auto 0; }
-
-    /* CARD */
     .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 36px 32px; backdrop-filter: blur(10px); margin-bottom: 20px; }
-
-    /* FORM */
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 7px; }
     .form-group.full { grid-column: 1 / -1; }
     label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
     .opt { opacity: 0.5; font-size: 10px; }
-    input, select {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(130,179,102,0.2);
-      border-radius: 8px;
-      padding: 13px 16px;
-      color: #e8e8e8;
-      font-family: 'Jost', sans-serif;
-      font-size: 14px;
-      outline: none;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
+    input, select { background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Jost', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
     input:focus, select:focus { border-color: rgba(130,179,102,0.5); }
     input::placeholder { color: rgba(255,255,255,0.2); }
     select option { background: #1a1a2e; }
-
-    .btn-primary {
-      width: 100%;
-      margin-top: 24px;
-      padding: 16px;
-      background: linear-gradient(135deg, #82B366, #6a9652);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-family: 'Cinzel', serif;
-      font-size: 13px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      box-shadow: 0 4px 20px rgba(130,179,102,0.3);
-    }
+    .btn-primary { width: 100%; margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #82B366, #6a9652); border: none; border-radius: 10px; color: white; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(130,179,102,0.3); }
     .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
     .error-msg { color: #e07070; font-size: 13px; margin-top: 12px; text-align: center; }
     .success-msg { color: #82B366; font-size: 13px; margin-top: 12px; text-align: center; }
-
-    /* LOADER */
     .loader { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 40px 0; }
     .orbit { position: relative; width: 80px; height: 80px; }
     .orbit-ring { position: absolute; border-radius: 50%; border: 1px solid; }
@@ -97,22 +41,8 @@
     .r4 { inset: 35px; background: #82B366; box-shadow: 0 0 12px rgba(130,179,102,0.6); }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .loader p { font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.15em; color: #82B366; opacity: 0.8; }
-
-    /* SECCIÓN TÍTULO */
-    .section-title {
-      font-family: 'Cinzel', serif;
-      font-size: 11px;
-      letter-spacing: 0.25em;
-      color: #82B366;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    .section-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.25em; color: #82B366; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
     .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(130,179,102,0.2); }
-
-    /* TABLA PLANETAS */
     .planets-table { width: 100%; border-collapse: collapse; }
     .planets-table th { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; color: rgba(255,255,255,0.3); text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .planets-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
@@ -123,8 +53,6 @@
     .planet-degree { color: rgba(255,255,255,0.4); font-size: 12px; }
     .planet-house { color: rgba(255,255,255,0.35); font-size: 12px; }
     .retro-badge { font-size: 10px; color: #e07070; letter-spacing: 0.05em; }
-
-    /* TABLA ASPECTOS */
     .aspects-table { width: 100%; border-collapse: collapse; }
     .aspects-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .aspects-table tr:last-child td { border-bottom: none; }
@@ -139,26 +67,13 @@
     .aspect-quality.desafiante { color: #e06060; }
     .aspect-orb { color: rgba(255,255,255,0.3); font-size: 12px; }
     .aspect-right { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
-
-    /* INTERPRETACIÓN */
     .interp-block { margin-bottom: 24px; }
     .interp-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #82B366; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(130,179,102,0.15); letter-spacing: 0.03em; }
     .interp-text { font-family: 'Jost', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.72); }
-
-    /* PRODUCTOS UPSELL */
     .productos-grid { display: grid; gap: 16px; margin-top: 8px; }
-
-    .producto-card {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 14px;
-      padding: 24px;
-      transition: border-color 0.2s, background 0.2s;
-      cursor: pointer;
-    }
+    .producto-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; transition: border-color 0.2s, background 0.2s; cursor: pointer; }
     .producto-card:hover { border-color: rgba(138,77,171,0.4); background: rgba(138,77,171,0.05); }
     .producto-card.destacado { border-color: rgba(138,77,171,0.35); background: linear-gradient(135deg, rgba(138,77,171,0.1), rgba(130,179,102,0.05)); }
-
     .producto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .producto-nombre { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: #f0ede8; }
     .producto-precio { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #8A4DAB; font-weight: 300; }
@@ -166,118 +81,28 @@
     .producto-items { list-style: none; margin-bottom: 16px; }
     .producto-items li { font-size: 12px; color: rgba(255,255,255,0.55); padding: 3px 0; display: flex; align-items: center; gap: 7px; }
     .producto-items li::before { content: '✦'; color: #8A4DAB; font-size: 9px; }
-
-    .badge-popular {
-      display: inline-block;
-      background: rgba(130,179,102,0.2);
-      border: 1px solid rgba(130,179,102,0.4);
-      border-radius: 20px;
-      padding: 3px 12px;
-      font-size: 10px;
-      letter-spacing: 0.1em;
-      color: #82B366;
-      margin-bottom: 10px;
-    }
-
-    /* FORMULARIO DE COMPRA */
+    .badge-popular { display: inline-block; background: rgba(130,179,102,0.2); border: 1px solid rgba(130,179,102,0.4); border-radius: 20px; padding: 3px 12px; font-size: 10px; letter-spacing: 0.1em; color: #82B366; margin-bottom: 10px; }
     .compra-form { margin-top: 16px; }
     .compra-form input { margin-bottom: 10px; }
-
     .promo-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .promo-row input { margin-bottom: 0; flex: 1; }
-    .btn-promo {
-      padding: 13px 16px;
-      background: transparent;
-      border: 1px solid rgba(130,179,102,0.3);
-      border-radius: 8px;
-      color: #82B366;
-      font-family: 'Jost', sans-serif;
-      font-size: 13px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s;
-    }
+    .btn-promo { padding: 13px 16px; background: transparent; border: 1px solid rgba(130,179,102,0.3); border-radius: 8px; color: #82B366; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
     .btn-promo:hover { background: rgba(130,179,102,0.1); }
-
-    .btn-paypal {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, #8A4DAB, #6a3a85);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      font-family: 'Cinzel', serif;
-      font-size: 13px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.1s;
-      box-shadow: 0 4px 20px rgba(138,77,171,0.35);
-      margin-top: 4px;
-    }
+    .btn-paypal { width: 100%; padding: 16px; background: linear-gradient(135deg, #8A4DAB, #6a3a85); border: none; border-radius: 10px; color: white; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(138,77,171,0.35); margin-top: 4px; }
     .btn-paypal:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-paypal:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
     .paypal-note { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
-
-    /* SECCIÓN PREGUNTAS */
     .preguntas-section { margin-top: 8px; }
     .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-    .pregunta-chip {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px;
-      padding: 6px 14px;
-      font-size: 12px;
-      color: rgba(255,255,255,0.5);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
+    .pregunta-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; }
     .pregunta-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.8); }
-    textarea {
-      width: 100%;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(130,179,102,0.2);
-      border-radius: 8px;
-      padding: 13px 16px;
-      color: #e8e8e8;
-      font-family: 'Jost', sans-serif;
-      font-size: 14px;
-      outline: none;
-      resize: vertical;
-      min-height: 90px;
-      transition: border-color 0.2s;
-    }
+    textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Jost', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
     textarea:focus { border-color: rgba(130,179,102,0.5); }
     textarea::placeholder { color: rgba(255,255,255,0.2); }
-
-    /* LECTURA DESBLOQUEADA */
-    .lectura-desbloqueada {
-      background: linear-gradient(135deg, rgba(138,77,171,0.08), rgba(130,179,102,0.05));
-      border: 1px solid rgba(138,77,171,0.25);
-      border-radius: 16px;
-      padding: 32px;
-      margin-top: 20px;
-    }
-    .paid-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(138,77,171,0.2);
-      border: 1px solid rgba(138,77,171,0.4);
-      border-radius: 20px;
-      padding: 4px 14px;
-      font-size: 11px;
-      letter-spacing: 0.1em;
-      color: #8A4DAB;
-      margin-bottom: 20px;
-    }
-
-    /* FOOTER */
+    .lectura-desbloqueada { background: linear-gradient(135deg, rgba(138,77,171,0.08), rgba(130,179,102,0.05)); border: 1px solid rgba(138,77,171,0.25); border-radius: 16px; padding: 32px; margin-top: 20px; }
+    .paid-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(138,77,171,0.2); border: 1px solid rgba(138,77,171,0.4); border-radius: 20px; padding: 4px 14px; font-size: 11px; letter-spacing: 0.1em; color: #8A4DAB; margin-bottom: 20px; }
     .footer { text-align: center; margin-top: 48px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
-
     .hidden { display: none !important; }
-
     @media (max-width: 540px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
@@ -292,7 +117,6 @@
 
 <div class="container">
 
-  <!-- HEADER -->
   <div class="header">
     <div class="brand">Espacio Libra</div>
     <h1>Tu Carta Natal</h1>
@@ -300,7 +124,6 @@
     <div class="divider"></div>
   </div>
 
-  <!-- FORMULARIO DATOS -->
   <div class="card" id="section-form">
     <div class="form-grid">
       <div class="form-group full">
@@ -330,7 +153,6 @@
     </button>
   </div>
 
-  <!-- LOADER -->
   <div class="card hidden" id="section-loader">
     <div class="loader">
       <div class="orbit">
@@ -343,23 +165,18 @@
     </div>
   </div>
 
-  <!-- RESULTADO -->
   <div id="section-result" class="hidden">
 
-    <!-- PLANETAS -->
     <div class="card">
       <div class="section-title">Posiciones planetarias</div>
       <table class="planets-table">
         <thead>
-          <tr>
-            <th>Planeta</th><th>Signo</th><th>Grado</th><th>Casa</th>
-          </tr>
+          <tr><th>Planeta</th><th>Signo</th><th>Grado</th><th>Casa</th></tr>
         </thead>
         <tbody id="tabla-planetas"></tbody>
       </table>
     </div>
 
-    <!-- ASPECTOS -->
     <div class="card">
       <div class="section-title" id="aspectos-count">Aspectos principales</div>
       <table class="aspects-table">
@@ -367,22 +184,18 @@
       </table>
     </div>
 
-    <!-- INTERPRETACIÓN BÁSICA -->
     <div class="card">
       <div class="section-title">Tu lectura esencial · Gratis</div>
       <div id="interpretacion-basica"></div>
     </div>
 
-    <!-- UPSELL PRODUCTOS -->
     <div class="card" id="section-upsell">
       <div class="section-title">Lecturas completas</div>
       <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
         Elegí la lectura que más te resuena. Ingresás tu email, pagás y la recibís en menos de 5 minutos.
       </p>
-
       <div class="productos-grid">
 
-        <!-- CARTA COMPLETA -->
         <div class="producto-card destacado">
           <div class="badge-popular">✦ Más elegida</div>
           <div class="producto-header">
@@ -405,14 +218,11 @@
             </div>
             <p class="error-msg hidden" id="error-carta-completa"></p>
             <p class="success-msg hidden" id="success-carta-completa"></p>
-            <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">
-              ✦ Obtener mi lectura · USD 6
-            </button>
+            <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
             <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
           </div>
         </div>
 
-        <!-- REVOLUCIÓN SOLAR -->
         <div class="producto-card">
           <div class="producto-header">
             <div class="producto-nombre">Revolución Solar 2025–2026</div>
@@ -433,14 +243,11 @@
             </div>
             <p class="error-msg hidden" id="error-revolucion-solar"></p>
             <p class="success-msg hidden" id="success-revolucion-solar"></p>
-            <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">
-              ✦ Obtener mi lectura · USD 9
-            </button>
+            <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">✦ Obtener mi lectura · USD 9</button>
             <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
           </div>
         </div>
 
-        <!-- SINASTRÍA -->
         <div class="producto-card">
           <div class="producto-header">
             <div class="producto-nombre">Sinastría · Compatibilidad</div>
@@ -465,14 +272,11 @@
             </div>
             <p class="error-msg hidden" id="error-sinastria"></p>
             <p class="success-msg hidden" id="success-sinastria"></p>
-            <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">
-              ✦ Obtener mi lectura · USD 9
-            </button>
+            <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">✦ Obtener mi lectura · USD 9</button>
             <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
           </div>
         </div>
 
-        <!-- TRÁNSITOS -->
         <div class="producto-card">
           <div class="producto-header">
             <div class="producto-nombre">Tránsitos Actuales</div>
@@ -492,9 +296,7 @@
             </div>
             <p class="error-msg hidden" id="error-transitos"></p>
             <p class="success-msg hidden" id="success-transitos"></p>
-            <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">
-              ✦ Obtener mi lectura · USD 5
-            </button>
+            <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">✦ Obtener mi lectura · USD 5</button>
             <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
           </div>
         </div>
@@ -502,7 +304,6 @@
       </div>
     </div>
 
-    <!-- PREGUNTAS PUNTUALES -->
     <div class="card">
       <div class="section-title">Pregunta Puntual</div>
       <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
@@ -524,14 +325,11 @@
         </div>
         <p class="error-msg hidden" id="error-pregunta"></p>
         <p class="success-msg hidden" id="success-pregunta"></p>
-        <button class="btn-paypal" onclick="procesarCompra('pregunta', 2)" style="margin-top:10px;">
-          ✦ Obtener respuesta · USD 2
-        </button>
+        <button class="btn-paypal" onclick="procesarCompra('pregunta', 2)" style="margin-top:10px;">✦ Obtener respuesta · USD 2</button>
         <p class="paypal-note">Pago seguro vía PayPal · Tarjeta de crédito/débito aceptada · Entrega en &lt;5 min</p>
       </div>
     </div>
 
-    <!-- LECTURAS DESBLOQUEADAS -->
     <div id="section-lecturas-desbloqueadas"></div>
 
     <div style="text-align:center;margin-top:20px;">
@@ -547,18 +345,12 @@
 <div class="footer">ESPACIO LIBRA · ASTROLOGÍA EVOLUTIVA · cartasahora.espaciolibra.com</div>
 
 <script>
-// =============================================
-// CONFIGURACIÓN
-// =============================================
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
 const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
 const CODIGO_PRUEBA = 'ESPACIO2025';
-
 const promoAplicada = {};
 
-// =============================================
 // ESTRELLAS
-// =============================================
 (function() {
   const container = document.getElementById('stars');
   for (let i = 0; i < 60; i++) {
@@ -570,23 +362,24 @@ const promoAplicada = {};
   }
 })();
 
-// =============================================
 // DATOS ASTROLÓGICOS
-// =============================================
 const PLANET_SYMBOLS = { 'Sun':'☉','Moon':'☽','Mercury':'☿','Venus':'♀','Mars':'♂','Jupiter':'♃','Saturn':'♄','Uranus':'♅','Neptune':'♆','Pluto':'♇','Chiron':'⚷','Lilith':'⚸','North Node':'☊','South Node':'☋' };
 const PLANET_ES = { 'Sun':'Sol','Moon':'Luna','Mercury':'Mercurio','Venus':'Venus','Mars':'Marte','Jupiter':'Júpiter','Saturn':'Saturno','Uranus':'Urano','Neptune':'Neptuno','Pluto':'Plutón','Chiron':'Quirón','Lilith':'Lilith','North Node':'Nodo Norte','South Node':'Nodo Sur' };
-const SIGN_ES = { 'Aries':'Aries','Taurus':'Tauro','Gemini':'Géminis','Cancer':'Cáncer','Leo':'Leo','Virgo':'Virgo','Libra':'Libra','Scorpio':'Escorpio','Sagittarius':'Sagitario','Capricorn':'Capricornio','Aquarius':'Acuario','Pisces':'Piscis' };
 const ASPECT_ES = { 'conjunction':'conjunción','opposition':'oposición','trine':'trígono','square':'cuadratura','sextile':'sextil','quincunx':'quincuncio','semi-sextile':'semisextil' };
 
+// Mapas para nueva estructura de API
+const SIGN_MAP = {'Ari':'Aries','Tau':'Tauro','Gem':'Géminis','Can':'Cáncer','Leo':'Leo','Vir':'Virgo','Lib':'Libra','Sco':'Escorpio','Sag':'Sagitario','Cap':'Capricornio','Aqu':'Acuario','Pis':'Piscis'};
+const HOUSE_MAP = {'First_House':1,'Second_House':2,'Third_House':3,'Fourth_House':4,'Fifth_House':5,'Sixth_House':6,'Seventh_House':7,'Eighth_House':8,'Ninth_House':9,'Tenth_House':10,'Eleventh_House':11,'Twelfth_House':12};
+const PLANET_KEYS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_lilith','mean_node','true_south_node'];
+const PLANET_KEY_NAME = {'sun':'Sun','moon':'Moon','mercury':'Mercury','venus':'Venus','mars':'Mars','jupiter':'Jupiter','saturn':'Saturn','uranus':'Uranus','neptune':'Neptune','pluto':'Pluto','chiron':'Chiron','mean_lilith':'Lilith','mean_node':'North Node','true_south_node':'South Node'};
+
 function aspectClass(type) {
-  if (['conjunction'].includes(type)) return 'poderoso';
-  if (['trine','sextile'].includes(type)) return 'armonico';
+  if (type === 'conjunction') return 'poderoso';
+  if (type === 'trine' || type === 'sextile') return 'armonico';
   return 'desafiante';
 }
 
-// =============================================
-// GEOCODING Y TIMEZONE
-// =============================================
+// GEOCODING
 async function getCoordenadas(ciudad, pais) {
   const query = encodeURIComponent(`${ciudad}, ${pais}`);
   const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, { headers: { 'Accept-Language': 'es' } });
@@ -603,67 +396,64 @@ async function getTimezone(lat, lon) {
   } catch { return 'America/Argentina/Buenos_Aires'; }
 }
 
-// =============================================
-// CARTA NATAL via Worker
-// =============================================
+// CARTA NATAL
 async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad, pais) {
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
-  const PAIS_CODIGOS = { 'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US' };
-const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
-const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode } };
+  const PAIS_CODIGOS = {'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
+  const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
+  const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode } };
   const res = await fetch(`${WORKER_URL}/carta`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
   return await res.json();
 }
 
-// =============================================
-// INTERPRETACIÓN via Worker
-// =============================================
+// CLAUDE
 async function llamarClaude(prompt) {
   const res = await fetch(`${WORKER_URL}/interpretar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
   const data = await res.json();
   return data.content?.map(b => b.text || '').join('') || '';
 }
 
-// =============================================
-// RENDERIZADO
-// =============================================
+// RENDER PLANETAS — lee la nueva estructura de API
 function renderPlanetas(chartData) {
   const tbody = document.getElementById('tabla-planetas');
   tbody.innerHTML = '';
-  const order = ['Sun','Moon','Mercury','Venus','Mars','Jupiter','Saturn','Uranus','Neptune','Pluto','Chiron','Lilith','North Node','South Node'];
-  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
-  const pm = {};
-  planets.forEach(p => { pm[p.name] = p; });
-  order.forEach(pName => {
-    const p = pm[pName];
+  const subject = chartData?.chart_data?.subject || {};
+
+  PLANET_KEYS.forEach(key => {
+    const p = subject[key];
     if (!p) return;
-    const retro = p.is_retro === 'true' || p.is_retro === true;
+    const pName = PLANET_KEY_NAME[key];
+    const signEs = SIGN_MAP[p.sign] || p.sign || '—';
+    const house = HOUSE_MAP[p.house] || '—';
+    const degree = p.position !== undefined ? p.position.toFixed(1) + '°' : '—';
+    const retro = p.retrograde === true ? ' <span class="retro-badge">Rx</span>' : '';
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td><div class="planet-name"><span class="planet-symbol">${PLANET_SYMBOLS[pName]||'•'}</span>${PLANET_ES[pName]||pName}${retro?` <span class="retro-badge">Rx</span>`:''}</div></td>
-      <td class="planet-sign">${SIGN_ES[p.sign]||p.sign||'—'}</td>
-      <td class="planet-degree">${p.norm_degree?p.norm_degree.toFixed(1)+'°':'—'}</td>
-      <td class="planet-house">${p.house?'Casa '+p.house:'—'}</td>
+      <td><div class="planet-name"><span class="planet-symbol">${PLANET_SYMBOLS[pName]||'•'}</span>${PLANET_ES[pName]||pName}${retro}</div></td>
+      <td class="planet-sign">${signEs}</td>
+      <td class="planet-degree">${degree}</td>
+      <td class="planet-house">${house !== '—' ? 'Casa ' + house : '—'}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
+// RENDER ASPECTOS
 function renderAspectos(chartData) {
   const tbody = document.getElementById('tabla-aspectos');
   tbody.innerHTML = '';
-  const aspects = chartData?.chart_data?.aspects || chartData?.aspects || [];
+  const aspects = chartData?.chart_data?.aspects || [];
   const mainTypes = ['conjunction','opposition','trine','square','sextile'];
-  const filtered = aspects.filter(a => mainTypes.includes(a.aspect_type||a.type));
+  const filtered = aspects.filter(a => mainTypes.includes(a.aspect_type || a.type));
   document.getElementById('aspectos-count').textContent = `Aspectos principales (${filtered.length})`;
   filtered.forEach(a => {
-    const p1 = PLANET_ES[a.p1_name]||a.p1_name||'';
-    const p2 = PLANET_ES[a.p2_name]||a.p2_name||'';
-    const tipo = a.aspect_type||a.type||'';
-    const tipoEs = ASPECT_ES[tipo]||tipo;
-    const orb = a.orbit!==undefined?Math.abs(a.orbit).toFixed(2)+'°':'';
+    const p1 = PLANET_ES[a.p1_name] || a.p1_name || '';
+    const p2 = PLANET_ES[a.p2_name] || a.p2_name || '';
+    const tipo = a.aspect_type || a.type || '';
+    const tipoEs = ASPECT_ES[tipo] || tipo;
+    const orb = a.orbit !== undefined ? Math.abs(a.orbit).toFixed(2) + '°' : '';
     const cls = aspectClass(tipo);
     const tr = document.createElement('tr');
     tr.innerHTML = `
@@ -674,6 +464,7 @@ function renderAspectos(chartData) {
   });
 }
 
+// RENDER INTERPRETACIÓN
 function renderInterp(texto, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -702,15 +493,19 @@ function renderInterp(texto, containerId) {
   if (currentBlock) container.appendChild(currentBlock);
 }
 
-// =============================================
-// PROMPT INTERPRETACIÓN BÁSICA
-// =============================================
+// PROMPT BÁSICO — lee nueva estructura
 function buildPromptBasico(nombre, chartData) {
-  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
-  const pm = {};
-  planets.forEach(p => { pm[p.name] = p; });
-  const sol = pm['Sun'], luna = pm['Moon'], asc = pm['Ascendant']||pm['ASC'];
-  const contexto = `Sol en ${SIGN_ES[sol?.sign]||sol?.sign||'?'} casa ${sol?.house||'?'}, Luna en ${SIGN_ES[luna?.sign]||luna?.sign||'?'} casa ${luna?.house||'?'}${asc?`, Ascendente en ${SIGN_ES[asc?.sign]||asc?.sign||'?'}`:''}`;
+  const subject = chartData?.chart_data?.subject || {};
+  const sol = subject.sun;
+  const luna = subject.moon;
+  const asc = subject.first_house;
+  const solSign = SIGN_MAP[sol?.sign] || sol?.sign || '?';
+  const lunaSign = SIGN_MAP[luna?.sign] || luna?.sign || '?';
+  const solHouse = HOUSE_MAP[sol?.house] || '?';
+  const lunaHouse = HOUSE_MAP[luna?.house] || '?';
+  const ascSign = asc ? (SIGN_MAP[asc?.sign] || asc?.sign) : null;
+  const contexto = `Sol en ${solSign} casa ${solHouse}, Luna en ${lunaSign} casa ${lunaHouse}${ascSign ? `, Ascendente en ${ascSign}` : ''}`;
+
   return `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, con tono cálido, poético y directo. Hablás de vos a la persona.
 
 Escribí una interpretación breve de carta natal para ${nombre} con estos datos reales:
@@ -725,19 +520,20 @@ Estructura la respuesta con exactamente estas 3 secciones, cada una con su títu
 (2 párrafos sobre la Luna)
 
 **Tu imagen ante el mundo**
-(2 párrafos sobre el Ascendente. Si no hay hora, omitir esta sección)
+(2 párrafos sobre el Ascendente. Si no hay ascendente disponible, omitir esta sección)
 
 Al final, sin título, agregá 2 líneas de gancho que inviten a descubrir más.`;
 }
 
-// =============================================
-// PROMPTS POR PRODUCTO
-// =============================================
+// PROMPTS POR PRODUCTO — lee nueva estructura
 function buildPrompt(producto, nombre, chartData, extras) {
-  const planets = chartData?.chart_data?.subject?.planets || chartData?.subject?.planets || [];
-  const pm = {};
-  planets.forEach(p => { pm[p.name] = p; });
-  const planetsText = planets.map(p => `${PLANET_ES[p.name]||p.name} en ${SIGN_ES[p.sign]||p.sign} casa ${p.house||'?'}${p.is_retro==='true'||p.is_retro===true?' (Rx)':''}`).join(', ');
+  const subject = chartData?.chart_data?.subject || {};
+  const planetsText = PLANET_KEYS.map(key => {
+    const p = subject[key];
+    if (!p) return null;
+    const pName = PLANET_KEY_NAME[key];
+    return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;
+  }).filter(Boolean).join(', ');
 
   const base = `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, cálido, poético y profundo. Hablás de vos a la persona. Usá títulos de sección en negrita con dobles asteriscos.
 
@@ -762,7 +558,7 @@ Cada sección 2-3 párrafos. Cerrá con una frase poderosa e inspiradora.`;
 
   if (producto === 'revolucion-solar') return `${base}
 
-Escribí el pronóstico del año personal 2025-2026 basado en esta carta natal con estas secciones:
+Escribí el pronóstico del año personal 2025-2026 con estas secciones:
 **El tono del año · Tu revolución solar**
 **Los meses clave**
 **Amor y vínculos en este año**
@@ -770,13 +566,13 @@ Escribí el pronóstico del año personal 2025-2026 basado en esta carta natal c
 **Crecimiento personal y desafíos**
 **Cómo aprovechar esta energía**
 
-Cada sección 2-3 párrafos. Usá los tránsitos actuales de Saturno en Aries, Neptuno en Aries y Urano ingresando a Géminis para enriquecer el análisis.`;
+Cada sección 2-3 párrafos. Usá los tránsitos actuales de Saturno en Aries, Neptuno en Aries y Urano ingresando a Géminis.`;
 
   if (producto === 'sinastria') return `${base}
 
 Persona 2: ${extras?.persona2||'datos no disponibles'}
 
-Escribí una sinastría entre estas dos personas con estas secciones:
+Escribí una sinastría con estas secciones:
 **La química inicial · Primera impresión**
 **Venus y Marte · La atracción y el deseo**
 **Sol y Luna · La compatibilidad profunda**
@@ -803,32 +599,27 @@ Relacioná cada tránsito con la carta natal personal. 2 párrafos por sección.
 
 La persona pregunta: "${extras?.pregunta||''}"
 
-Respondé esta pregunta específica basándote en la carta natal. La respuesta debe ser:
+Respondé esta pregunta específica basándote en la carta natal:
 - Directa y clara, 3-4 párrafos
-- Basada en los planetas y casas relevantes para la pregunta
+- Basada en los planetas y casas relevantes
 - Con perspectiva evolutiva, no fatalista
 - Con un consejo práctico al final
 
-Usá el formato de un solo bloque de texto sin subtítulos, salvo un título inicial en negrita que reformule la pregunta.`;
+Un solo bloque de texto, con un título inicial en negrita que reformule la pregunta.`;
 
   return `${base}\n\nHacé una lectura general de la carta natal en 5 párrafos.`;
 }
 
-// =============================================
 // PROMO CODE
-// =============================================
 function aplicarPromo(producto) {
   const codigoEl = document.getElementById(`promo-${producto}`);
   const errorEl = document.getElementById(`error-${producto}`);
   const successEl = document.getElementById(`success-${producto}`);
   const codigo = codigoEl?.value?.trim().toUpperCase();
-
   if (codigo === CODIGO_PRUEBA) {
     promoAplicada[producto] = true;
     if (successEl) { successEl.textContent = '✦ Código válido — lectura gratuita desbloqueada'; successEl.classList.remove('hidden'); }
     if (errorEl) errorEl.classList.add('hidden');
-    // Cambiar botón
-    const btn = document.querySelector(`#form-${producto} .btn-paypal`) || document.querySelector(`#section-result .btn-paypal`);
   } else {
     if (errorEl) { errorEl.textContent = 'Código no válido.'; errorEl.classList.remove('hidden'); }
     if (successEl) successEl.classList.add('hidden');
@@ -836,9 +627,7 @@ function aplicarPromo(producto) {
   }
 }
 
-// =============================================
 // PROCESAR COMPRA
-// =============================================
 async function procesarCompra(producto, precio) {
   const emailId = producto === 'pregunta' ? 'email-pregunta' : `email-${producto}`;
   const email = document.getElementById(emailId)?.value?.trim();
@@ -852,8 +641,8 @@ async function procesarCompra(producto, precio) {
 
   const nombre = document.getElementById('nombre').value.trim();
   const esPrueba = promoAplicada[producto] === true;
-
   const extras = {};
+
   if (producto === 'sinastria') extras.persona2 = document.getElementById('sinastria-persona2')?.value;
   if (producto === 'pregunta') {
     extras.pregunta = document.getElementById('pregunta-texto')?.value?.trim();
@@ -861,27 +650,20 @@ async function procesarCompra(producto, precio) {
   }
 
   if (esPrueba) {
-    // Generar directamente sin pago
     await generarYEnviarLectura(producto, email, nombre, extras, true);
   } else {
-    // Guardar datos y redirigir a PayPal
-    const sesion = { producto, email, nombre, extras, precio };
-    sessionStorage.setItem('pendiente', JSON.stringify(sesion));
+    sessionStorage.setItem('pendiente', JSON.stringify({ producto, email, nombre, extras, precio }));
     const returnUrl = encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&email=${encodeURIComponent(email)}&nombre=${encodeURIComponent(nombre)}`);
     window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`, '_blank');
     mostrarMensaje(successId, '✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
   }
 }
 
-// =============================================
 // GENERAR Y ENVIAR LECTURA
-// =============================================
 async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) {
   const errorId = `error-${producto}`;
   const successId = `success-${producto}`;
-
   mostrarMensaje(successId, '⟳ Generando tu lectura...');
-
   try {
     const prompt = buildPrompt(producto, nombre, cartaData, extras);
     const res = await fetch(`${WORKER_URL}/enviar-lectura`, {
@@ -900,9 +682,7 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
   }
 }
 
-// =============================================
-// CALCULAR CARTA — FLUJO PRINCIPAL
-// =============================================
+// CALCULAR CARTA
 let cartaData = null;
 
 async function calcularCarta() {
@@ -943,7 +723,6 @@ async function calcularCarta() {
     ocultar('section-loader');
     mostrar('section-result');
 
-    // Verificar si viene de PayPal
     const params = new URLSearchParams(window.location.search);
     if (params.get('lectura') === 'ok') {
       const prod = params.get('prod');
@@ -961,28 +740,15 @@ async function calcularCarta() {
   }
 }
 
-// =============================================
 // UTILIDADES
-// =============================================
 function mostrar(id) { document.getElementById(id)?.classList.remove('hidden'); }
 function ocultar(id) { document.getElementById(id)?.classList.add('hidden'); }
-function mostrarMensaje(id, msg) {
-  const el = document.getElementById(id);
-  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
-}
+function mostrarMensaje(id, msg) { const el = document.getElementById(id); if (el) { el.textContent = msg; el.classList.remove('hidden'); } }
 function ocultarMsg(id) { document.getElementById(id)?.classList.add('hidden'); }
 function setLoaderText(txt) { document.getElementById('loader-text').textContent = txt; }
-function reiniciar() {
-  ocultar('section-result');
-  mostrar('section-form');
-  cartaData = null;
-  window.history.replaceState({}, '', window.location.pathname);
-}
-function setEjemplo(texto) {
-  document.getElementById('pregunta-texto').value = texto;
-}
+function reiniciar() { ocultar('section-result'); mostrar('section-form'); cartaData = null; window.history.replaceState({}, '', window.location.pathname); }
+function setEjemplo(texto) { document.getElementById('pregunta-texto').value = texto; }
 
-// Chequear si viene de PayPal al cargar
 window.addEventListener('load', () => {
   const params = new URLSearchParams(window.location.search);
   if (params.get('nombre')) {

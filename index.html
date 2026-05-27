@@ -927,7 +927,7 @@ async function calcularCarta() {
     const timezone = await getTimezone(coords.lat, coords.lon);
 
     setLoaderText('calculando posiciones planetarias...');
-    const chartData = await obtenerCartaNatal(fecha, hora, coords.lat, coords.lon, timezone, nombre, ciudad, pais));
+    const chartData = await obtenerCartaNatal(fecha, hora, coords.lat, coords.lon, timezone, nombre, ciudad, pais);
     cartaData = chartData;
 
     setLoaderText('escribiendo tu lectura esencial...');

@@ -444,7 +444,7 @@ function renderPlanetas(chartData) {
 function renderAspectos(chartData) {
   const tbody = document.getElementById('tabla-aspectos');
   tbody.innerHTML = '';
-  const aspects = chartData?.chart_data?.aspects || [];
+  const aspects = chartData?.chart_data?.aspects || chartData?.chart_data?.subject?.aspects || [];
   const mainTypes = ['conjunction','opposition','trine','square','sextile'];
   const filtered = aspects.filter(a => mainTypes.includes(a.aspect_type || a.type));
   document.getElementById('aspectos-count').textContent = `Aspectos principales (${filtered.length})`;
@@ -498,7 +498,7 @@ function buildPromptBasico(nombre, chartData) {
   const subject = chartData?.chart_data?.subject || {};
   const sol = subject.sun;
   const luna = subject.moon;
-  const asc = subject.first_house;
+  const asc = subject.first_house || subject.ascendant || subject.asc || null;
   const solSign = SIGN_MAP[sol?.sign] || sol?.sign || '?';
   const lunaSign = SIGN_MAP[luna?.sign] || luna?.sign || '?';
   const solHouse = HOUSE_MAP[sol?.house] || '?';

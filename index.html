@@ -105,7 +105,11 @@
     .hidden { display: none !important; }
     /* RUEDA ZODIACAL */
     .chart-wheel-container { display: flex; justify-content: center; padding: 20px 0 10px; }
-    #chart-wheel { max-width: 320px; width: 100%; }
+    #chart-wheel { max-width: 380px; width: 100%; filter: drop-shadow(0 0 20px rgba(130,179,102,0.15)); }
+    /* Leyenda aspectos */
+    .aspect-legend { display: flex; gap: 20px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.4); }
+    .legend-line { width: 20px; height: 2px; border-radius: 1px; }
     @media (max-width: 540px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
@@ -176,6 +180,13 @@
       <div class="chart-wheel-container">
         <svg id="chart-wheel" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
       </div>
+      <div class="aspect-legend">
+        <div class="legend-item"><div class="legend-line" style="background:#82B366;"></div>Trígono</div>
+        <div class="legend-item"><div class="legend-line" style="background:#e06060;"></div>Cuadratura</div>
+        <div class="legend-item"><div class="legend-line" style="background:#f0c040;"></div>Conjunción</div>
+        <div class="legend-item"><div class="legend-line" style="background:#6090e0;"></div>Oposición</div>
+        <div class="legend-item"><div class="legend-line" style="background:#a0c0a0;opacity:0.6;"></div>Sextil</div>
+      </div>
     </div>
 
     <div class="card">
@@ -197,7 +208,11 @@
 
     <div class="card">
       <div class="section-title">Tu lectura esencial · Gratis</div>
-      <div id="interpretacion-basica"></div>
+      <div id="interpretacion-basica">
+        <div class="loader" style="padding:20px 0;">
+          <p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;">Cargando tu lectura...</p>
+        </div>
+      </div>
     </div>
 
     <div class="card" id="section-upsell">
@@ -358,6 +373,7 @@
 <script>
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
 const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
+// FIX: código de prueba case-insensitive
 const CODIGO_PRUEBA = 'ESPACIO2025';
 const promoAplicada = {};
 
@@ -379,14 +395,38 @@ const PLANET_ES = {'Sun':'Sol','Moon':'Luna','Mercury':'Mercurio','Venus':'Venus
 const ASPECT_ES = {'conjunction':'conjunción','opposition':'oposición','trine':'trígono','square':'cuadratura','sextile':'sextil','quincunx':'quincuncio','semi-sextile':'semisextil'};
 const SIGN_MAP = {'Ari':'Aries','Tau':'Tauro','Gem':'Géminis','Can':'Cáncer','Leo':'Leo','Vir':'Virgo','Lib':'Libra','Sco':'Escorpio','Sag':'Sagitario','Cap':'Capricornio','Aqu':'Acuario','Pis':'Piscis'};
 const SIGN_SYMBOLS = {'Ari':'♈','Tau':'♉','Gem':'♊','Can':'♋','Leo':'♌','Vir':'♍','Lib':'♎','Sco':'♏','Sag':'♐','Cap':'♑','Aqu':'♒','Pis':'♓'};
+const SIGN_COLORS = {'Ari':'#e05050','Tau':'#50a050','Gem':'#e0b030','Can':'#6090d0','Leo':'#e07020','Vir':'#80a060','Lib':'#a060c0','Sco':'#c03030','Sag':'#e06010','Cap':'#708080','Aqu':'#4090c0','Pis':'#7070c0'};
+const ELEMENT_COLORS = {
+  'Ari':'#c04040','Tau':'#70a050','Gem':'#d0a020','Can':'#5080c0',
+  'Leo':'#d06010','Vir':'#80a050','Lib':'#9050b0','Sco':'#b02020',
+  'Sag':'#d05010','Cap':'#607060','Aqu':'#3080b0','Pis':'#6060b0'
+};
 const HOUSE_MAP = {'First_House':1,'Second_House':2,'Third_House':3,'Fourth_House':4,'Fifth_House':5,'Sixth_House':6,'Seventh_House':7,'Eighth_House':8,'Ninth_House':9,'Tenth_House':10,'Eleventh_House':11,'Twelfth_House':12};
 const PLANET_KEYS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_lilith','mean_node','true_south_node'];
 const PLANET_KEY_NAME = {'sun':'Sun','moon':'Moon','mercury':'Mercury','venus':'Venus','mars':'Mars','jupiter':'Jupiter','saturn':'Saturn','uranus':'Uranus','neptune':'Neptune','pluto':'Pluto','chiron':'Chiron','mean_lilith':'Lilith','mean_node':'North Node','true_south_node':'South Node'};
+
+// Colores de planetas para la rueda
+const PLANET_COLORS = {
+  'sun':'#f5c842','moon':'#c8d8f0','mercury':'#82B366','venus':'#f090a0',
+  'mars':'#e05050','jupiter':'#9B6FD0','saturn':'#c8a040','uranus':'#40c0c0',
+  'neptune':'#5070e0','pluto':'#b060b0','chiron':'#80b080',
+  'mean_lilith':'#c04040','mean_node':'#d0d0d0','true_south_node':'#a0a0a0'
+};
 
 function aspectClass(type) {
   if (type === 'conjunction') return 'poderoso';
   if (type === 'trine' || type === 'sextile') return 'armonico';
   return 'desafiante';
+}
+
+// Colores de aspectos para la rueda
+function aspectLineColor(type) {
+  if (type === 'trine') return { color: 'rgba(130,179,102,0.7)', width: 1.5, dash: '' };
+  if (type === 'square') return { color: 'rgba(224,80,80,0.7)', width: 1.5, dash: '' };
+  if (type === 'opposition') return { color: 'rgba(80,130,220,0.7)', width: 1.2, dash: '4,4' };
+  if (type === 'conjunction') return { color: 'rgba(240,192,64,0.6)', width: 1.2, dash: '' };
+  if (type === 'sextile') return { color: 'rgba(130,179,102,0.4)', width: 1, dash: '3,3' };
+  return { color: 'rgba(255,255,255,0.2)', width: 1, dash: '2,4' };
 }
 
 // GEOCODING
@@ -421,95 +461,299 @@ async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad
 // CLAUDE
 async function llamarClaude(prompt) {
   const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({prompt})});
+  if (!res.ok) {
+    console.error('Error del worker:', res.status);
+    throw new Error('Error al obtener la interpretación.');
+  }
   const data = await res.json();
-  return data.content?.map(b => b.text || '').join('') || '';
+  // FIX: manejar distintas estructuras de respuesta posibles
+  if (data.content && Array.isArray(data.content)) {
+    return data.content.map(b => b.text || '').join('');
+  }
+  if (data.text) return data.text;
+  if (typeof data === 'string') return data;
+  console.warn('Respuesta inesperada del worker:', data);
+  return '';
 }
 
-// RUEDA ZODIACAL SVG
+// ─── RUEDA ZODIACAL SVG MEJORADA ────────────────────────────────────────────
 function renderRueda(chartData) {
   const svg = document.getElementById('chart-wheel');
   svg.innerHTML = '';
-  const cx = 250, cy = 250, r = 220;
+  const cx = 250, cy = 250;
+  const R_OUTER = 230;   // borde exterior
+  const R_SIGN  = 210;   // anillo de signos (exterior)
+  const R_SIGN_IN = 175; // anillo de signos (interior)
+  const R_HOUSE = 160;   // marcas de casas
+  const R_PLANET = 130;  // planetas
+  const R_CENTER = 35;   // círculo central
+
   const signs = ['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
-  const signColors = ['#c0392b','#27ae60','#f39c12','#c0392b','#27ae60','#f39c12','#c0392b','#27ae60','#f39c12','#c0392b','#27ae60','#f39c12'];
 
-  // Fondo
-  const bg = document.createElementNS('http://www.w3.org/2000/svg','circle');
-  bg.setAttribute('cx', cx); bg.setAttribute('cy', cy); bg.setAttribute('r', r);
-  bg.setAttribute('fill', '#0a0a18'); svg.appendChild(bg);
+  // ── Defs: gradientes y filtros ──
+  const defs = createSVGEl('defs');
 
-  // 12 sectores zodiacales
+  // Filtro glow para planetas
+  const filter = createSVGEl('filter');
+  filter.setAttribute('id','glow');
+  const feGaussian = createSVGEl('feGaussianBlur');
+  feGaussian.setAttribute('stdDeviation','3'); feGaussian.setAttribute('result','blur');
+  const feMerge = createSVGEl('feMerge');
+  const m1 = createSVGEl('feMergeNode'); m1.setAttribute('in','blur');
+  const m2 = createSVGEl('feMergeNode'); m2.setAttribute('in','SourceGraphic');
+  feMerge.appendChild(m1); feMerge.appendChild(m2);
+  filter.appendChild(feGaussian); filter.appendChild(feMerge);
+  defs.appendChild(filter);
+  svg.appendChild(defs);
+
+  // ── Fondo circular ──
+  const bgCircle = createSVGEl('circle');
+  bgCircle.setAttribute('cx', cx); bgCircle.setAttribute('cy', cy);
+  bgCircle.setAttribute('r', R_OUTER);
+  bgCircle.setAttribute('fill', '#080812');
+  bgCircle.setAttribute('stroke', 'rgba(130,179,102,0.3)');
+  bgCircle.setAttribute('stroke-width', '1');
+  svg.appendChild(bgCircle);
+
+  // ── 12 sectores zodiacales (anillo exterior) ──
   signs.forEach((sign, i) => {
-    const startAngle = (i * 30 - 90) * Math.PI / 180;
-    const endAngle = ((i + 1) * 30 - 90) * Math.PI / 180;
-    const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
-    const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
-    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', `M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`);
-    path.setAttribute('fill', i % 2 === 0 ? 'rgba(130,179,102,0.05)' : 'rgba(138,77,171,0.05)');
-    path.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+    // Aries empieza en 0° = derecha. Rotamos -90° para que Aries esté arriba-derecha
+    // y añadimos el offset del ascendente después
+    const startDeg = i * 30 - 90;
+    const endDeg = (i + 1) * 30 - 90;
+    const startRad = startDeg * Math.PI / 180;
+    const endRad = endDeg * Math.PI / 180;
+
+    // Sector del anillo de signos
+    const x1o = cx + R_SIGN * Math.cos(startRad);
+    const y1o = cy + R_SIGN * Math.sin(startRad);
+    const x2o = cx + R_SIGN * Math.cos(endRad);
+    const y2o = cy + R_SIGN * Math.sin(endRad);
+    const x1i = cx + R_SIGN_IN * Math.cos(startRad);
+    const y1i = cy + R_SIGN_IN * Math.sin(startRad);
+    const x2i = cx + R_SIGN_IN * Math.cos(endRad);
+    const y2i = cy + R_SIGN_IN * Math.sin(endRad);
+
+    const elem = ['fire','earth','air','water'][Math.floor(i / 3) % 4];
+    const elemColors = {
+      fire: 'rgba(180,60,40,0.12)',
+      earth: 'rgba(70,120,60,0.12)',
+      air: 'rgba(180,150,30,0.12)',
+      water: 'rgba(50,80,160,0.12)'
+    };
+    const elemIndex = [0,1,2,3,0,1,2,3,0,1,2,3][i]; // fire,earth,air,water
+    const elemColorMap = ['rgba(180,60,40,0.15)','rgba(70,120,60,0.15)','rgba(180,150,30,0.15)','rgba(50,80,160,0.15)'];
+    const fillColor = elemColorMap[elemIndex];
+
+    const path = createSVGEl('path');
+    path.setAttribute('d', [
+      `M${x1i},${y1i}`,
+      `L${x1o},${y1o}`,
+      `A${R_SIGN},${R_SIGN} 0 0,1 ${x2o},${y2o}`,
+      `L${x2i},${y2i}`,
+      `A${R_SIGN_IN},${R_SIGN_IN} 0 0,0 ${x1i},${y1i}`,
+      'Z'
+    ].join(' '));
+    path.setAttribute('fill', fillColor);
+    path.setAttribute('stroke', 'rgba(255,255,255,0.07)');
     path.setAttribute('stroke-width', '0.5');
     svg.appendChild(path);
 
-    // Símbolo del signo
-    const midAngle = ((i + 0.5) * 30 - 90) * Math.PI / 180;
-    const tx = cx + (r - 18) * Math.cos(midAngle);
-    const ty = cy + (r - 18) * Math.sin(midAngle);
-    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x', tx); txt.setAttribute('y', ty);
-    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
-    txt.setAttribute('font-size', '13'); txt.setAttribute('fill', signColors[i]);
-    txt.setAttribute('opacity', '0.8');
-    txt.textContent = SIGN_SYMBOLS[sign] || sign;
-    svg.appendChild(txt);
+    // Símbolo zodiacal centrado en el sector
+    const midRad = (startDeg + 15) * Math.PI / 180;
+    const symR = (R_SIGN + R_SIGN_IN) / 2;
+    const tx = cx + symR * Math.cos(midRad);
+    const ty = cy + symR * Math.sin(midRad);
+
+    const symColor = SIGN_COLORS[sign] || '#ffffff';
+    const symTxt = createSVGEl('text');
+    symTxt.setAttribute('x', tx); symTxt.setAttribute('y', ty);
+    symTxt.setAttribute('text-anchor', 'middle');
+    symTxt.setAttribute('dominant-baseline', 'middle');
+    symTxt.setAttribute('font-size', '16');
+    symTxt.setAttribute('fill', symColor);
+    symTxt.setAttribute('opacity', '0.9');
+    symTxt.setAttribute('font-family', 'serif');
+    symTxt.textContent = SIGN_SYMBOLS[sign] || sign;
+    svg.appendChild(symTxt);
   });
 
-  // Círculos internos
-  [0.75, 0.5, 0.3].forEach(frac => {
-    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r * frac);
-    c.setAttribute('fill', 'none'); c.setAttribute('stroke', 'rgba(255,255,255,0.06)');
-    c.setAttribute('stroke-width', '0.5');
-    svg.appendChild(c);
+  // ── Círculo separador interior del anillo de signos ──
+  const ringCircle = createSVGEl('circle');
+  ringCircle.setAttribute('cx', cx); ringCircle.setAttribute('cy', cy);
+  ringCircle.setAttribute('r', R_SIGN_IN);
+  ringCircle.setAttribute('fill', 'none');
+  ringCircle.setAttribute('stroke', 'rgba(130,179,102,0.25)');
+  ringCircle.setAttribute('stroke-width', '1');
+  svg.appendChild(ringCircle);
+
+  // ── Anillo de casas ──
+  const houseCircle = createSVGEl('circle');
+  houseCircle.setAttribute('cx', cx); houseCircle.setAttribute('cy', cy);
+  houseCircle.setAttribute('r', R_HOUSE);
+  houseCircle.setAttribute('fill', 'rgba(0,0,0,0.3)');
+  houseCircle.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+  houseCircle.setAttribute('stroke-width', '0.5');
+  svg.appendChild(houseCircle);
+
+  // Líneas divisorias entre signos (desde interior al anillo)
+  signs.forEach((_, i) => {
+    const angle = (i * 30 - 90) * Math.PI / 180;
+    const x1 = cx + R_SIGN_IN * Math.cos(angle);
+    const y1 = cy + R_SIGN_IN * Math.sin(angle);
+    const x2 = cx + R_SIGN * Math.cos(angle);
+    const y2 = cy + R_SIGN * Math.sin(angle);
+    const line = createSVGEl('line');
+    line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+    line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+    line.setAttribute('stroke', 'rgba(255,255,255,0.12)');
+    line.setAttribute('stroke-width', '0.8');
+    svg.appendChild(line);
   });
 
-  // Planetas
+  // ── Obtener posiciones de planetas para líneas de aspectos ──
   const subject = chartData?.chart_data?.subject || {};
-  const planetColors = {'sun':'#f0c040','moon':'#c8d8f0','mercury':'#82B366','venus':'#e07090','mars':'#e06060','jupiter':'#8A4DAB','saturn':'#c0a060','uranus':'#60c0c0','neptune':'#6080e0','pluto':'#a060a0','chiron':'#80a080','mean_lilith':'#804040','mean_node':'#d0d0d0','true_south_node':'#d0d0d0'};
+  const planetPositions = {}; // key → {x, y, abs_pos}
 
   PLANET_KEYS.forEach(key => {
     const p = subject[key];
     if (!p || p.abs_pos === undefined) return;
-    const angle = (p.abs_pos - 90) * Math.PI / 180;
-    const pr = r * 0.62;
-    const px = cx + pr * Math.cos(angle);
-    const py = cy + pr * Math.sin(angle);
-    const pName = PLANET_KEY_NAME[key];
-    const color = planetColors[key] || '#ffffff';
-
-    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    circle.setAttribute('cx', px); circle.setAttribute('cy', py); circle.setAttribute('r', '10');
-    circle.setAttribute('fill', 'rgba(10,10,24,0.85)');
-    circle.setAttribute('stroke', color); circle.setAttribute('stroke-width', '1');
-    svg.appendChild(circle);
-
-    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
-    txt.setAttribute('x', px); txt.setAttribute('y', py);
-    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
-    txt.setAttribute('font-size', '10'); txt.setAttribute('fill', color);
-    txt.textContent = PLANET_SYMBOLS[pName] || '•';
-    svg.appendChild(txt);
+    // abs_pos en grados 0-360. 0° = Aries. Transformamos a ángulo SVG
+    const angleDeg = p.abs_pos - 90; // -90 para que 0° Aries quede arriba
+    const angleRad = angleDeg * Math.PI / 180;
+    const px = cx + R_PLANET * Math.cos(angleRad);
+    const py = cy + R_PLANET * Math.sin(angleRad);
+    planetPositions[key] = { x: px, y: py, abs_pos: p.abs_pos, name: PLANET_KEY_NAME[key] };
   });
 
-  // Centro
-  const center = document.createElementNS('http://www.w3.org/2000/svg','circle');
-  center.setAttribute('cx', cx); center.setAttribute('cy', cy); center.setAttribute('r', '28');
-  center.setAttribute('fill', '#0a0a18'); center.setAttribute('stroke', 'rgba(130,179,102,0.3)');
-  center.setAttribute('stroke-width', '1');
-  svg.appendChild(center);
+  // ── Líneas de aspectos (top 10, mismos tipos que la tabla) ──
+  const aspects = chartData?.chart_data?.aspects || [];
+  const mainTypes = ['conjunction','opposition','trine','square','sextile'];
+  const topAspects = aspects
+    .filter(a => mainTypes.includes(a.aspect || a.aspect_type || a.type))
+    .sort((a, b) => Math.abs(a.orbit || 0) - Math.abs(b.orbit || 0))
+    .slice(0, 10);
+
+  // Mapeo de nombre de planeta a key
+  const nameToKey = {};
+  PLANET_KEYS.forEach(k => { nameToKey[PLANET_KEY_NAME[k]] = k; });
+
+  topAspects.forEach(asp => {
+    const tipo = asp.aspect || asp.aspect_type || asp.type;
+    const k1 = nameToKey[asp.p1_name];
+    const k2 = nameToKey[asp.p2_name];
+    const pos1 = planetPositions[k1];
+    const pos2 = planetPositions[k2];
+    if (!pos1 || !pos2) return;
+
+    const style = aspectLineColor(tipo);
+    const line = createSVGEl('line');
+    line.setAttribute('x1', pos1.x); line.setAttribute('y1', pos1.y);
+    line.setAttribute('x2', pos2.x); line.setAttribute('y2', pos2.y);
+    line.setAttribute('stroke', style.color);
+    line.setAttribute('stroke-width', style.width);
+    if (style.dash) line.setAttribute('stroke-dasharray', style.dash);
+    svg.appendChild(line);
+  });
+
+  // ── Puntos de planetas ──
+  // Calcular posiciones con anti-solapamiento básico
+  const placedAngles = [];
+
+  PLANET_KEYS.forEach(key => {
+    const p = subject[key];
+    if (!p || p.abs_pos === undefined) return;
+
+    let angleDeg = p.abs_pos - 90;
+
+    // Anti-solapamiento: si hay otro planeta muy cercano, desplazar
+    let adjusted = angleDeg;
+    let tries = 0;
+    while (tries < 8) {
+      const conflict = placedAngles.find(a => Math.abs(((adjusted - a + 540) % 360) - 180) < 8);
+      if (!conflict) break;
+      adjusted += 9;
+      tries++;
+    }
+    placedAngles.push(adjusted);
+
+    const angleRad = adjusted * Math.PI / 180;
+    const origRad = angleDeg * Math.PI / 180;
+    const px = cx + R_PLANET * Math.cos(angleRad);
+    const py = cy + R_PLANET * Math.sin(angleRad);
+
+    // Línea de tick desde anillo interno al planeta
+    const tickX1 = cx + (R_SIGN_IN - 4) * Math.cos(origRad);
+    const tickY1 = cy + (R_SIGN_IN - 4) * Math.sin(origRad);
+    const tickX2 = cx + (R_SIGN_IN - 14) * Math.cos(origRad);
+    const tickY2 = cy + (R_SIGN_IN - 14) * Math.sin(origRad);
+    const tick = createSVGEl('line');
+    tick.setAttribute('x1', tickX1); tick.setAttribute('y1', tickY1);
+    tick.setAttribute('x2', tickX2); tick.setAttribute('y2', tickY2);
+    tick.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+    tick.setAttribute('stroke-width', '0.8');
+    svg.appendChild(tick);
+
+    const pName = PLANET_KEY_NAME[key];
+    const color = PLANET_COLORS[key] || '#ffffff';
+
+    // Círculo de fondo del planeta
+    const circle = createSVGEl('circle');
+    circle.setAttribute('cx', px); circle.setAttribute('cy', py);
+    circle.setAttribute('r', '12');
+    circle.setAttribute('fill', 'rgba(8,8,18,0.92)');
+    circle.setAttribute('stroke', color);
+    circle.setAttribute('stroke-width', '1.2');
+    circle.setAttribute('filter', 'url(#glow)');
+    svg.appendChild(circle);
+
+    // Símbolo del planeta
+    const sym = createSVGEl('text');
+    sym.setAttribute('x', px); sym.setAttribute('y', py);
+    sym.setAttribute('text-anchor', 'middle');
+    sym.setAttribute('dominant-baseline', 'middle');
+    sym.setAttribute('font-size', '11');
+    sym.setAttribute('fill', color);
+    sym.setAttribute('font-family', 'serif');
+    sym.textContent = PLANET_SYMBOLS[pName] || '•';
+    svg.appendChild(sym);
+
+    // Grado pequeño al costado
+    const degText = createSVGEl('text');
+    degText.setAttribute('x', px); degText.setAttribute('y', py + 18);
+    degText.setAttribute('text-anchor', 'middle');
+    degText.setAttribute('font-size', '7');
+    degText.setAttribute('fill', 'rgba(255,255,255,0.3)');
+    degText.textContent = (p.position !== undefined ? p.position.toFixed(0) : '') + '°';
+    svg.appendChild(degText);
+  });
+
+  // ── Círculo central ──
+  const centerCircle = createSVGEl('circle');
+  centerCircle.setAttribute('cx', cx); centerCircle.setAttribute('cy', cy);
+  centerCircle.setAttribute('r', R_CENTER);
+  centerCircle.setAttribute('fill', '#080812');
+  centerCircle.setAttribute('stroke', 'rgba(130,179,102,0.4)');
+  centerCircle.setAttribute('stroke-width', '1');
+  svg.appendChild(centerCircle);
+
+  // Símbolo central
+  const centralSym = createSVGEl('text');
+  centralSym.setAttribute('x', cx); centralSym.setAttribute('y', cy);
+  centralSym.setAttribute('text-anchor', 'middle');
+  centralSym.setAttribute('dominant-baseline', 'middle');
+  centralSym.setAttribute('font-size', '18');
+  centralSym.setAttribute('fill', 'rgba(130,179,102,0.6)');
+  centralSym.textContent = '✦';
+  svg.appendChild(centralSym);
 }
 
-// RENDER PLANETAS
+// Helper para crear elementos SVG
+function createSVGEl(tag) {
+  return document.createElementNS('http://www.w3.org/2000/svg', tag);
+}
+
+// ─── RENDER PLANETAS ────────────────────────────────────────────────────────
 function renderPlanetas(chartData) {
   const tbody = document.getElementById('tabla-planetas');
   tbody.innerHTML = '';
@@ -533,14 +777,19 @@ function renderPlanetas(chartData) {
   });
 }
 
-// RENDER ASPECTOS — usa campo "aspect" correcto
+// ─── RENDER ASPECTOS (máximo 10, por orbe más cerrado) ──────────────────────
 function renderAspectos(chartData) {
   const tbody = document.getElementById('tabla-aspectos');
   tbody.innerHTML = '';
   const aspects = chartData?.chart_data?.aspects || [];
   const mainTypes = ['conjunction','opposition','trine','square','sextile'];
-  const filtered = aspects.filter(a => mainTypes.includes(a.aspect || a.aspect_type || a.type));
+  const filtered = aspects
+    .filter(a => mainTypes.includes(a.aspect || a.aspect_type || a.type))
+    .sort((a, b) => Math.abs(a.orbit || 0) - Math.abs(b.orbit || 0))
+    .slice(0, 10); // FIX: máximo 10 aspectos
+
   document.getElementById('aspectos-count').textContent = `Aspectos principales (${filtered.length})`;
+
   filtered.forEach(a => {
     const p1 = PLANET_ES[a.p1_name] || a.p1_name || '';
     const p2 = PLANET_ES[a.p2_name] || a.p2_name || '';
@@ -557,36 +806,57 @@ function renderAspectos(chartData) {
   });
 }
 
-// RENDER INTERPRETACIÓN
+// ─── RENDER INTERPRETACIÓN ──────────────────────────────────────────────────
 function renderInterp(texto, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
+
+  // FIX: si el texto está vacío, mostrar mensaje de error
+  if (!texto || !texto.trim()) {
+    container.innerHTML = '<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura. Verificá tu conexión e intentá de nuevo.</p>';
+    return;
+  }
+
   container.innerHTML = '';
   const lineas = texto.split('\n');
   let currentBlock = null;
+
   lineas.forEach(linea => {
-    if (!linea.trim()) { if (currentBlock) { container.appendChild(currentBlock); currentBlock = null; } return; }
-    if (linea.startsWith('**') && linea.endsWith('**')) {
+    if (!linea.trim()) {
+      if (currentBlock) { container.appendChild(currentBlock); currentBlock = null; }
+      return;
+    }
+
+    // FIX: detectar títulos con ** al inicio Y al final, o solo al inicio
+    const esTitulo = (linea.startsWith('**') && linea.endsWith('**')) ||
+                     (linea.startsWith('**') && linea.includes('**', 2));
+
+    if (esTitulo) {
       if (currentBlock) container.appendChild(currentBlock);
       currentBlock = document.createElement('div');
       currentBlock.className = 'interp-block';
       const title = document.createElement('div');
       title.className = 'interp-title';
-      title.textContent = linea.replace(/\*\*/g, '');
+      title.textContent = linea.replace(/\*\*/g, '').trim();
       currentBlock.appendChild(title);
     } else {
-      if (!currentBlock) { currentBlock = document.createElement('div'); currentBlock.className = 'interp-block'; }
+      if (!currentBlock) {
+        currentBlock = document.createElement('div');
+        currentBlock.className = 'interp-block';
+      }
       const p = document.createElement('p');
       p.className = 'interp-text';
       p.style.marginBottom = '10px';
-      p.textContent = linea.replace(/\*\*/g, '');
+      // FIX: limpiar asteriscos y otros marcadores de markdown inline
+      p.textContent = linea.replace(/\*\*/g, '').replace(/\*/g, '').trim();
       currentBlock.appendChild(p);
     }
   });
+
   if (currentBlock) container.appendChild(currentBlock);
 }
 
-// PROMPT BÁSICO — usa campo "aspect" correcto y ascendente
+// ─── PROMPT BÁSICO ──────────────────────────────────────────────────────────
 function buildPromptBasico(nombre, chartData) {
   const subject = chartData?.chart_data?.subject || {};
   const sol = subject.sun;
@@ -599,12 +869,12 @@ function buildPromptBasico(nombre, chartData) {
   const ascSign = asc ? (SIGN_MAP[asc?.sign] || asc?.sign) : null;
   const contexto = `Sol en ${solSign} casa ${solHouse}, Luna en ${lunaSign} casa ${lunaHouse}${ascSign ? `, Ascendente en ${ascSign}` : ''}`;
 
-  return `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, con tono cálido, poético y directo. Hablás de vos a la persona.
+  return `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, con tono cálido, poético y directo. Hablás de "vos" a la persona.
 
 Escribí una interpretación breve de carta natal para ${nombre} con estos datos reales:
 ${contexto}
 
-Estructura la respuesta con exactamente estas secciones, cada una con su título en negrita entre dobles asteriscos:
+Estructura la respuesta con exactamente estas secciones, cada una con su título entre dobles asteriscos en una línea propia:
 
 **Tu esencia solar**
 Escribí 2 párrafos sobre el Sol en ${solSign} casa ${solHouse}.
@@ -612,12 +882,12 @@ Escribí 2 párrafos sobre el Sol en ${solSign} casa ${solHouse}.
 **Tu mundo emocional**
 Escribí 2 párrafos sobre la Luna en ${lunaSign} casa ${lunaHouse}.
 
-${ascSign ? `**Tu imagen ante el mundo**\nEscribí 2 párrafos sobre el Ascendente en ${ascSign}.` : ''}
+${ascSign ? `**Tu imagen ante el mundo**\nEscribí 2 párrafos sobre el Ascendente en ${ascSign}.\n` : ''}
 
 Al final, sin título, agregá 2 líneas de gancho que inviten a descubrir más sobre su carta completa.`;
 }
 
-// PROMPTS POR PRODUCTO
+// ─── PROMPTS POR PRODUCTO ───────────────────────────────────────────────────
 function buildPrompt(producto, nombre, chartData, extras) {
   const subject = chartData?.chart_data?.subject || {};
   const planetsText = PLANET_KEYS.map(key => {
@@ -627,7 +897,7 @@ function buildPrompt(producto, nombre, chartData, extras) {
     return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;
   }).filter(Boolean).join(', ');
 
-  const base = `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, cálido, poético y profundo. Hablás de vos a la persona. Usá títulos de sección en negrita con dobles asteriscos.
+  const base = `Sos una astróloga especializada en astrología evolutiva. Escribís en castellano argentino, cálido, poético y profundo. Hablás de "vos" a la persona. Usá títulos de sección entre dobles asteriscos en línea propia.
 
 Carta natal de ${nombre}:
 ${planetsText}`;
@@ -697,29 +967,43 @@ Respondé esta pregunta específica basándote en la carta natal:
 - Con perspectiva evolutiva, no fatalista
 - Con un consejo práctico al final
 
-Un solo bloque de texto, con un título inicial en negrita que reformule la pregunta.`;
+Un solo bloque de texto, con un título inicial entre dobles asteriscos que reformule la pregunta.`;
 
   return `${base}\n\nHacé una lectura general de la carta natal en 5 párrafos.`;
 }
 
-// PROMO CODE
+// ─── PROMO CODE (FIX) ───────────────────────────────────────────────────────
 function aplicarPromo(producto) {
   const codigoEl = document.getElementById(`promo-${producto}`);
   const errorEl = document.getElementById(`error-${producto}`);
   const successEl = document.getElementById(`success-${producto}`);
-  const codigo = codigoEl?.value?.trim().toUpperCase();
-  if (codigo === CODIGO_PRUEBA) {
+
+  if (!codigoEl) return;
+
+  // FIX: comparación case-insensitive, trim espacios
+  const codigoIngresado = codigoEl.value.trim().toUpperCase();
+  const codigoValido = CODIGO_PRUEBA.toUpperCase();
+
+  if (codigoIngresado === codigoValido) {
     promoAplicada[producto] = true;
     if (successEl) { successEl.textContent = '✦ Código válido — lectura gratuita desbloqueada'; successEl.classList.remove('hidden'); }
     if (errorEl) errorEl.classList.add('hidden');
+    // FIX: actualizar texto del botón de compra
+    const btnPaypal = codigoEl.closest('.compra-form')?.querySelector('.btn-paypal') ||
+                      codigoEl.closest('.preguntas-section')?.querySelector('.btn-paypal');
+    if (btnPaypal) {
+      const originalText = btnPaypal.textContent;
+      btnPaypal.textContent = originalText.replace(/· USD \d+/, '· GRATIS');
+      btnPaypal.style.background = 'linear-gradient(135deg, #82B366, #6a9652)';
+    }
   } else {
-    if (errorEl) { errorEl.textContent = 'Código no válido. Usá ESPACIO2025'; errorEl.classList.remove('hidden'); }
+    if (errorEl) { errorEl.textContent = `Código no válido. El código correcto es: ${CODIGO_PRUEBA}`; errorEl.classList.remove('hidden'); }
     if (successEl) successEl.classList.add('hidden');
     promoAplicada[producto] = false;
   }
 }
 
-// PROCESAR COMPRA
+// ─── PROCESAR COMPRA ────────────────────────────────────────────────────────
 async function procesarCompra(producto, precio) {
   const emailId = producto === 'pregunta' ? 'email-pregunta' : `email-${producto}`;
   const email = document.getElementById(emailId)?.value?.trim();
@@ -751,7 +1035,7 @@ async function procesarCompra(producto, precio) {
   }
 }
 
-// GENERAR Y ENVIAR LECTURA
+// ─── GENERAR Y ENVIAR LECTURA ────────────────────────────────────────────────
 async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) {
   const errorId = `error-${producto}`;
   const successId = `success-${producto}`;
@@ -774,7 +1058,7 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
   }
 }
 
-// CALCULAR CARTA
+// ─── CALCULAR CARTA ──────────────────────────────────────────────────────────
 let cartaData = null;
 
 async function calcularCarta() {
@@ -804,18 +1088,30 @@ async function calcularCarta() {
     const chartData = await obtenerCartaNatal(fecha, hora, coords.lat, coords.lon, timezone, nombre, ciudad, pais);
     cartaData = chartData;
 
-    setLoaderText('escribiendo tu lectura esencial...');
-    const prompt = buildPromptBasico(nombre, chartData);
-    const interpBasica = await llamarClaude(prompt);
-
+    // FIX: mostrar la sección de resultado ANTES de hacer la llamada a Claude
+    // para que el usuario ya vea la rueda y los planetas mientras carga la lectura
     renderRueda(chartData);
     renderPlanetas(chartData);
     renderAspectos(chartData);
-    renderInterp(interpBasica, 'interpretacion-basica');
 
+    // Mostrar resultado con spinner en la sección de lectura
     ocultar('section-loader');
     mostrar('section-result');
 
+    // FIX: ahora sí llamar a Claude y renderizar cuando llegue
+    setLoaderText('escribiendo tu lectura esencial...');
+    const prompt = buildPromptBasico(nombre, chartData);
+
+    try {
+      const interpBasica = await llamarClaude(prompt);
+      renderInterp(interpBasica, 'interpretacion-basica');
+    } catch (claudeErr) {
+      console.error('Error Claude:', claudeErr);
+      document.getElementById('interpretacion-basica').innerHTML =
+        '<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';
+    }
+
+    // Procesar parámetros de URL si viene de pago PayPal
     const params = new URLSearchParams(window.location.search);
     if (params.get('lectura') === 'ok') {
       const prod = params.get('prod');
@@ -833,7 +1129,7 @@ async function calcularCarta() {
   }
 }
 
-// UTILIDADES
+// ─── UTILIDADES ──────────────────────────────────────────────────────────────
 function mostrar(id) { document.getElementById(id)?.classList.remove('hidden'); }
 function ocultar(id) { document.getElementById(id)?.classList.add('hidden'); }
 function mostrarMensaje(id, msg) { const el = document.getElementById(id); if (el) { el.textContent = msg; el.classList.remove('hidden'); } }

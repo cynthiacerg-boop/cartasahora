@@ -103,6 +103,9 @@
     .paid-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(138,77,171,0.2); border: 1px solid rgba(138,77,171,0.4); border-radius: 20px; padding: 4px 14px; font-size: 11px; letter-spacing: 0.1em; color: #8A4DAB; margin-bottom: 20px; }
     .footer { text-align: center; margin-top: 48px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
     .hidden { display: none !important; }
+    /* RUEDA ZODIACAL */
+    .chart-wheel-container { display: flex; justify-content: center; padding: 20px 0 10px; }
+    #chart-wheel { max-width: 320px; width: 100%; }
     @media (max-width: 540px) {
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
@@ -166,6 +169,14 @@
   </div>
 
   <div id="section-result" class="hidden">
+
+    <!-- RUEDA ZODIACAL -->
+    <div class="card">
+      <div class="section-title">Tu carta natal</div>
+      <div class="chart-wheel-container">
+        <svg id="chart-wheel" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+    </div>
 
     <div class="card">
       <div class="section-title">Posiciones planetarias</div>
@@ -363,12 +374,11 @@ const promoAplicada = {};
 })();
 
 // DATOS ASTROLÓGICOS
-const PLANET_SYMBOLS = { 'Sun':'☉','Moon':'☽','Mercury':'☿','Venus':'♀','Mars':'♂','Jupiter':'♃','Saturn':'♄','Uranus':'♅','Neptune':'♆','Pluto':'♇','Chiron':'⚷','Lilith':'⚸','North Node':'☊','South Node':'☋' };
-const PLANET_ES = { 'Sun':'Sol','Moon':'Luna','Mercury':'Mercurio','Venus':'Venus','Mars':'Marte','Jupiter':'Júpiter','Saturn':'Saturno','Uranus':'Urano','Neptune':'Neptuno','Pluto':'Plutón','Chiron':'Quirón','Lilith':'Lilith','North Node':'Nodo Norte','South Node':'Nodo Sur' };
-const ASPECT_ES = { 'conjunction':'conjunción','opposition':'oposición','trine':'trígono','square':'cuadratura','sextile':'sextil','quincunx':'quincuncio','semi-sextile':'semisextil' };
-
-// Mapas para nueva estructura de API
+const PLANET_SYMBOLS = {'Sun':'☉','Moon':'☽','Mercury':'☿','Venus':'♀','Mars':'♂','Jupiter':'♃','Saturn':'♄','Uranus':'♅','Neptune':'♆','Pluto':'♇','Chiron':'⚷','Lilith':'⚸','North Node':'☊','South Node':'☋'};
+const PLANET_ES = {'Sun':'Sol','Moon':'Luna','Mercury':'Mercurio','Venus':'Venus','Mars':'Marte','Jupiter':'Júpiter','Saturn':'Saturno','Uranus':'Urano','Neptune':'Neptuno','Pluto':'Plutón','Chiron':'Quirón','Lilith':'Lilith','North Node':'Nodo Norte','South Node':'Nodo Sur'};
+const ASPECT_ES = {'conjunction':'conjunción','opposition':'oposición','trine':'trígono','square':'cuadratura','sextile':'sextil','quincunx':'quincuncio','semi-sextile':'semisextil'};
 const SIGN_MAP = {'Ari':'Aries','Tau':'Tauro','Gem':'Géminis','Can':'Cáncer','Leo':'Leo','Vir':'Virgo','Lib':'Libra','Sco':'Escorpio','Sag':'Sagitario','Cap':'Capricornio','Aqu':'Acuario','Pis':'Piscis'};
+const SIGN_SYMBOLS = {'Ari':'♈','Tau':'♉','Gem':'♊','Can':'♋','Leo':'♌','Vir':'♍','Lib':'♎','Sco':'♏','Sag':'♐','Cap':'♑','Aqu':'♒','Pis':'♓'};
 const HOUSE_MAP = {'First_House':1,'Second_House':2,'Third_House':3,'Fourth_House':4,'Fifth_House':5,'Sixth_House':6,'Seventh_House':7,'Eighth_House':8,'Ninth_House':9,'Tenth_House':10,'Eleventh_House':11,'Twelfth_House':12};
 const PLANET_KEYS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_lilith','mean_node','true_south_node'];
 const PLANET_KEY_NAME = {'sun':'Sun','moon':'Moon','mercury':'Mercury','venus':'Venus','mars':'Mars','jupiter':'Jupiter','saturn':'Saturn','uranus':'Uranus','neptune':'Neptune','pluto':'Pluto','chiron':'Chiron','mean_lilith':'Lilith','mean_node':'North Node','true_south_node':'South Node'};
@@ -382,10 +392,10 @@ function aspectClass(type) {
 // GEOCODING
 async function getCoordenadas(ciudad, pais) {
   const query = encodeURIComponent(`${ciudad}, ${pais}`);
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, { headers: { 'Accept-Language': 'es' } });
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {headers: {'Accept-Language': 'es'}});
   const data = await res.json();
   if (!data || data.length === 0) throw new Error('No encontré esa ciudad. Probá con una ciudad más grande cercana.');
-  return { lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+  return {lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon)};
 }
 
 async function getTimezone(lat, lon) {
@@ -402,25 +412,108 @@ async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
   const PAIS_CODIGOS = {'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
   const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
-  const body = { subject: { name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode } };
-  const res = await fetch(`${WORKER_URL}/carta`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const body = {subject: {name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode}};
+  const res = await fetch(`${WORKER_URL}/carta`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
   return await res.json();
 }
 
 // CLAUDE
 async function llamarClaude(prompt) {
-  const res = await fetch(`${WORKER_URL}/interpretar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt }) });
+  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({prompt})});
   const data = await res.json();
   return data.content?.map(b => b.text || '').join('') || '';
 }
 
-// RENDER PLANETAS — lee la nueva estructura de API
+// RUEDA ZODIACAL SVG
+function renderRueda(chartData) {
+  const svg = document.getElementById('chart-wheel');
+  svg.innerHTML = '';
+  const cx = 250, cy = 250, r = 220;
+  const signs = ['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
+  const signColors = ['#c0392b','#27ae60','#f39c12','#c0392b','#27ae60','#f39c12','#c0392b','#27ae60','#f39c12','#c0392b','#27ae60','#f39c12'];
+
+  // Fondo
+  const bg = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bg.setAttribute('cx', cx); bg.setAttribute('cy', cy); bg.setAttribute('r', r);
+  bg.setAttribute('fill', '#0a0a18'); svg.appendChild(bg);
+
+  // 12 sectores zodiacales
+  signs.forEach((sign, i) => {
+    const startAngle = (i * 30 - 90) * Math.PI / 180;
+    const endAngle = ((i + 1) * 30 - 90) * Math.PI / 180;
+    const x1 = cx + r * Math.cos(startAngle), y1 = cy + r * Math.sin(startAngle);
+    const x2 = cx + r * Math.cos(endAngle), y2 = cy + r * Math.sin(endAngle);
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${cx},${cy} L${x1},${y1} A${r},${r} 0 0,1 ${x2},${y2} Z`);
+    path.setAttribute('fill', i % 2 === 0 ? 'rgba(130,179,102,0.05)' : 'rgba(138,77,171,0.05)');
+    path.setAttribute('stroke', 'rgba(255,255,255,0.08)');
+    path.setAttribute('stroke-width', '0.5');
+    svg.appendChild(path);
+
+    // Símbolo del signo
+    const midAngle = ((i + 0.5) * 30 - 90) * Math.PI / 180;
+    const tx = cx + (r - 18) * Math.cos(midAngle);
+    const ty = cy + (r - 18) * Math.sin(midAngle);
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', tx); txt.setAttribute('y', ty);
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
+    txt.setAttribute('font-size', '13'); txt.setAttribute('fill', signColors[i]);
+    txt.setAttribute('opacity', '0.8');
+    txt.textContent = SIGN_SYMBOLS[sign] || sign;
+    svg.appendChild(txt);
+  });
+
+  // Círculos internos
+  [0.75, 0.5, 0.3].forEach(frac => {
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r * frac);
+    c.setAttribute('fill', 'none'); c.setAttribute('stroke', 'rgba(255,255,255,0.06)');
+    c.setAttribute('stroke-width', '0.5');
+    svg.appendChild(c);
+  });
+
+  // Planetas
+  const subject = chartData?.chart_data?.subject || {};
+  const planetColors = {'sun':'#f0c040','moon':'#c8d8f0','mercury':'#82B366','venus':'#e07090','mars':'#e06060','jupiter':'#8A4DAB','saturn':'#c0a060','uranus':'#60c0c0','neptune':'#6080e0','pluto':'#a060a0','chiron':'#80a080','mean_lilith':'#804040','mean_node':'#d0d0d0','true_south_node':'#d0d0d0'};
+
+  PLANET_KEYS.forEach(key => {
+    const p = subject[key];
+    if (!p || p.abs_pos === undefined) return;
+    const angle = (p.abs_pos - 90) * Math.PI / 180;
+    const pr = r * 0.62;
+    const px = cx + pr * Math.cos(angle);
+    const py = cy + pr * Math.sin(angle);
+    const pName = PLANET_KEY_NAME[key];
+    const color = planetColors[key] || '#ffffff';
+
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx', px); circle.setAttribute('cy', py); circle.setAttribute('r', '10');
+    circle.setAttribute('fill', 'rgba(10,10,24,0.85)');
+    circle.setAttribute('stroke', color); circle.setAttribute('stroke-width', '1');
+    svg.appendChild(circle);
+
+    const txt = document.createElementNS('http://www.w3.org/2000/svg','text');
+    txt.setAttribute('x', px); txt.setAttribute('y', py);
+    txt.setAttribute('text-anchor', 'middle'); txt.setAttribute('dominant-baseline', 'middle');
+    txt.setAttribute('font-size', '10'); txt.setAttribute('fill', color);
+    txt.textContent = PLANET_SYMBOLS[pName] || '•';
+    svg.appendChild(txt);
+  });
+
+  // Centro
+  const center = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  center.setAttribute('cx', cx); center.setAttribute('cy', cy); center.setAttribute('r', '28');
+  center.setAttribute('fill', '#0a0a18'); center.setAttribute('stroke', 'rgba(130,179,102,0.3)');
+  center.setAttribute('stroke-width', '1');
+  svg.appendChild(center);
+}
+
+// RENDER PLANETAS
 function renderPlanetas(chartData) {
   const tbody = document.getElementById('tabla-planetas');
   tbody.innerHTML = '';
   const subject = chartData?.chart_data?.subject || {};
-
   PLANET_KEYS.forEach(key => {
     const p = subject[key];
     if (!p) return;
@@ -440,18 +533,18 @@ function renderPlanetas(chartData) {
   });
 }
 
-// RENDER ASPECTOS
+// RENDER ASPECTOS — usa campo "aspect" correcto
 function renderAspectos(chartData) {
   const tbody = document.getElementById('tabla-aspectos');
   tbody.innerHTML = '';
-  const aspects = chartData?.chart_data?.aspects || chartData?.chart_data?.subject?.aspects || [];
+  const aspects = chartData?.chart_data?.aspects || [];
   const mainTypes = ['conjunction','opposition','trine','square','sextile'];
-  const filtered = aspects.filter(a => mainTypes.includes(a.aspect_type || a.type));
+  const filtered = aspects.filter(a => mainTypes.includes(a.aspect || a.aspect_type || a.type));
   document.getElementById('aspectos-count').textContent = `Aspectos principales (${filtered.length})`;
   filtered.forEach(a => {
     const p1 = PLANET_ES[a.p1_name] || a.p1_name || '';
     const p2 = PLANET_ES[a.p2_name] || a.p2_name || '';
-    const tipo = a.aspect_type || a.type || '';
+    const tipo = a.aspect || a.aspect_type || a.type || '';
     const tipoEs = ASPECT_ES[tipo] || tipo;
     const orb = a.orbit !== undefined ? Math.abs(a.orbit).toFixed(2) + '°' : '';
     const cls = aspectClass(tipo);
@@ -493,7 +586,7 @@ function renderInterp(texto, containerId) {
   if (currentBlock) container.appendChild(currentBlock);
 }
 
-// PROMPT BÁSICO — lee nueva estructura
+// PROMPT BÁSICO — usa campo "aspect" correcto y ascendente
 function buildPromptBasico(nombre, chartData) {
   const subject = chartData?.chart_data?.subject || {};
   const sol = subject.sun;
@@ -511,21 +604,20 @@ function buildPromptBasico(nombre, chartData) {
 Escribí una interpretación breve de carta natal para ${nombre} con estos datos reales:
 ${contexto}
 
-Estructura la respuesta con exactamente estas 3 secciones, cada una con su título en negrita entre dobles asteriscos:
+Estructura la respuesta con exactamente estas secciones, cada una con su título en negrita entre dobles asteriscos:
 
 **Tu esencia solar**
-(2 párrafos sobre el Sol)
+Escribí 2 párrafos sobre el Sol en ${solSign} casa ${solHouse}.
 
 **Tu mundo emocional**
-(2 párrafos sobre la Luna)
+Escribí 2 párrafos sobre la Luna en ${lunaSign} casa ${lunaHouse}.
 
-**Tu imagen ante el mundo**
-(2 párrafos sobre el Ascendente. Si no hay ascendente disponible, omitir esta sección)
+${ascSign ? `**Tu imagen ante el mundo**\nEscribí 2 párrafos sobre el Ascendente en ${ascSign}.` : ''}
 
-Al final, sin título, agregá 2 líneas de gancho que inviten a descubrir más.`;
+Al final, sin título, agregá 2 líneas de gancho que inviten a descubrir más sobre su carta completa.`;
 }
 
-// PROMPTS POR PRODUCTO — lee nueva estructura
+// PROMPTS POR PRODUCTO
 function buildPrompt(producto, nombre, chartData, extras) {
   const subject = chartData?.chart_data?.subject || {};
   const planetsText = PLANET_KEYS.map(key => {
@@ -566,7 +658,7 @@ Escribí el pronóstico del año personal 2025-2026 con estas secciones:
 **Crecimiento personal y desafíos**
 **Cómo aprovechar esta energía**
 
-Cada sección 2-3 párrafos. Usá los tránsitos actuales de Saturno en Aries, Neptuno en Aries y Urano ingresando a Géminis.`;
+Cada sección 2-3 párrafos.`;
 
   if (producto === 'sinastria') return `${base}
 
@@ -621,7 +713,7 @@ function aplicarPromo(producto) {
     if (successEl) { successEl.textContent = '✦ Código válido — lectura gratuita desbloqueada'; successEl.classList.remove('hidden'); }
     if (errorEl) errorEl.classList.add('hidden');
   } else {
-    if (errorEl) { errorEl.textContent = 'Código no válido.'; errorEl.classList.remove('hidden'); }
+    if (errorEl) { errorEl.textContent = 'Código no válido. Usá ESPACIO2025'; errorEl.classList.remove('hidden'); }
     if (successEl) successEl.classList.add('hidden');
     promoAplicada[producto] = false;
   }
@@ -652,7 +744,7 @@ async function procesarCompra(producto, precio) {
   if (esPrueba) {
     await generarYEnviarLectura(producto, email, nombre, extras, true);
   } else {
-    sessionStorage.setItem('pendiente', JSON.stringify({ producto, email, nombre, extras, precio }));
+    sessionStorage.setItem('pendiente', JSON.stringify({producto, email, nombre, extras, precio}));
     const returnUrl = encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&email=${encodeURIComponent(email)}&nombre=${encodeURIComponent(nombre)}`);
     window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`, '_blank');
     mostrarMensaje(successId, '✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
@@ -668,8 +760,8 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
     const prompt = buildPrompt(producto, nombre, cartaData, extras);
     const res = await fetch(`${WORKER_URL}/enviar-lectura`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, nombre, producto, lectura: prompt, codigoPromo: esPrueba ? CODIGO_PRUEBA : '', pagado: true }),
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email, nombre, producto, lectura: prompt, codigoPromo: esPrueba ? CODIGO_PRUEBA : '', pagado: true}),
     });
     const data = await res.json();
     if (data.ok) {
@@ -716,6 +808,7 @@ async function calcularCarta() {
     const prompt = buildPromptBasico(nombre, chartData);
     const interpBasica = await llamarClaude(prompt);
 
+    renderRueda(chartData);
     renderPlanetas(chartData);
     renderAspectos(chartData);
     renderInterp(interpBasica, 'interpretacion-basica');

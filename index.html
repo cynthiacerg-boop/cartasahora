@@ -490,29 +490,81 @@ function renderRueda(chartData) {
 
   const signs = ['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
 
-  // ── Calcular offset del Ascendente ──
-  // En astrología: el Ascendente (Cúspide Casa 1) va en el lado IZQUIERDO (180° en SVG = 9h del reloj)
-  // abs_pos del ascendente en grados eclípticos (0=Aries). 
-  // Para que ASC quede a la izquierda: offset = 180 - asc_abs_pos
+  // ── Extraer datos del sujeto y cúspides de casas ──
   const subject_pre = chartData?.chart_data?.subject || {};
+
+  // ── Obtener abs_pos del Ascendente (cúspide Casa 1) ──
+  // kerykeion puede devolver el ASC en distintas claves según versión
   const ascData = subject_pre.first_house || subject_pre.ascendant || subject_pre.asc || null;
-  // Intentar obtener abs_pos del ascendente desde distintas claves posibles
   let ascAbsPos = 0;
   if (ascData && ascData.abs_pos !== undefined) {
     ascAbsPos = ascData.abs_pos;
-  } else if (ascData && ascData.position !== undefined) {
-    // si solo tiene position relativa al signo, buscar el signo para calcular abs
-    const ascSignKey = Object.keys(SIGN_MAP).find(k => SIGN_MAP[k] === (SIGN_MAP[ascData.sign] || ascData.sign));
-    const ascSignIndex = signs.indexOf(ascData.sign || ascSignKey);
+  } else if (ascData && ascData.position !== undefined && ascData.sign) {
+    const ascSignIndex = signs.indexOf(ascData.sign);
     if (ascSignIndex >= 0) ascAbsPos = ascSignIndex * 30 + (ascData.position || 0);
   }
-  // Offset: el ASC debe quedar a la izquierda (180° SVG). 
-  // Conversión: angleSVG = eclipticDeg + ascOffset - 90
-  // Para que ascAbsPos → 180°: ascOffset = 180 + 90 - ascAbsPos = 270 - ascAbsPos
-  const ascOffset = 270 - ascAbsPos;
 
-  // Obtener cúspides de casas si están disponibles
-  const houses = chartData?.chart_data?.houses || null;
+  // ── Obtener cúspides Placidus reales ──
+  // kerykeion devuelve algo como:
+  //   chart_data.houses = { first_house: {abs_pos:X}, second_house: {abs_pos:X}, ... }
+  // o chart_data.subject tiene first_house..twelfth_house
+  // Construimos array cusps[0..11] con abs_pos de cada cúspide
+  const HOUSE_KEYS_ORDER = [
+    'first_house','second_house','third_house','fourth_house',
+    'fifth_house','sixth_house','seventh_house','eighth_house',
+    'ninth_house','tenth_house','eleventh_house','twelfth_house'
+  ];
+
+  function getHouseAbsPos(hData) {
+    if (!hData) return null;
+    if (hData.abs_pos !== undefined) return hData.abs_pos;
+    if (hData.position !== undefined && hData.sign) {
+      const idx = signs.indexOf(hData.sign);
+      if (idx >= 0) return idx * 30 + hData.position;
+    }
+    return null;
+  }
+
+  // Intentar desde chart_data.houses primero, luego desde subject
+  const housesSource = chartData?.chart_data?.houses || subject_pre;
+  const cusps = HOUSE_KEYS_ORDER.map(k => {
+    // kerykeion usa PascalCase o snake_case dependiendo de la versión
+    const variants = [k, k.replace(/_/g,''), k.split('_').map((w,i)=>i===0?w:w[0].toUpperCase()+w.slice(1)).join('')];
+    for (const v of variants) {
+      const val = getHouseAbsPos(housesSource[v]);
+      if (val !== null) return val;
+    }
+    return null;
+  });
+
+  // Si tenemos las 12 cúspides reales las usamos; si no, fallback a iguales desde ASC
+  const hasRealCusps = cusps.filter(c => c !== null).length >= 6;
+  const finalCusps = hasRealCusps
+    ? cusps.map((c, i) => c !== null ? c : (ascAbsPos + i * 30) % 360)
+    : Array.from({length: 12}, (_, i) => (ascAbsPos + i * 30) % 360);
+
+  // Log para debug (se puede quitar luego)
+  console.log('[Carta] ascAbsPos:', ascAbsPos, '| cusps reales:', hasRealCusps, finalCusps);
+
+  // ── Offset SVG ──
+  // El ASC (Casa 1) debe quedar a la IZQUIERDA (180° en SVG).
+  // Fórmula: svgAngle = eclipticDeg + ascOffset
+  // Para que ascAbsPos → 180°: ascOffset = 180 - ascAbsPos
+  // En SVG Y está invertido (crece hacia abajo), así que el sentido es antihorario.
+  // Usamos: svgAngle = 180 - (eclipticDeg - ascAbsPos) = 180 + ascAbsPos - eclipticDeg
+  // Simplificado con función de conversión:
+  function eclToSvg(deg) {
+    // Convierte grados eclípticos a ángulo SVG (radianes)
+    // ASC → izquierda (180°), sentido horario en SVG = antihorario en astrología
+    return (180 - (deg - ascAbsPos)) * Math.PI / 180;
+  }
+
+  // Para compatibilidad con el resto del código que usa ascOffset como suma simple:
+  // svgDeg = 180 - eclDeg + ascAbsPos  =>  ascOffset = 180 + ascAbsPos, luego svgDeg = ascOffset - eclDeg
+  // Pero como el código multiplica, usamos la función eclToSvg() directamente en la rueda.
+  // Para planetas que usan "+ascOffset": ascOffset = 180 + ascAbsPos - 2*eclDeg no funciona así.
+  // Solución limpia: reescribir todo usando eclToSvg().
+  const ascOffset = 180 + ascAbsPos; // dummy para no romper nada, pero no se usa en la nueva lógica
 
   // ── Defs: gradientes y filtros ──
   const defs = createSVGEl('defs');
@@ -541,13 +593,11 @@ function renderRueda(chartData) {
 
   // ── 12 sectores zodiacales (anillo exterior) ──
   signs.forEach((sign, i) => {
-    // Aplicar offset del ascendente para que la rueda rote correctamente
-    const startDeg = i * 30 + ascOffset;
-    const endDeg = (i + 1) * 30 + ascOffset;
-    const startRad = startDeg * Math.PI / 180;
-    const endRad = endDeg * Math.PI / 180;
-
-    // Sector del anillo de signos
+    // Aplicar conversión eclíptica correcta
+    const startRad = eclToSvg(i * 30);
+    const endRad   = eclToSvg((i + 1) * 30);
+    // Para arco SVG necesitamos los puntos en coordenadas cartesianas
+    // IMPORTANTE: el arco va en sentido horario en SVG (sweep=1) porque eclToSvg invierte
     const x1o = cx + R_SIGN * Math.cos(startRad);
     const y1o = cy + R_SIGN * Math.sin(startRad);
     const x2o = cx + R_SIGN * Math.cos(endRad);
@@ -572,9 +622,9 @@ function renderRueda(chartData) {
     path.setAttribute('d', [
       `M${x1i},${y1i}`,
       `L${x1o},${y1o}`,
-      `A${R_SIGN},${R_SIGN} 0 0,1 ${x2o},${y2o}`,
+      `A${R_SIGN},${R_SIGN} 0 0,0 ${x2o},${y2o}`,
       `L${x2i},${y2i}`,
-      `A${R_SIGN_IN},${R_SIGN_IN} 0 0,0 ${x1i},${y1i}`,
+      `A${R_SIGN_IN},${R_SIGN_IN} 0 0,1 ${x1i},${y1i}`,
       'Z'
     ].join(' '));
     path.setAttribute('fill', fillColor);
@@ -583,7 +633,7 @@ function renderRueda(chartData) {
     svg.appendChild(path);
 
     // Símbolo zodiacal centrado en el sector
-    const midRad = (i * 30 + 15 + ascOffset) * Math.PI / 180;
+    const midRad = eclToSvg(i * 30 + 15);
     const symR = (R_SIGN + R_SIGN_IN) / 2;
     const tx = cx + symR * Math.cos(midRad);
     const ty = cy + symR * Math.sin(midRad);
@@ -621,7 +671,7 @@ function renderRueda(chartData) {
 
   // Líneas divisorias entre signos (desde interior al anillo)
   signs.forEach((_, i) => {
-    const angle = (i * 30 + ascOffset) * Math.PI / 180;
+    const angle = eclToSvg(i * 30);
     const x1 = cx + R_SIGN_IN * Math.cos(angle);
     const y1 = cy + R_SIGN_IN * Math.sin(angle);
     const x2 = cx + R_SIGN * Math.cos(angle);
@@ -634,80 +684,96 @@ function renderRueda(chartData) {
     svg.appendChild(line);
   });
 
-  // ── Líneas de casas astrológicas ──
-  // Las casas se espacian cada 30° desde el Ascendente (Casa 1 = izquierda = 180° SVG)
-  // Casas angulares (1,4,7,10) más prominentes
-  const angularHouses = new Set([0, 3, 6, 9]); // índices 0-based
-  for (let h = 0; h < 12; h++) {
-    // Casa h+1 empieza en: ascAbsPos + h*30 grados eclípticos
-    // En SVG: ascAbsPos + h*30 + ascOffset
-    const houseDeg = ascAbsPos + h * 30 + ascOffset;
-    const houseRad = houseDeg * Math.PI / 180;
-
+  // ── Líneas de casas astrológicas (Placidus real) ──
+  const angularHouses = new Set([0, 3, 6, 9]); // 1,4,7,10
+  finalCusps.forEach((cuspEcl, h) => {
     const isAngular = angularHouses.has(h);
-    const x1h = cx + (isAngular ? R_HOUSE + 15 : R_HOUSE) * Math.cos(houseRad);
-    const y1h = cy + (isAngular ? R_HOUSE + 15 : R_HOUSE) * Math.sin(houseRad);
-    const x2h = cx + (R_CENTER + 2) * Math.cos(houseRad);
-    const y2h = cy + (R_CENTER + 2) * Math.sin(houseRad);
+    const houseRad = eclToSvg(cuspEcl);
+
+    const r1 = isAngular ? R_SIGN_IN : R_HOUSE;
+    const r2 = R_CENTER + 2;
+    const x1h = cx + r1 * Math.cos(houseRad);
+    const y1h = cy + r1 * Math.sin(houseRad);
+    const x2h = cx + r2 * Math.cos(houseRad);
+    const y2h = cy + r2 * Math.sin(houseRad);
 
     const hLine = createSVGEl('line');
     hLine.setAttribute('x1', x1h); hLine.setAttribute('y1', y1h);
     hLine.setAttribute('x2', x2h); hLine.setAttribute('y2', y2h);
-    hLine.setAttribute('stroke', isAngular ? 'rgba(200,170,80,0.55)' : 'rgba(255,255,255,0.12)');
+    hLine.setAttribute('stroke', isAngular ? 'rgba(200,170,80,0.6)' : 'rgba(255,255,255,0.13)');
     hLine.setAttribute('stroke-width', isAngular ? '1.2' : '0.6');
     if (!isAngular) hLine.setAttribute('stroke-dasharray', '3,4');
     svg.appendChild(hLine);
 
-    // Número de casa en el anillo interior
-    const labelR = R_HOUSE - 12;
-    const labelMidRad = (houseDeg + 15) * Math.PI / 180;
-    const lx = cx + labelR * Math.cos(labelMidRad);
-    const ly = cy + labelR * Math.sin(labelMidRad);
+    // Número de casa entre cúspide actual y la siguiente
+    const nextCusp = finalCusps[(h + 1) % 12];
+    // Calcular punto medio del sector de casa
+    let midEcl = cuspEcl + 15;
+    // Si la siguiente cúspide implica cruzar 0° Aries, ajustar
+    let span = (nextCusp - cuspEcl + 360) % 360;
+    midEcl = cuspEcl + span / 2;
+    const labelRad = eclToSvg(midEcl);
+    const labelR = R_HOUSE - 14;
+    const lx = cx + labelR * Math.cos(labelRad);
+    const ly = cy + labelR * Math.sin(labelRad);
     const hLabel = createSVGEl('text');
     hLabel.setAttribute('x', lx); hLabel.setAttribute('y', ly);
     hLabel.setAttribute('text-anchor', 'middle');
     hLabel.setAttribute('dominant-baseline', 'middle');
     hLabel.setAttribute('font-size', isAngular ? '9' : '7');
-    hLabel.setAttribute('fill', isAngular ? 'rgba(200,170,80,0.8)' : 'rgba(255,255,255,0.2)');
+    hLabel.setAttribute('fill', isAngular ? 'rgba(200,170,80,0.85)' : 'rgba(255,255,255,0.22)');
     hLabel.textContent = String(h + 1);
     svg.appendChild(hLabel);
-  }
+  });
 
-  // Marca especial del Ascendente (AC) a la izquierda
-  const ascRad = (ascAbsPos + ascOffset) * Math.PI / 180;
-  const acLabelX = cx + (R_SIGN_IN - 8) * Math.cos(ascRad);
-  const acLabelY = cy + (R_SIGN_IN - 8) * Math.sin(ascRad);
-  // Pequeña línea destacada
-  const acLine = createSVGEl('line');
-  acLine.setAttribute('x1', cx + R_OUTER * Math.cos(ascRad));
-  acLine.setAttribute('y1', cy + R_OUTER * Math.sin(ascRad));
-  acLine.setAttribute('x2', cx + (R_CENTER + 2) * Math.cos(ascRad));
-  acLine.setAttribute('y2', cy + (R_CENTER + 2) * Math.sin(ascRad));
-  acLine.setAttribute('stroke', 'rgba(200,170,80,0.7)');
-  acLine.setAttribute('stroke-width', '1.5');
-  svg.appendChild(acLine);
+  // ── Marca especial AC (izquierda) y DC (derecha) ──
+  // ASC = Casa 1 = 180° SVG (izquierda), DC = Casa 7 = 0° SVG (derecha)
+  const ascRad = eclToSvg(ascAbsPos);   // debería dar exactamente 180° = π
+  const dcAbsPos = (ascAbsPos + 180) % 360;
+  const dcRad = eclToSvg(dcAbsPos);     // debería dar exactamente 0°
+
+  // Línea eje ASC-DC
+  const axisDC = createSVGEl('line');
+  axisDC.setAttribute('x1', cx + R_SIGN_IN * Math.cos(ascRad));
+  axisDC.setAttribute('y1', cy + R_SIGN_IN * Math.sin(ascRad));
+  axisDC.setAttribute('x2', cx + R_SIGN_IN * Math.cos(dcRad));
+  axisDC.setAttribute('y2', cy + R_SIGN_IN * Math.sin(dcRad));
+  axisDC.setAttribute('stroke', 'rgba(200,170,80,0.3)');
+  axisDC.setAttribute('stroke-width', '0.8');
+  svg.appendChild(axisDC);
+
   // Etiqueta AC
   const acLabel = createSVGEl('text');
-  acLabel.setAttribute('x', cx + (R_OUTER + 10) * Math.cos(ascRad));
-  acLabel.setAttribute('y', cy + (R_OUTER + 10) * Math.sin(ascRad));
+  acLabel.setAttribute('x', cx + (R_OUTER - 15) * Math.cos(ascRad));
+  acLabel.setAttribute('y', cy + (R_OUTER - 15) * Math.sin(ascRad));
   acLabel.setAttribute('text-anchor', 'middle');
   acLabel.setAttribute('dominant-baseline', 'middle');
-  acLabel.setAttribute('font-size', '9');
-  acLabel.setAttribute('fill', 'rgba(200,170,80,0.9)');
+  acLabel.setAttribute('font-size', '10');
+  acLabel.setAttribute('fill', 'rgba(200,170,80,0.95)');
   acLabel.setAttribute('font-family', 'Cinzel, serif');
   acLabel.textContent = 'AC';
   svg.appendChild(acLabel);
 
+  // Etiqueta DC
+  const dcLabel = createSVGEl('text');
+  dcLabel.setAttribute('x', cx + (R_OUTER - 15) * Math.cos(dcRad));
+  dcLabel.setAttribute('y', cy + (R_OUTER - 15) * Math.sin(dcRad));
+  dcLabel.setAttribute('text-anchor', 'middle');
+  dcLabel.setAttribute('dominant-baseline', 'middle');
+  dcLabel.setAttribute('font-size', '10');
+  dcLabel.setAttribute('fill', 'rgba(200,170,80,0.6)');
+  dcLabel.setAttribute('font-family', 'Cinzel, serif');
+  dcLabel.textContent = 'DC';
+  svg.appendChild(dcLabel);
+
   // ── Obtener posiciones de planetas para líneas de aspectos ──
   const subject = chartData?.chart_data?.subject || {};
-  const planetPositions = {}; // key → {x, y, abs_pos}
+  const planetPositions = {};
 
   PLANET_KEYS.forEach(key => {
     const p = subject[key];
     if (!p || p.abs_pos === undefined) return;
-    // Aplicar offset del ascendente a cada planeta
-    const angleDeg = p.abs_pos + ascOffset;
-    const angleRad = angleDeg * Math.PI / 180;
+    const angleRad = eclToSvg(p.abs_pos);
     const px = cx + R_PLANET * Math.cos(angleRad);
     const py = cy + R_PLANET * Math.sin(angleRad);
     planetPositions[key] = { x: px, y: py, abs_pos: p.abs_pos, name: PLANET_KEY_NAME[key] };
@@ -744,30 +810,30 @@ function renderRueda(chartData) {
   });
 
   // ── Puntos de planetas ──
-  // Calcular posiciones con anti-solapamiento básico
   const placedAngles = [];
 
   PLANET_KEYS.forEach(key => {
     const p = subject[key];
     if (!p || p.abs_pos === undefined) return;
 
-    // Aplicar offset del ascendente
-    let angleDeg = p.abs_pos + ascOffset;
-    let origDeg  = p.abs_pos + ascOffset;
+    // Ángulo SVG exacto del planeta
+    const origRad = eclToSvg(p.abs_pos);
 
-    // Anti-solapamiento: si hay otro planeta muy cercano, desplazar
-    let adjusted = angleDeg;
+    // Anti-solapamiento en espacio angular eclíptico
+    let adjustedEcl = p.abs_pos;
     let tries = 0;
     while (tries < 8) {
-      const conflict = placedAngles.find(a => Math.abs(((adjusted - a + 540) % 360) - 180) < 8);
+      const conflict = placedAngles.find(a => {
+        const diff = Math.abs(((adjustedEcl - a + 540) % 360) - 180);
+        return diff < 8;
+      });
       if (!conflict) break;
-      adjusted += 9;
+      adjustedEcl += 9;
       tries++;
     }
-    placedAngles.push(adjusted);
+    placedAngles.push(adjustedEcl);
 
-    const angleRad = adjusted * Math.PI / 180;
-    const origRad = origDeg * Math.PI / 180;
+    const angleRad = eclToSvg(adjustedEcl);
     const px = cx + R_PLANET * Math.cos(angleRad);
     const py = cy + R_PLANET * Math.sin(angleRad);
 

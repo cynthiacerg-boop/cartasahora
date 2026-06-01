@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cartas Ahora · Espacio Libra</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #0a0a12; color: #e8e4de; font-family: 'Jost', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+    .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite alternate; }
+    @keyframes twinkle { from { opacity: 0.05; } to { opacity: 0.5; } }
+    .container { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
+    .header { text-align: center; margin-bottom: 48px; }
+    .brand { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.35em; color: #82B366; text-transform: uppercase; margin-bottom: 14px; opacity: 0.9; }
+    h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 7vw, 58px); font-weight: 300; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
+    .subtitle { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.6; }
+    .divider { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, #82B366, transparent); margin: 20px auto 0; }
+    .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 36px 32px; backdrop-filter: blur(10px); margin-bottom: 20px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+    input, select { background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Jost', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+    input:focus, select:focus { border-color: rgba(130,179,102,0.5); }
+    input::placeholder { color: rgba(255,255,255,0.2); }
+    select option { background: #1a1a2e; }
+    .btn-primary { width: 100%; margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #82B366, #6a9652); border: none; border-radius: 10px; color: white; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(130,179,102,0.3); }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .error-msg { color: #e07070; font-size: 13px; margin-top: 12px; text-align: center; }
+    .success-msg { color: #82B366; font-size: 13px; margin-top: 12px; text-align: center; }
+    .loader { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 40px 0; }
+    .orbit { position: relative; width: 80px; height: 80px; }
+    .orbit-ring { position: absolute; border-radius: 50%; border: 1px solid; }
+    .r1 { inset: 0; border-color: rgba(130,179,102,0.3); animation: spin 3s linear infinite; }
+    .r2 { inset: 10px; border-color: rgba(138,77,171,0.3); animation: spin 2s linear infinite reverse; }
+    .r3 { inset: 22px; border-color: rgba(130,179,102,0.5); animation: spin 1.5s linear infinite; }
+    .r4 { inset: 35px; background: #82B366; box-shadow: 0 0 12px rgba(130,179,102,0.6); }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .loader p { font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.15em; color: #82B366; opacity: 0.8; }
+    .section-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.25em; color: #82B366; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(130,179,102,0.2); }
+    .planets-table { width: 100%; border-collapse: collapse; }
+    .planets-table th { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; color: rgba(255,255,255,0.3); text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .planets-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .planets-table tr:last-child td { border-bottom: none; }
+    .planet-name { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.75); }
+    .planet-symbol { font-size: 16px; width: 22px; text-align: center; }
+    .planet-sign { color: #8A4DAB; font-weight: 500; }
+    .planet-degree { color: rgba(255,255,255,0.4); font-size: 12px; }
+    .planet-house { color: rgba(255,255,255,0.35); font-size: 12px; }
+    .retro-badge { font-size: 10px; color: #e07070; letter-spacing: 0.05em; }
+    .aspects-table { width: 100%; border-collapse: collapse; }
+    .aspects-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+    .aspects-table tr:last-child td { border-bottom: none; }
+    .aspect-name { color: rgba(255,255,255,0.75); display: flex; align-items: center; gap: 8px; }
+    .aspect-bar { width: 4px; height: 18px; border-radius: 2px; flex-shrink: 0; }
+    .aspect-bar.armonico { background: #82B366; }
+    .aspect-bar.poderoso { background: #f0c040; }
+    .aspect-bar.desafiante { background: #e06060; }
+    .aspect-quality { font-size: 12px; font-weight: 500; }
+    .aspect-quality.armonico { color: #82B366; }
+    .aspect-quality.poderoso { color: #f0c040; }
+    .aspect-quality.desafiante { color: #e06060; }
+    .aspect-orb { color: rgba(255,255,255,0.3); font-size: 12px; }
+    .aspect-right { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
+    .interp-block { margin-bottom: 24px; }
+    .interp-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #82B366; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(130,179,102,0.15); letter-spacing: 0.03em; }
+    .interp-text { font-family: 'Jost', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.72); }
+    .productos-grid { display: grid; gap: 16px; margin-top: 8px; }
+    .producto-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; transition: border-color 0.2s, background 0.2s; cursor: pointer; }
+    .producto-card:hover { border-color: rgba(138,77,171,0.4); background: rgba(138,77,171,0.05); }
+    .producto-card.destacado { border-color: rgba(138,77,171,0.35); background: linear-gradient(135deg, rgba(138,77,171,0.1), rgba(130,179,102,0.05)); }
+    .producto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+    .producto-nombre { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: #f0ede8; }
+    .producto-precio { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #8A4DAB; font-weight: 300; }
+    .producto-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 16px; }
+    .producto-items { list-style: none; margin-bottom: 16px; }
+    .producto-items li { font-size: 12px; color: rgba(255,255,255,0.55); padding: 3px 0; display: flex; align-items: center; gap: 7px; }
+    .producto-items li::before { content: '✦'; color: #8A4DAB; font-size: 9px; }
+    .badge-popular { display: inline-block; background: rgba(130,179,102,0.2); border: 1px solid rgba(130,179,102,0.4); border-radius: 20px; padding: 3px 12px; font-size: 10px; letter-spacing: 0.1em; color: #82B366; margin-bottom: 10px; }
+    .compra-form { margin-top: 16px; }
+    .compra-form input, .compra-form select { margin-bottom: 10px; }
+    .promo-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .promo-row input { margin-bottom: 0; flex: 1; }
+    .btn-promo { padding: 13px 16px; background: transparent; border: 1px solid rgba(130,179,102,0.3); border-radius: 8px; color: #82B366; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+    .btn-promo:hover { background: rgba(130,179,102,0.1); }
+    .btn-paypal { width: 100%; padding: 16px; background: linear-gradient(135deg, #8A4DAB, #6a3a85); border: none; border-radius: 10px; color: white; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(138,77,171,0.35); margin-top: 4px; }
+    .btn-paypal:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-paypal:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .paypal-note { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
+    .preguntas-section { margin-top: 8px; }
+    .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .pregunta-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; }
+    .pregunta-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.8); }
+    textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Jost', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
+    textarea:focus { border-color: rgba(130,179,102,0.5); }
+    textarea::placeholder { color: rgba(255,255,255,0.2); }
+    .footer { text-align: center; margin-top: 48px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
+    .hidden { display: none !important; }
+    .chart-wheel-container { display: flex; justify-content: center; padding: 20px 0 10px; }
+    #chart-wheel { max-width: 380px; width: 100%; filter: drop-shadow(0 0 20px rgba(130,179,102,0.15)); }
+    .aspect-legend { display: flex; gap: 20px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.4); }
+    .legend-line { width: 20px; height: 2px; border-radius: 1px; }
+    .rs-campos { background: rgba(130,179,102,0.05); border: 1px solid rgba(130,179,102,0.15); border-radius: 10px; padding: 16px; margin-bottom: 10px; }
+    .rs-campos label { color: rgba(130,179,102,0.7); margin-bottom: 6px; display: block; }
+    @media (max-width: 540px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full { grid-column: 1; }
+      .card { padding: 24px 18px; }
+      .producto-header { flex-direction: column; gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+
+<div id="stars"></div>
+
+<div class="container">
+
+  <div class="header">
+    <div class="brand">Espacio Libra</div>
+    <h1>Tu Carta Natal</h1>
+    <p class="subtitle">Descubrí lo que el cielo tenía preparado<br>para el momento exacto de tu llegada.</p>
+    <div class="divider"></div>
+  </div>
+
+  <div class="card" id="section-form">
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>Tu nombre</label>
+        <input type="text" id="nombre" placeholder="¿Cómo te llamás?" />
+      </div>
+      <div class="form-group">
+        <label>Fecha de nacimiento</label>
+        <input type="date" id="fecha" />
+      </div>
+      <div class="form-group">
+        <label>Hora de nacimiento</label>
+        <input type="time" id="hora" />
+      </div>
+      <div class="form-group full">
+        <label>Ciudad de nacimiento</label>
+        <input type="text" id="ciudad" placeholder="Buenos Aires, Córdoba, Rosario..." />
+      </div>
+      <div class="form-group full">
+        <label>País</label>
+        <input type="text" id="pais" placeholder="Argentina" value="Argentina" />
+      </div>
+    </div>
+    <p class="error-msg hidden" id="error-msg"></p>
+    <button class="btn-primary" id="btn-calcular" onclick="calcularCarta()">
+      ✦ Calcular mi carta natal gratis
+    </button>
+  </div>
+
+  <div class="card hidden" id="section-loader">
+    <div class="loader">
+      <div class="orbit">
+        <div class="orbit-ring r1"></div>
+        <div class="orbit-ring r2"></div>
+        <div class="orbit-ring r3"></div>
+        <div class="orbit-ring r4"></div>
+      </div>
+      <p id="loader-text">calculando posiciones planetarias...</p>
+    </div>
+  </div>
+
+  <div id="section-result" class="hidden">
+
+    <div class="card">
+      <div class="section-title">Tu carta natal</div>
+      <div class="chart-wheel-container">
+        <svg id="chart-wheel" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+      </div>
+      <div class="aspect-legend">
+        <div class="legend-item"><div class="legend-line" style="background:#82B366;"></div>Trígono</div>
+        <div class="legend-item"><div class="legend-line" style="background:#e06060;"></div>Cuadratura</div>
+        <div class="legend-item"><div class="legend-line" style="background:#f0c040;"></div>Conjunción</div>
+        <div class="legend-item"><div class="legend-line" style="background:#6090e0;"></div>Oposición</div>
+        <div class="legend-item"><div class="legend-line" style="background:#a0c0a0;opacity:0.6;"></div>Sextil</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Posiciones planetarias</div>
+      <table class="planets-table">
+        <thead>
+          <tr><th>Planeta</th><th>Signo</th><th>Grado</th><th>Casa</th></tr>
+        </thead>
+        <tbody id="tabla-planetas"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title" id="aspectos-count">Aspectos principales</div>
+      <table class="aspects-table">
+        <tbody id="tabla-aspectos"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Tu lectura esencial · Gratis</div>
+      <div id="interpretacion-basica">
+        <div class="loader" style="padding:20px 0;">
+          <p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;">Cargando tu lectura...</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="section-upsell">
+      <div class="section-title">Lecturas completas</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
+        Elegí la lectura que más te resuena. Ingresás tu email, pagás y la recibís en menos de 5 minutos.
+      </p>
+      <div class="productos-grid">
+
+        <div class="producto-card destacado">
+          <div class="badge-popular">✦ Más elegida</div>
+          <div class="producto-header">
+            <div class="producto-nombre">Carta Natal Completa</div>
+            <div class="producto-precio">USD 6</div>
+          </div>
+          <p class="producto-desc">Interpretación profunda de los 10 planetas, casas, aspectos y síntesis evolutiva de tu camino de alma.</p>
+          <ul class="producto-items">
+            <li>Los 10 planetas en profundidad</li>
+            <li>Análisis de todas las casas astrológicas</li>
+            <li>Quirón, Lilith y Nodos del destino</li>
+            <li>Síntesis evolutiva de tu camino de alma</li>
+            <li>Patrones dominantes y dones ocultos</li>
+          </ul>
+          <div class="compra-form" id="form-carta-completa">
+            <input type="email" id="email-carta-completa" placeholder="Tu email para recibir la lectura" />
+            <div class="promo-row">
+              <input type="text" id="promo-carta-completa" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('carta-completa')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-carta-completa"></p>
+            <p class="success-msg hidden" id="success-carta-completa"></p>
+            <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          </div>
+        </div>
+
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Revolución Solar</div>
+            <div class="producto-precio">USD 9</div>
+          </div>
+          <p class="producto-desc">Tu año personal desde tu último cumpleaños. Qué viene, qué se activa, cuáles son tus meses clave.</p>
+          <ul class="producto-items">
+            <li>Carta de revolución solar interpretada</li>
+            <li>Meses clave del año</li>
+            <li>Amor, trabajo y crecimiento personal</li>
+            <li>Temas centrales de tu año evolutivo</li>
+          </ul>
+          <div class="compra-form" id="form-revolucion-solar">
+            <input type="email" id="email-revolucion-solar" placeholder="Tu email para recibir la lectura" />
+            <div class="rs-campos">
+              <label>¿Qué revolución solar querés leer?</label>
+              <select id="rs-anio">
+                <option value="">Elegí el año de tu cumpleaños</option>
+                <option value="2024">Cumpleaños 2024</option>
+                <option value="2025">Cumpleaños 2025</option>
+                <option value="2026">Cumpleaños 2026</option>
+              </select>
+              <label style="margin-top:10px;">Ciudad donde pasaste o pasarás ese cumpleaños</label>
+              <input type="text" id="rs-ciudad" placeholder="Ej: Buenos Aires, Madrid, México DF..." />
+              <label style="margin-top:10px;">País</label>
+              <input type="text" id="rs-pais" placeholder="Argentina" />
+            </div>
+            <div class="promo-row">
+              <input type="text" id="promo-revolucion-solar" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('revolucion-solar')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-revolucion-solar"></p>
+            <p class="success-msg hidden" id="success-revolucion-solar"></p>
+            <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">✦ Obtener mi lectura · USD 9</button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          </div>
+        </div>
+
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Sinastría · Compatibilidad</div>
+            <div class="producto-precio">USD 9</div>
+          </div>
+          <p class="producto-desc">La química real entre dos cartas natales. Qué los une, qué los desafía, el karma compartido.</p>
+          <ul class="producto-items">
+            <li>Análisis de aspectos cruzados entre ambas cartas</li>
+            <li>Venus, Marte, Sol y Luna en relación</li>
+            <li>Karma compartido y Nodos</li>
+            <li>Desafíos y dones de la relación</li>
+          </ul>
+          <div class="compra-form" id="form-sinastria">
+            <input type="email" id="email-sinastria" placeholder="Tu email para recibir la lectura" />
+            <div class="form-group" style="margin:10px 0;">
+              <label>Nombre y fecha de nacimiento de la otra persona</label>
+              <input type="text" id="sinastria-persona2" placeholder="Ej: Juan, 15/03/1990, Buenos Aires" />
+            </div>
+            <div class="promo-row">
+              <input type="text" id="promo-sinastria" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('sinastria')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-sinastria"></p>
+            <p class="success-msg hidden" id="success-sinastria"></p>
+            <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">✦ Obtener mi lectura · USD 9</button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          </div>
+        </div>
+
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Tránsitos Actuales</div>
+            <div class="producto-precio">USD 5</div>
+          </div>
+          <p class="producto-desc">Qué están activando los planetas en tu carta ahora mismo. Por qué sentís lo que sentís hoy.</p>
+          <ul class="producto-items">
+            <li>Planetas en tránsito sobre tu carta natal</li>
+            <li>Qué área de tu vida está siendo activada</li>
+            <li>Duración y cómo trabajar cada tránsito</li>
+          </ul>
+          <div class="compra-form" id="form-transitos">
+            <input type="email" id="email-transitos" placeholder="Tu email para recibir la lectura" />
+            <div class="promo-row">
+              <input type="text" id="promo-transitos" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('transitos')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-transitos"></p>
+            <p class="success-msg hidden" id="success-transitos"></p>
+            <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">✦ Obtener mi lectura · USD 5</button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Pregunta Puntual</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
+        Una pregunta específica respondida con tu carta natal. Amor, trabajo, decisiones, momentos clave.
+      </p>
+      <div class="pregunta-ejemplos">
+        <span class="pregunta-chip" onclick="setEjemplo('¿Por qué me cuesta tanto tomar decisiones importantes?')">¿Por qué me cuesta decidir?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Qué dice mi carta sobre el amor y los vínculos?')">¿Qué dice mi carta del amor?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Cuál es mi mayor fortaleza según mi carta natal?')">¿Cuál es mi mayor fortaleza?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Qué área de mi vida necesita más atención ahora?')">¿Qué necesita atención ahora?</span>
+        <span class="pregunta-chip" onclick="setEjemplo('¿Qué dice mi carta sobre mi propósito de vida?')">¿Mi propósito de vida?</span>
+      </div>
+      <div class="preguntas-section">
+        <textarea id="pregunta-texto" placeholder="Escribí tu pregunta aquí..."></textarea>
+        <input type="email" id="email-pregunta" placeholder="Tu email para recibir la respuesta" style="margin-top:10px;" />
+        <div class="promo-row" style="margin-top:10px;">
+          <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
+          <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
+        </div>
+        <p class="error-msg hidden" id="error-pregunta"></p>
+        <p class="success-msg hidden" id="success-pregunta"></p>
+        <button class="btn-paypal" onclick="procesarCompra('pregunta', 2)" style="margin-top:10px;">✦ Obtener respuesta · USD 2</button>
+        <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+      </div>
+    </div>
+
+    <div id="section-lecturas-desbloqueadas"></div>
+
+    <div style="text-align:center;margin-top:20px;">
+      <button onclick="reiniciar()" style="background:transparent;border:1px solid rgba(130,179,102,0.25);border-radius:8px;padding:10px 24px;color:#82B366;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer;letter-spacing:0.05em;">
+        Nueva consulta
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<div class="footer">ESPACIO LIBRA · ASTROLOGÍA EVOLUTIVA · cartasahora.espaciolibra.com</div>
+
+<script>
+const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
+const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
+const CODIGO_PRUEBA = 'ESPACIO2025';
+const promoAplicada = {};
+
+(function() {
+  const container = document.getElementById('stars');
+  for (let i = 0; i < 60; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random() * 1.8 + 0.4;
+    s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;width:${size}px;height:${size}px;--d:${(Math.random()*3+2).toFixed(1)}s;animation-delay:${(Math.random()*3).toFixed(1)}s;`;
+    container.appendChild(s);
+  }
+})();
+
+const PLANET_SYMBOLS = {'Sun':'☉','Moon':'☽','Mercury':'☿','Venus':'♀','Mars':'♂','Jupiter':'♃','Saturn':'♄','Uranus':'♅','Neptune':'♆','Pluto':'♇','Chiron':'⚷','Lilith':'⚸','North Node':'☊','South Node':'☋'};
+const PLANET_ES = {'Sun':'Sol','Moon':'Luna','Mercury':'Mercurio','Venus':'Venus','Mars':'Marte','Jupiter':'Júpiter','Saturn':'Saturno','Uranus':'Urano','Neptune':'Neptuno','Pluto':'Plutón','Chiron':'Quirón','Lilith':'Lilith','North Node':'Nodo Norte','South Node':'Nodo Sur'};
+const ASPECT_ES = {'conjunction':'conjunción','opposition':'oposición','trine':'trígono','square':'cuadratura','sextile':'sextil','quincunx':'quincuncio','semi-sextile':'semisextil'};
+const SIGN_MAP = {'Ari':'Aries','Tau':'Tauro','Gem':'Géminis','Can':'Cáncer','Leo':'Leo','Vir':'Virgo','Lib':'Libra','Sco':'Escorpio','Sag':'Sagitario','Cap':'Capricornio','Aqu':'Acuario','Pis':'Piscis'};
+const SIGN_SYMBOLS = {'Ari':'♈','Tau':'♉','Gem':'♊','Can':'♋','Leo':'♌','Vir':'♍','Lib':'♎','Sco':'♏','Sag':'♐','Cap':'♑','Aqu':'♒','Pis':'♓'};
+const SIGN_COLORS = {'Ari':'#e05050','Tau':'#50a050','Gem':'#e0b030','Can':'#6090d0','Leo':'#e07020','Vir':'#80a060','Lib':'#a060c0','Sco':'#c03030','Sag':'#e06010','Cap':'#708080','Aqu':'#4090c0','Pis':'#7070c0'};
+const HOUSE_MAP = {'First_House':1,'Second_House':2,'Third_House':3,'Fourth_House':4,'Fifth_House':5,'Sixth_House':6,'Seventh_House':7,'Eighth_House':8,'Ninth_House':9,'Tenth_House':10,'Eleventh_House':11,'Twelfth_House':12};
+const PLANET_KEYS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_lilith','true_north_lunar_node','true_south_lunar_node'];
+const PLANET_KEY_NAME = {'sun':'Sun','moon':'Moon','mercury':'Mercury','venus':'Venus','mars':'Mars','jupiter':'Jupiter','saturn':'Saturn','uranus':'Uranus','neptune':'Neptune','pluto':'Pluto','chiron':'Chiron','mean_lilith':'Lilith','true_north_lunar_node':'North Node','true_south_lunar_node':'South Node'};
+const PLANET_COLORS = {'sun':'#f5c842','moon':'#c8d8f0','mercury':'#82B366','venus':'#f090a0','mars':'#e05050','jupiter':'#9B6FD0','saturn':'#c8a040','uranus':'#40c0c0','neptune':'#5070e0','pluto':'#b060b0','chiron':'#80b080','mean_lilith':'#c04040','true_north_lunar_node':'#d0d0d0','true_south_lunar_node':'#a0a0a0'};
+
+function aspectClass(type) {
+  if (type === 'conjunction') return 'poderoso';
+  if (type === 'trine' || type === 'sextile') return 'armonico';
+  return 'desafiante';
+}
+
+function aspectLineColor(type) {
+  if (type === 'trine') return { color: 'rgba(130,179,102,0.7)', width: 1.5, dash: '' };
+  if (type === 'square') return { color: 'rgba(224,80,80,0.7)', width: 1.5, dash: '' };
+  if (type === 'opposition') return { color: 'rgba(80,130,220,0.7)', width: 1.2, dash: '4,4' };
+  if (type === 'conjunction') return { color: 'rgba(240,192,64,0.6)', width: 1.2, dash: '' };
+  if (type === 'sextile') return { color: 'rgba(130,179,102,0.4)', width: 1, dash: '3,3' };
+  return { color: 'rgba(255,255,255,0.2)', width: 1, dash: '2,4' };
+}
+
+async function getCoordenadas(ciudad, pais) {
+  const query = encodeURIComponent(`${ciudad}, ${pais}`);
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {headers: {'Accept-Language': 'es'}});
+  const data = await res.json();
+  if (!data || data.length === 0) throw new Error('No encontré esa ciudad. Probá con una ciudad más grande cercana.');
+  return {lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon)};
+}
+
+async function getTimezone(lat, lon) {
+  try {
+    const res = await fetch(`https://timeapi.io/api/timezone/coordinate?latitude=${lat}&longitude=${lon}`);
+    const data = await res.json();
+    return data.timeZone || 'America/Argentina/Buenos_Aires';
+  } catch { return 'America/Argentina/Buenos_Aires'; }
+}
+
+async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad, pais) {
+  const [year, month, day] = fecha.split('-').map(Number);
+  const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
+  const PAIS_CODIGOS = {'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
+  const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
+  const body = {subject: {name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode}};
+  const res = await fetch(`${WORKER_URL}/carta`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
+  if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
+  return await res.json();
+}
+
+async function llamarClaude(prompt) {
+  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt})});
+  if (!res.ok) throw new Error('Error al obtener la interpretación.');
+  const data = await res.json();
+  if (data.content && Array.isArray(data.content)) return data.content.map(b => b.text || '').join('');
+  if (data.text) return data.text;
+  if (typeof data === 'string') return data;
+  return '';
+}
+
+function createSVGEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+
+function renderRueda(chartData) {
+  const svg = document.getElementById('chart-wheel');
+  svg.innerHTML = '';
+  const cx = 250, cy = 250, R_OUTER = 230, R_SIGN = 210, R_SIGN_IN = 175, R_HOUSE = 160, R_PLANET = 130, R_CENTER = 35;
+  const signs = ['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
+  const subject_pre = chartData?.chart_data?.subject || {};
+  const ascData = subject_pre.first_house || subject_pre.ascendant || subject_pre.asc || null;
+  let ascAbsPos = 0;
+  if (ascData?.abs_pos !== undefined) ascAbsPos = ascData.abs_pos;
+  else if (ascData?.position !== undefined && ascData?.sign) { const i = signs.indexOf(ascData.sign); if (i >= 0) ascAbsPos = i * 30 + ascData.position; }
+  const HOUSE_KEYS_ORDER = ['first_house','second_house','third_house','fourth_house','fifth_house','sixth_house','seventh_house','eighth_house','ninth_house','tenth_house','eleventh_house','twelfth_house'];
+  function getHouseAbsPos(hData) { if (!hData) return null; if (hData.abs_pos !== undefined) return hData.abs_pos; if (hData.position !== undefined && hData.sign) { const idx = signs.indexOf(hData.sign); if (idx >= 0) return idx * 30 + hData.position; } return null; }
+  const housesSource = chartData?.chart_data?.houses || subject_pre;
+  const cusps = HOUSE_KEYS_ORDER.map(k => { const variants = [k, k.replace(/_/g,''), k.split('_').map((w,i) => i===0?w:w[0].toUpperCase()+w.slice(1)).join('')]; for (const v of variants) { const val = getHouseAbsPos(housesSource[v]); if (val !== null) return val; } return null; });
+  const hasRealCusps = cusps.filter(c => c !== null).length >= 6;
+  const finalCusps = hasRealCusps ? cusps.map((c,i) => c !== null ? c : (ascAbsPos+i*30)%360) : Array.from({length:12},(_,i) => (ascAbsPos+i*30)%360);
+  function eclToSvg(deg) { return (180-(deg-ascAbsPos))*Math.PI/180; }
+  const defs = createSVGEl('defs'); const filter = createSVGEl('filter'); filter.setAttribute('id','glow');
+  const feG = createSVGEl('feGaussianBlur'); feG.setAttribute('stdDeviation','3'); feG.setAttribute('result','blur');
+  const feM = createSVGEl('feMerge'); const m1=createSVGEl('feMergeNode'); m1.setAttribute('in','blur'); const m2=createSVGEl('feMergeNode'); m2.setAttribute('in','SourceGraphic');
+  feM.appendChild(m1); feM.appendChild(m2); filter.appendChild(feG); filter.appendChild(feM); defs.appendChild(filter); svg.appendChild(defs);
+  const bgC = createSVGEl('circle'); bgC.setAttribute('cx',cx); bgC.setAttribute('cy',cy); bgC.setAttribute('r',R_OUTER); bgC.setAttribute('fill','#080812'); bgC.setAttribute('stroke','rgba(130,179,102,0.3)'); bgC.setAttribute('stroke-width','1'); svg.appendChild(bgC);
+  const elemColorMap = ['rgba(180,60,40,0.15)','rgba(70,120,60,0.15)','rgba(180,150,30,0.15)','rgba(50,80,160,0.15)'];
+  signs.forEach((sign,i) => {
+    const startRad=eclToSvg(i*30),endRad=eclToSvg((i+1)*30);
+    const x1o=cx+R_SIGN*Math.cos(startRad),y1o=cy+R_SIGN*Math.sin(startRad),x2o=cx+R_SIGN*Math.cos(endRad),y2o=cy+R_SIGN*Math.sin(endRad);
+    const x1i=cx+R_SIGN_IN*Math.cos(startRad),y1i=cy+R_SIGN_IN*Math.sin(startRad),x2i=cx+R_SIGN_IN*Math.cos(endRad),y2i=cy+R_SIGN_IN*Math.sin(endRad);
+    const path=createSVGEl('path'); path.setAttribute('d',`M${x1i},${y1i} L${x1o},${y1o} A${R_SIGN},${R_SIGN} 0 0,0 ${x2o},${y2o} L${x2i},${y2i} A${R_SIGN_IN},${R_SIGN_IN} 0 0,1 ${x1i},${y1i} Z`); path.setAttribute('fill',elemColorMap[[0,1,2,3,0,1,2,3,0,1,2,3][i]]); path.setAttribute('stroke','rgba(255,255,255,0.07)'); path.setAttribute('stroke-width','0.5'); svg.appendChild(path);
+    const midRad=eclToSvg(i*30+15),symR=(R_SIGN+R_SIGN_IN)/2,tx=cx+symR*Math.cos(midRad),ty=cy+symR*Math.sin(midRad);
+    const symTxt=createSVGEl('text'); symTxt.setAttribute('x',tx); symTxt.setAttribute('y',ty); symTxt.setAttribute('text-anchor','middle'); symTxt.setAttribute('dominant-baseline','middle'); symTxt.setAttribute('font-size','16'); symTxt.setAttribute('fill',SIGN_COLORS[sign]||'#ffffff'); symTxt.setAttribute('opacity','0.9'); symTxt.setAttribute('font-family','serif'); symTxt.textContent=SIGN_SYMBOLS[sign]||sign; svg.appendChild(symTxt);
+  });
+  const ringC=createSVGEl('circle'); ringC.setAttribute('cx',cx); ringC.setAttribute('cy',cy); ringC.setAttribute('r',R_SIGN_IN); ringC.setAttribute('fill','none'); ringC.setAttribute('stroke','rgba(130,179,102,0.25)'); ringC.setAttribute('stroke-width','1'); svg.appendChild(ringC);
+  const houseC=createSVGEl('circle'); houseC.setAttribute('cx',cx); houseC.setAttribute('cy',cy); houseC.setAttribute('r',R_HOUSE); houseC.setAttribute('fill','rgba(0,0,0,0.3)'); houseC.setAttribute('stroke','rgba(255,255,255,0.06)'); houseC.setAttribute('stroke-width','0.5'); svg.appendChild(houseC);
+  signs.forEach((_,i) => { const angle=eclToSvg(i*30),x1=cx+R_SIGN_IN*Math.cos(angle),y1=cy+R_SIGN_IN*Math.sin(angle),x2=cx+R_SIGN*Math.cos(angle),y2=cy+R_SIGN*Math.sin(angle); const line=createSVGEl('line'); line.setAttribute('x1',x1); line.setAttribute('y1',y1); line.setAttribute('x2',x2); line.setAttribute('y2',y2); line.setAttribute('stroke','rgba(255,255,255,0.12)'); line.setAttribute('stroke-width','0.8'); svg.appendChild(line); });
+  const angularHouses=new Set([0,3,6,9]);
+  finalCusps.forEach((cuspEcl,h) => { const isAngular=angularHouses.has(h),houseRad=eclToSvg(cuspEcl),r1=isAngular?R_SIGN_IN:R_HOUSE,r2=R_CENTER+2; const x1h=cx+r1*Math.cos(houseRad),y1h=cy+r1*Math.sin(houseRad),x2h=cx+r2*Math.cos(houseRad),y2h=cy+r2*Math.sin(houseRad); const hLine=createSVGEl('line'); hLine.setAttribute('x1',x1h); hLine.setAttribute('y1',y1h); hLine.setAttribute('x2',x2h); hLine.setAttribute('y2',y2h); hLine.setAttribute('stroke',isAngular?'rgba(200,170,80,0.6)':'rgba(255,255,255,0.13)'); hLine.setAttribute('stroke-width',isAngular?'1.2':'0.6'); if(!isAngular)hLine.setAttribute('stroke-dasharray','3,4'); svg.appendChild(hLine); const nextCusp=finalCusps[(h+1)%12],span=(nextCusp-cuspEcl+360)%360,midEcl=cuspEcl+span/2,labelRad=eclToSvg(midEcl),labelR=R_HOUSE-14,lx=cx+labelR*Math.cos(labelRad),ly=cy+labelR*Math.sin(labelRad); const hLabel=createSVGEl('text'); hLabel.setAttribute('x',lx); hLabel.setAttribute('y',ly); hLabel.setAttribute('text-anchor','middle'); hLabel.setAttribute('dominant-baseline','middle'); hLabel.setAttribute('font-size',isAngular?'9':'7'); hLabel.setAttribute('fill',isAngular?'rgba(200,170,80,0.85)':'rgba(255,255,255,0.22)'); hLabel.textContent=String(h+1); svg.appendChild(hLabel); });
+  const ascRad=eclToSvg(ascAbsPos),dcAbsPos=(ascAbsPos+180)%360,dcRad=eclToSvg(dcAbsPos);
+  const axisDC=createSVGEl('line'); axisDC.setAttribute('x1',cx+R_SIGN_IN*Math.cos(ascRad)); axisDC.setAttribute('y1',cy+R_SIGN_IN*Math.sin(ascRad)); axisDC.setAttribute('x2',cx+R_SIGN_IN*Math.cos(dcRad)); axisDC.setAttribute('y2',cy+R_SIGN_IN*Math.sin(dcRad)); axisDC.setAttribute('stroke','rgba(200,170,80,0.3)'); axisDC.setAttribute('stroke-width','0.8'); svg.appendChild(axisDC);
+  const acLabel=createSVGEl('text'); acLabel.setAttribute('x',cx+(R_OUTER-15)*Math.cos(ascRad)); acLabel.setAttribute('y',cy+(R_OUTER-15)*Math.sin(ascRad)); acLabel.setAttribute('text-anchor','middle'); acLabel.setAttribute('dominant-baseline','middle'); acLabel.setAttribute('font-size','10'); acLabel.setAttribute('fill','rgba(200,170,80,0.95)'); acLabel.setAttribute('font-family','Cinzel, serif'); acLabel.textContent='AC'; svg.appendChild(acLabel);
+  const dcLabel=createSVGEl('text'); dcLabel.setAttribute('x',cx+(R_OUTER-15)*Math.cos(dcRad)); dcLabel.setAttribute('y',cy+(R_OUTER-15)*Math.sin(dcRad)); dcLabel.setAttribute('text-anchor','middle'); dcLabel.setAttribute('dominant-baseline','middle'); dcLabel.setAttribute('font-size','10'); dcLabel.setAttribute('fill','rgba(200,170,80,0.6)'); dcLabel.setAttribute('font-family','Cinzel, serif'); dcLabel.textContent='DC'; svg.appendChild(dcLabel);
+  const subject=chartData?.chart_data?.subject||{};
+  const planetPositions={};
+  PLANET_KEYS.forEach(key => { const p=subject[key]; if(!p||p.abs_pos===undefined)return; const angleRad=eclToSvg(p.abs_pos),px=cx+R_PLANET*Math.cos(angleRad),py=cy+R_PLANET*Math.sin(angleRad); planetPositions[key]={x:px,y:py,abs_pos:p.abs_pos,name:PLANET_KEY_NAME[key]}; });
+  const aspects=chartData?.chart_data?.aspects||[];
+  const mainTypes=['conjunction','opposition','trine','square','sextile'];
+  const topAspects=aspects.filter(a=>mainTypes.includes(a.aspect||a.aspect_type||a.type)).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,10);
+  const nameToKey={};
+  PLANET_KEYS.forEach(k=>{nameToKey[PLANET_KEY_NAME[k]]=k;});
+  topAspects.forEach(asp => { const tipo=asp.aspect||asp.aspect_type||asp.type,k1=nameToKey[asp.p1_name],k2=nameToKey[asp.p2_name],pos1=planetPositions[k1],pos2=planetPositions[k2]; if(!pos1||!pos2)return; const style=aspectLineColor(tipo),line=createSVGEl('line'); line.setAttribute('x1',pos1.x); line.setAttribute('y1',pos1.y); line.setAttribute('x2',pos2.x); line.setAttribute('y2',pos2.y); line.setAttribute('stroke',style.color); line.setAttribute('stroke-width',style.width); if(style.dash)line.setAttribute('stroke-dasharray',style.dash); svg.appendChild(line); });
+  const placedAngles=[];
+  PLANET_KEYS.forEach(key => { const p=subject[key]; if(!p||p.abs_pos===undefined)return; let adjustedEcl=p.abs_pos,tries=0; while(tries<8){const conflict=placedAngles.find(a=>Math.abs(((adjustedEcl-a+540)%360)-180)<8);if(!conflict)break;adjustedEcl+=9;tries++;} placedAngles.push(adjustedEcl); const angleRad=eclToSvg(adjustedEcl),px=cx+R_PLANET*Math.cos(angleRad),py=cy+R_PLANET*Math.sin(angleRad); const origRad=eclToSvg(p.abs_pos); const tickX1=cx+(R_SIGN_IN-4)*Math.cos(origRad),tickY1=cy+(R_SIGN_IN-4)*Math.sin(origRad),tickX2=cx+(R_SIGN_IN-14)*Math.cos(origRad),tickY2=cy+(R_SIGN_IN-14)*Math.sin(origRad); const tick=createSVGEl('line'); tick.setAttribute('x1',tickX1); tick.setAttribute('y1',tickY1); tick.setAttribute('x2',tickX2); tick.setAttribute('y2',tickY2); tick.setAttribute('stroke','rgba(255,255,255,0.1)'); tick.setAttribute('stroke-width','0.8'); svg.appendChild(tick); const pName=PLANET_KEY_NAME[key],color=PLANET_COLORS[key]||'#ffffff'; const circle=createSVGEl('circle'); circle.setAttribute('cx',px); circle.setAttribute('cy',py); circle.setAttribute('r','12'); circle.setAttribute('fill','rgba(8,8,18,0.92)'); circle.setAttribute('stroke',color); circle.setAttribute('stroke-width','1.2'); circle.setAttribute('filter','url(#glow)'); svg.appendChild(circle); const sym=createSVGEl('text'); sym.setAttribute('x',px); sym.setAttribute('y',py); sym.setAttribute('text-anchor','middle'); sym.setAttribute('dominant-baseline','middle'); sym.setAttribute('font-size','11'); sym.setAttribute('fill',color); sym.setAttribute('font-family','serif'); sym.textContent=PLANET_SYMBOLS[pName]||'•'; svg.appendChild(sym); const degText=createSVGEl('text'); degText.setAttribute('x',px); degText.setAttribute('y',py+18); degText.setAttribute('text-anchor','middle'); degText.setAttribute('font-size','7'); degText.setAttribute('fill','rgba(255,255,255,0.3)'); degText.textContent=(p.position!==undefined?p.position.toFixed(0):'')+'\u00b0'; svg.appendChild(degText); });
+  const centerCircle=createSVGEl('circle'); centerCircle.setAttribute('cx',cx); centerCircle.setAttribute('cy',cy); centerCircle.setAttribute('r',R_CENTER); centerCircle.setAttribute('fill','#080812'); centerCircle.setAttribute('stroke','rgba(130,179,102,0.4)'); centerCircle.setAttribute('stroke-width','1'); svg.appendChild(centerCircle);
+  const centralSym=createSVGEl('text'); centralSym.setAttribute('x',cx); centralSym.setAttribute('y',cy); centralSym.setAttribute('text-anchor','middle'); centralSym.setAttribute('dominant-baseline','middle'); centralSym.setAttribute('font-size','18'); centralSym.setAttribute('fill','rgba(130,179,102,0.6)'); centralSym.textContent='✦'; svg.appendChild(centralSym);
+}
+
+function renderPlanetas(chartData) {
+  const tbody=document.getElementById('tabla-planetas'); tbody.innerHTML='';
+  const subject=chartData?.chart_data?.subject||{};
+  let ascInserted=false;
+  PLANET_KEYS.forEach(key => {
+    const p=subject[key]; if(!p)return;
+    const pName=PLANET_KEY_NAME[key],signEs=SIGN_MAP[p.sign]||p.sign||'—',house=HOUSE_MAP[p.house]||'—',degree=p.position!==undefined?p.position.toFixed(1)+'°':'—',retro=p.retrograde===true?' <span class="retro-badge">Rx</span>':'';
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><div class="planet-name"><span class="planet-symbol">${PLANET_SYMBOLS[pName]||'•'}</span>${PLANET_ES[pName]||pName}${retro}</div></td><td class="planet-sign">${signEs}</td><td class="planet-degree">${degree}</td><td class="planet-house">${house!=='—'?'Casa '+house:'—'}</td>`;
+    tbody.appendChild(tr);
+    if(key==='moon'&&!ascInserted){
+      ascInserted=true;
+      const ascData=subject.first_house||subject.ascendant||subject.asc||null;
+      if(ascData){const ascSign=SIGN_MAP[ascData.sign]||ascData.sign||'—',ascDeg=ascData.position!==undefined?ascData.position.toFixed(1)+'°':'—',ascTr=document.createElement('tr');ascTr.style.borderTop='1px solid rgba(200,170,80,0.15)';ascTr.innerHTML=`<td><div class="planet-name" style="color:rgba(200,170,80,0.9);"><span class="planet-symbol" style="font-size:13px;">↑</span>Ascendente</div></td><td class="planet-sign" style="color:rgba(200,170,80,0.9);">${ascSign}</td><td class="planet-degree">${ascDeg}</td><td class="planet-house" style="color:rgba(200,170,80,0.6);">Casa 1</td>`;tbody.appendChild(ascTr);}
+    }
+  });
+}
+
+function renderAspectos(chartData) {
+  const tbody=document.getElementById('tabla-aspectos'); tbody.innerHTML='';
+  const aspects=chartData?.chart_data?.aspects||[];
+  const mainTypes=['conjunction','opposition','trine','square','sextile'];
+  const filtered=aspects.filter(a=>mainTypes.includes(a.aspect||a.aspect_type||a.type)).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,10);
+  document.getElementById('aspectos-count').textContent=`Aspectos principales (${filtered.length})`;
+  filtered.forEach(a => { const p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'',tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,orb=a.orbit!==undefined?Math.abs(a.orbit).toFixed(2)+'°':'',cls=aspectClass(tipo); const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="aspect-name"><div class="aspect-bar ${cls}"></div>${p1} ${tipoEs} ${p2}</div></td><td><div class="aspect-right"><span class="aspect-quality ${cls}">${cls==='poderoso'?'poderoso':cls==='armonico'?'armónico':'desafiante'}</span><span class="aspect-orb">${orb}</span></div></td>`; tbody.appendChild(tr); });
+}
+
+function renderInterp(texto, containerId) {
+  const container=document.getElementById(containerId); if(!container)return;
+  if(!texto||!texto.trim()){container.innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura. Verificá tu conexión e intentá de nuevo.</p>';return;}
+  container.innerHTML='';
+  const lineas=texto.split('\n'); let currentBlock=null;
+  lineas.forEach(linea => {
+    if(!linea.trim()){if(currentBlock){container.appendChild(currentBlock);currentBlock=null;}return;}
+    const esTitulo=(linea.startsWith('**')&&linea.endsWith('**'))||(linea.startsWith('**')&&linea.includes('**',2));
+    if(esTitulo){if(currentBlock)container.appendChild(currentBlock);currentBlock=document.createElement('div');currentBlock.className='interp-block';const title=document.createElement('div');title.className='interp-title';title.textContent=linea.replace(/\*\*/g,'').trim();currentBlock.appendChild(title);}
+    else{if(!currentBlock){currentBlock=document.createElement('div');currentBlock.className='interp-block';}const p=document.createElement('p');p.className='interp-text';p.style.marginBottom='10px';p.textContent=linea.replace(/\*\*/g,'').replace(/\*/g,'').trim();currentBlock.appendChild(p);}
+  });
+  if(currentBlock)container.appendChild(currentBlock);
+}
+
+// --- SYSTEM PROMPT BASE EVOLUTIVO ---
+const SYSTEM_EVOLUTIVO = `Sos una astróloga especializada en astrología psicológica y evolutiva. Tu marco de interpretación se basa en los siguientes principios fundamentales:
+
+LA CARTA NATAL es un mapa evolutivo del alma, no un destino fijo. Muestra desde dónde viene el alma (puntos de pasado) y hacia dónde va su evolución en esta vida (puntos evolutivos).
+
+PUNTOS DE PASADO (lo conocido, lo automático, lo que el alma trae): Luna (mecanismo de seguridad emocional aprendido en la infancia, el niño interno, lo que busca para sentirse protegido), Nodo Sur (energías y experiencias ya dominadas en vidas anteriores, talentos naturales pero que frenan el crecimiento si se abusa de ellos), Plutón (el mayor apego del alma, lo que controla desde el inconsciente).
+
+PUNTOS DE EVOLUCIÓN (lo nuevo, el camino del alma en esta vida): Sol (punto evolutivo central, la llama auténtica que se viene a encender en esta vida; NO es algo ya dado sino algo a desarrollar; muchas personas no se identifican con su Sol porque todavía no lo han activado), Ascendente (energía nueva a integrar en la personalidad; mientras no se incorpore hay dificultades para funcionar en el mundo; activarlo permite que el Sol se exprese), Nodo Norte (la enseñanza espiritual de esta encarnación, el camino de crecimiento que el alma viene a explorar).
+
+SATURNO es punto de pasado, presente y futuro a la vez: sus desafíos son el vehículo de evolución del alma en la Tierra.
+
+QUIRÓN es la herida del sanador: el área de dolor profundo que, al ser trabajada conscientemente, se convierte en el mayor don para ayudar a otros.
+
+PRINCIPIOS DE INTERPRETACIÓN:
+- Nunca predecís el futuro de manera determinista. Los tránsitos y configuraciones son portales energéticos, oportunidades, no condenas.
+- Siempre hablás desde el autoconocimiento y el crecimiento: el dolor tiene sentido evolutivo.
+- La evolución no está en negar los puntos de pasado sino en integrarlos sanamente.
+- El libre albedrío siempre existe: la persona puede fluir con las energías o resistirlas.
+- Usás castellano rioplatense, tono cálido, moderno, directo y profundo. Nunca robótico ni esotérico superficial.
+- Hablás de "vos" a la persona.
+- Usás títulos de sección entre dobles asteriscos en línea propia.
+- NUNCA menciones autores, escuelas o metodologías específicas.`;
+
+// --- PROMPT BASICO ---
+function buildPromptBasico(nombre, chartData) {
+  const subject=chartData?.chart_data?.subject||{};
+  const sol=subject.sun,luna=subject.moon,asc=subject.first_house||subject.ascendant||subject.asc||null;
+  const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?',lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?';
+  const solHouse=HOUSE_MAP[sol?.house]||'?',lunaHouse=HOUSE_MAP[luna?.house]||'?';
+  const ascSign=asc?(SIGN_MAP[asc?.sign]||asc?.sign):'?';
+  const aspects=chartData?.chart_data?.aspects||[];
+  const tiposRelevantes=['trine','square','conjunction','opposition','sextile'];
+  function aspectosDe(planetName) {
+    return aspects.filter(a=>{const tipo=a.aspect||a.aspect_type||a.type;return(a.p1_name===planetName||a.p2_name===planetName)&&tiposRelevantes.includes(tipo);})
+    .sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,2)
+    .map(a=>{const tipo=a.aspect||a.aspect_type||a.type,tipoEs=ASPECT_ES[tipo]||tipo,otro=a.p1_name===planetName?a.p2_name:a.p1_name,otroEs=PLANET_ES[otro]||otro;return `${tipoEs} con ${otroEs}`;});
+  }
+  const aspectosSol=aspectosDe('Sun'),aspectosLuna=aspectosDe('Moon');
+  const textoAspectosSol=aspectosSol.length>0?`\nEl Sol tiene estos aspectos en su carta: ${aspectosSol.join(' / ')}. Mencionalos con un tono invitador, como una puerta entornada que sugiere que hay más por descubrir, sin explicar del todo su significado.`:'';
+  const textoAspectosLuna=aspectosLuna.length>0?`\nLa Luna tiene estos aspectos: ${aspectosLuna.join(' / ')}. Mencionalos con el mismo aire: algo que resuene pero que quede abierto, como una pista de algo más profundo.`:'';
+
+  return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
+- Sol en ${solSign}, casa ${solHouse}
+- Luna en ${lunaSign}, casa ${lunaHouse}
+- Ascendente en ${ascSign}
+
+Escribí una LECTURA ESENCIAL GRATUITA con exactamente estas tres secciones. Cada título entre dobles asteriscos en línea propia.
+
+**Tu esencia solar**
+Hablá del Sol de ${nombre} en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que está aprendiendo a ser en esta vida, no algo que ya tiene completamente desarrollado. Describí la llama auténtica que viene a encender: cómo se expresa su identidad cuando está siendo genuino/a, qué necesita para sentirse vivo/a. Incluí una tensión o paradoja real de este Sol. 150 a 200 palabras.${textoAspectosSol} No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.
+
+**Tu mundo emocional**
+Hablá de la Luna de ${nombre} en ${lunaSign} en casa ${lunaHouse}. La Luna es el mecanismo de seguridad emocional que trae desde su historia más temprana. Describí cómo procesa lo que siente, qué necesita para sentirse seguro/a, cómo reacciona cuando se siente vulnerable. 150 a 200 palabras.${textoAspectosLuna} Quedás en la superficie luminosa, sin entrar en heridas profundas ni sombras.
+
+**Tu presencia en el mundo**
+Hablá del Ascendente de ${nombre} en ${ascSign}. El Ascendente es una energía nueva que viene a integrar en esta vida. Describí cómo se presenta ante el mundo, la energía que irradia al entrar a un lugar, cómo la perciben quienes no la conocen. 150 a 200 palabras. No entres en el propósito evolutivo profundo.
+
+Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una pregunta que invite a ${nombre} a querer saber más sobre su carta completa, una línea en blanco, y una frase poética muy breve que funcione como gancho hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
+}
+
+// --- PROMPTS POR PRODUCTO ---
+function buildPrompt(producto, nombre, chartData, extras) {
+  const subject=chartData?.chart_data?.subject||{};
+  const planetsText=PLANET_KEYS.map(key=>{const p=subject[key];if(!p)return null;const pName=PLANET_KEY_NAME[key];return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;}).filter(Boolean).join(', ');
+  const ascData=subject.first_house||subject.ascendant||subject.asc||null;
+  const ascSign=ascData?(SIGN_MAP[ascData.sign]||ascData.sign):'?';
+  const aspects=chartData?.chart_data?.aspects||[];
+  const topAspects=aspects.filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect||a.aspect_type||a.type)).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,8).map(a=>{const tipo=a.aspect||a.aspect_type||a.type,tipoEs=ASPECT_ES[tipo]||tipo,p1=PLANET_ES[a.p1_name]||a.p1_name,p2=PLANET_ES[a.p2_name]||a.p2_name;return `${p1} ${tipoEs} ${p2} (orbe ${Math.abs(a.orbit||0).toFixed(1)})`;}).join(', ');
+
+  const base=`Carta natal de ${nombre}:
+Planetas: ${planetsText}
+Ascendente: ${ascSign}
+Aspectos principales: ${topAspects}`;
+
+  if (producto === 'carta-completa') return `${base}
+
+Escribí una LECTURA NATAL COMPLETA Y PROFUNDA desde la perspectiva evolutiva. Cada sección 2-3 párrafos.
+
+**Tu esencia solar**
+El Sol como punto evolutivo: la llama auténtica que viene a encender en esta vida, el proceso de individualización, la paradoja entre quién cree que es y quién realmente es.
+
+**Tu mundo emocional**
+La Luna como mecanismo de seguridad aprendido en la infancia: qué busca para sentirse contenido/a, cómo reacciona ante la vulnerabilidad, el niño/a interno/a que sigue pidiendo ser cuidado/a.
+
+**Tu presencia en el mundo**
+El Ascendente como energía nueva a integrar: la máscara, el filtro, lo que viene a aprender a ser en este plano.
+
+**Tu mente y tu voz**
+Mercurio: cómo piensa, aprende y se comunica.
+
+**El amor y los vínculos**
+Venus y sus aspectos: qué busca en el amor, cómo se relaciona, qué le atrae y qué le cuesta en los vínculos.
+
+**Tu fuerza y tu acción**
+Marte: cómo actúa, defiende lo que quiere, maneja la energía y el enojo.
+
+**Expansión y abundancia**
+Júpiter: dónde está su crecimiento natural, su filosofía de vida, su sentido de abundancia.
+
+**Estructura y desafío**
+Saturno como vehículo de evolución: dónde la vida le pide madurez, disciplina y hacerse cargo. Sus desafíos son sus mayores maestros.
+
+**Tu camino de alma**
+Nodo Norte (hacia dónde va el alma) y Nodo Sur (de dónde viene). Quirón: la herida que al ser integrada se convierte en don. Plutón: el apego más profundo del alma y lo que viene a transformar.
+
+**Síntesis evolutiva**
+Una síntesis de 2-3 párrafos que integre todo: el viaje de esta alma en esta encarnación, los temas centrales, el regalo que tiene para el mundo cuando vive desde su expresión más auténtica.
+
+Cerrá con una frase poética y poderosa.`;
+
+  if (producto === 'revolucion-solar') {
+    const anioRS=extras?.anioRS||'2025';
+    const ciudadRS=extras?.ciudadRS||'su ciudad de residencia';
+
+    // Extraer datos reales de la RS si están disponibles
+    let rsSection='';
+    const rsData=extras?.rsData;
+    if(rsData&&rsData.chart_data){
+      const ss=rsData.chart_data.second_subject||{};
+      const rsAsc=SIGN_MAP[ss.ascendant?.sign]||ss.ascendant?.sign||'?';
+      const rsSol=`${SIGN_MAP[ss.sun?.sign]||ss.sun?.sign||'?'}, casa ${HOUSE_MAP[ss.sun?.house]||'?'}`;
+      const rsLuna=`${SIGN_MAP[ss.moon?.sign]||ss.moon?.sign||'?'}, casa ${HOUSE_MAP[ss.moon?.house]||'?'}`;
+      const rsVenus=`${SIGN_MAP[ss.venus?.sign]||ss.venus?.sign||'?'}, casa ${HOUSE_MAP[ss.venus?.house]||'?'}`;
+      const rsMarte=`${SIGN_MAP[ss.mars?.sign]||ss.mars?.sign||'?'}, casa ${HOUSE_MAP[ss.mars?.house]||'?'}`;
+      const rsJupiter=`${SIGN_MAP[ss.jupiter?.sign]||ss.jupiter?.sign||'?'}, casa ${HOUSE_MAP[ss.jupiter?.house]||'?'}`;
+      const rsSaturno=`${SIGN_MAP[ss.saturn?.sign]||ss.saturn?.sign||'?'}, casa ${HOUSE_MAP[ss.saturn?.house]||'?'}`;
+      const rsAspectos=(rsData.chart_data.aspects||[])
+        .sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0))
+        .slice(0,5)
+        .map(a=>{const tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'';return `${p1} natal ${tipoEs} ${p2} RS (orbe ${Math.abs(a.orbit||0).toFixed(1)}°)`;})
+        .join('\n');
+      rsSection=`
+Datos de la Revolución Solar ${anioRS} (calculada para ${ciudadRS}):
+- Ascendente RS: ${rsAsc} → energía nueva a integrar este año
+- Sol RS: ${rsSol}
+- Luna RS: ${rsLuna}
+- Venus RS: ${rsVenus}
+- Marte RS: ${rsMarte}
+- Júpiter RS: ${rsJupiter}
+- Saturno RS: ${rsSaturno}
+
+Aspectos cruzados natal-RS más exactos:
+${rsAspectos}`;
+    } else {
+      rsSection=`\nRevolución Solar ${anioRS} calculada para ${ciudadRS}. Interpretá el año basándote en la carta natal de ${nombre} y los principios evolutivos del ciclo personal.`;
+    }
+
+    return `${base}
+${rsSection}
+
+Escribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} desde la perspectiva evolutiva. Cada sección 2-3 párrafos.
+
+Reglas de interpretación:
+- El Ascendente de la RS marca el tono evolutivo del año: qué energía nueva viene a integrar ${nombre} en este ciclo
+- La Luna de la RS muestra la necesidad emocional dominante del año
+- Los planetas lentos (Júpiter, Saturno) en la RS son portales energéticos que activan áreas de la carta natal, nunca predicciones fijas
+- Los aspectos cruzados natal-RS muestran cómo el año dialoga con el mapa del alma
+- El tono nunca es fatalista: es siempre una invitación al movimiento consciente
+- Usás castellano rioplatense, "vos", cálido, profundo, sin terminología esotérica superficial
+- NUNCA menciones autores, escuelas ni metodologías
+- Dirigite directamente a ${nombre} en cada sección al menos una vez
+
+**El tono del año ${anioRS}**
+Qué energía trae el Ascendente de la RS. Cuál es el tono evolutivo dominante del año. Qué viene a trabajar ${nombre} en este ciclo. Empezá con: "Tu Ascendente de revolución solar en [signo], ${nombre}, marca el tono de este año..."
+
+**Tu mundo emocional este año**
+La Luna de la RS: qué necesita ${nombre} emocionalmente este año, cómo procesa lo que siente en este ciclo, qué busca para sentirse contenida/o y segura/o.
+
+**Los planetas que marcan el ritmo**
+Cómo Venus, Marte, Júpiter y Saturno de la RS están activando áreas específicas de la vida de ${nombre}. Qué se expande, qué se estructura, qué se moviliza, qué se desafía.
+
+**Los aspectos clave entre tu carta natal y tu revolución solar**
+Cómo el año dialoga con el mapa del alma de ${nombre}. Qué se activa en la carta natal a través de los aspectos cruzados. Qué conversación hay entre quién es ${nombre} y lo que este año viene a despertar.
+
+**Los meses clave**
+Qué períodos del año tienen mayor activación o movimiento para ${nombre}. Dónde hay oportunidades y dónde hay desafíos a trabajar con conciencia.
+
+**Amor y vínculos en este año**
+Qué se mueve en el área de los vínculos y el amor en este ciclo personal de ${nombre}. Qué pide ser mirado, transformado o profundizado.
+
+**Trabajo y propósito en este año**
+Qué se activa en el área profesional, vocacional y de propósito de vida de ${nombre}. Qué viene a construir o a soltar en este ciclo.
+
+**Cómo aprovechar esta energía**
+Consejos concretos y evolutivos para que ${nombre} fluya con lo que el año trae. Qué actitud, qué práctica, qué mirada interna le va a permitir vivir este año desde su expresión más auténtica.`;
+  }
+
+  if (producto === 'sinastria') return `${base}
+
+Persona 2: ${extras?.persona2||'datos no disponibles'}
+
+Escribí una LECTURA DE SINASTRÍA desde la perspectiva evolutiva. La sinastría no es sobre si son compatibles o no: es el estudio de cómo dos almas se encuentran, qué se activan mutuamente y qué vienen a aprender una de la otra. Cada sección 2 párrafos.
+
+**La química inicial**
+La primera impresión y la atracción. Qué se sienten mutuamente al encontrarse.
+
+**Venus y Marte en relación**
+La atracción, el deseo, la forma en que se seducen y se complementan o tensionan en lo erótico y afectivo.
+
+**Sol y Luna: la compatibilidad profunda**
+Cómo se relacionan sus identidades y sus mundos emocionales. Dónde hay comprensión natural y dónde hay roces.
+
+**Los desafíos de esta relación**
+Los aspectos tensos entre las cartas. No son obstáculos sino áreas de crecimiento mutuo que requieren conciencia.
+
+**El karma compartido**
+Los Nodos y lo que estas dos almas vienen a trabajar juntas. El tema evolutivo de este vínculo.
+
+**El potencial de esta unión**
+Lo mejor que esta relación puede dar cuando ambas personas están en su mejor versión.
+
+**Síntesis**
+Qué tiene para enseñarles esta relación. Qué viene a despertar en cada uno.`;
+
+  if (producto === 'transitos') return `${base}
+
+Escribí una LECTURA DE TRÁNSITOS ACTUALES (mayo-junio 2026) desde la perspectiva evolutiva.
+
+IMPORTANTE: Los tránsitos no son predicciones fijas. Son portales energéticos, irradiaciones planetarias que se activan sobre la carta natal. La persona puede fluir con ellos o resistirlos. Tu rol es explicar qué energía está llegando, sobre qué área de la vida, y qué quiere movilizar internamente. El tono es siempre de oportunidad y autoconocimiento, nunca de fatalismo.
+
+Considerá los tránsitos de los planetas lentos que son los más significativos: Saturno, Urano, Neptuno, Plutón, Júpiter. Relacioná cada tránsito con los planetas natales que activan en esta carta específica. Cada sección 2 párrafos.
+
+**El momento que estás viviendo**
+Una visión general de la energía que está rodeando a esta persona ahora. Qué tipo de ciclo vital está transitando.
+
+**Saturno en Aries: lo que se consolida y desafía**
+Qué área de la carta natal está siendo saturnizada. Qué viene a madurar, estructurar o poner a prueba en esta persona.
+
+**Neptuno en Aries: lo que se disuelve y transforma**
+Dónde está llegando la energía neptuniana. Qué se está disolviendo, confundiendo o espiritualizando en la vida de esta persona.
+
+**Urano en Géminis: los cambios que vienen**
+Qué área de la carta está siendo uranizada. Dónde la vida pide libertad, ruptura con lo conocido e innovación.
+
+**Júpiter en Cáncer: dónde está tu expansión**
+Dónde está el viento a favor ahora mismo. Qué área de la vida tiene mayor potencial de crecimiento y abundancia en este período.
+
+**Cómo trabajar con esta energía**
+Consejos concretos y evolutivos. Cómo fluir con lo que los planetas están pidiendo en lugar de resistirlo.`;
+
+  if (producto === 'pregunta') return `${base}
+
+La persona pregunta: "${extras?.pregunta||''}"
+
+Respondé esta pregunta específica basándote en la carta natal desde la perspectiva evolutiva:
+- Directa y clara, 3-4 párrafos
+- Identificá qué planetas, casas o aspectos de la carta son relevantes para esta pregunta
+- Respondé desde el autoconocimiento, no desde el determinismo
+- Incluí un consejo práctico y evolutivo al final
+- No predicás ni juzgás: acompañás
+
+Un solo bloque de texto, con un título inicial entre dobles asteriscos que reformule la pregunta de manera poética.`;
+
+  return `${base}\n\nHacé una lectura general evolutiva de la carta natal en 5 párrafos profundos.`;
+}
+
+// --- PROMO CODE ---
+function aplicarPromo(producto) {
+  const codigoEl=document.getElementById(`promo-${producto}`),errorEl=document.getElementById(`error-${producto}`),successEl=document.getElementById(`success-${producto}`);
+  if(!codigoEl)return;
+  const codigoIngresado=codigoEl.value.trim().toUpperCase(),codigoValido=CODIGO_PRUEBA.toUpperCase();
+  if(codigoIngresado===codigoValido){
+    promoAplicada[producto]=true;
+    if(successEl){successEl.textContent='✦ Código válido — lectura gratuita desbloqueada';successEl.classList.remove('hidden');}
+    if(errorEl)errorEl.classList.add('hidden');
+    const btnPaypal=codigoEl.closest('.compra-form')?.querySelector('.btn-paypal')||codigoEl.closest('.preguntas-section')?.querySelector('.btn-paypal');
+    if(btnPaypal){btnPaypal.textContent=btnPaypal.textContent.replace(/· USD \d+/,'· GRATIS');btnPaypal.style.background='linear-gradient(135deg, #82B366, #6a9652)';}
+  } else {
+    if(errorEl){errorEl.textContent='Código no válido.';errorEl.classList.remove('hidden');}
+    if(successEl)successEl.classList.add('hidden');
+    promoAplicada[producto]=false;
+  }
+}
+
+// --- PROCESAR COMPRA ---
+async function procesarCompra(producto, precio) {
+  const emailId=producto==='pregunta'?'email-pregunta':`email-${producto}`;
+  const email=document.getElementById(emailId)?.value?.trim();
+  const errorId=`error-${producto}`,successId=`success-${producto}`;
+  if(!email||!email.includes('@')){mostrarMensaje(errorId,'Ingresá un email válido para recibir tu lectura.');return;}
+  const nombre=document.getElementById('nombre').value.trim();
+  const esPrueba=promoAplicada[producto]===true;
+  const extras={};
+  if(producto==='sinastria')extras.persona2=document.getElementById('sinastria-persona2')?.value;
+  if(producto==='pregunta'){extras.pregunta=document.getElementById('pregunta-texto')?.value?.trim();if(!extras.pregunta){mostrarMensaje(errorId,'Escribí tu pregunta antes de continuar.');return;}}
+  if(producto==='revolucion-solar'){
+    const anioRS=document.getElementById('rs-anio')?.value;
+    const ciudadRS=document.getElementById('rs-ciudad')?.value?.trim();
+    const paisRS=document.getElementById('rs-pais')?.value?.trim()||'Argentina';
+    if(!anioRS){mostrarMensaje(errorId,'Elegí el año de la revolución solar.');return;}
+    if(!ciudadRS){mostrarMensaje(errorId,'Ingresá la ciudad donde pasaste o pasarás ese cumpleaños.');return;}
+    extras.anioRS=anioRS;
+    extras.ciudadRS=ciudadRS;
+    extras.paisRS=paisRS;
+  }
+  if(esPrueba){await generarYEnviarLectura(producto,email,nombre,extras,true);}
+  else{
+    sessionStorage.setItem('pendiente',JSON.stringify({producto,email,nombre,extras,precio,fecha:document.getElementById('fecha').value,hora:document.getElementById('hora').value,ciudad:document.getElementById('ciudad').value.trim(),pais:document.getElementById('pais').value.trim()||'Argentina'}));
+    const returnUrl=encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&email=${encodeURIComponent(email)}&nombre=${encodeURIComponent(nombre)}`);
+    window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`,'_blank');
+    mostrarMensaje(successId,'✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
+  }
+}
+
+// --- GENERAR Y ENVIAR LECTURA ---
+async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) {
+  const errorId=`error-${producto}`,successId=`success-${producto}`;
+  mostrarMensaje(successId,'⟳ Generando tu lectura...');
+  try {
+    // Para revolución solar, primero obtener los datos de la RS desde la API
+    let chartDataParaPrompt=cartaData;
+    if(producto==='revolucion-solar'&&extras.anioRS){
+      try{
+        mostrarMensaje(successId,'⟳ Calculando tu revolución solar...');
+        const subject=cartaData?.chart_data?.subject||{};
+        const coordsRS=await getCoordenadas(extras.ciudadRS,extras.paisRS||'Argentina');
+        const tzRS=await getTimezone(coordsRS.lat,coordsRS.lon);
+        const PAIS_CODIGOS={'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
+        const nationCodeRS=PAIS_CODIGOS[(extras.paisRS||'Argentina').toLowerCase()]||(extras.paisRS||'AR').toUpperCase().slice(0,2);
+        const rsRes=await fetch(`${WORKER_URL}/revolucion-solar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:{name:subject.name,year:subject.year||new Date().getFullYear(),month:subject.month,day:subject.day,hour:subject.hour,minute:subject.minute,longitude:subject.lng,latitude:subject.lat,timezone:subject.tz_str,city:subject.city,nation:subject.nation},year:parseInt(extras.anioRS),return_location:{city:extras.ciudadRS,nation:nationCodeRS,longitude:coordsRS.lon,latitude:coordsRS.lat,timezone:tzRS}})});
+        const rsData=await rsRes.json();
+        if(rsData&&!rsData.error){
+          extras.rsData=rsData;
+          mostrarMensaje(successId,'⟳ Interpretando tu revolución solar...');
+        }
+      }catch(rsErr){console.warn('Error RS:',rsErr);}
+    }
+    const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
+    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre,producto,system:SYSTEM_EVOLUTIVO,lectura:prompt,codigoPromo:esPrueba?CODIGO_PRUEBA:'',pagado:true})});
+    const data=await res.json();
+    if(data.ok){mostrarMensaje(successId,`✦ ¡Listo! Tu lectura fue enviada a ${email}. Revisá tu bandeja de entrada.`);}
+    else{mostrarMensaje(errorId,'Error al enviar. Contactanos por WhatsApp.');}
+  }catch(e){mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');}
+}
+
+// --- CALCULAR CARTA ---
+let cartaData=null;
+
+async function calcularCarta() {
+  const nombre=document.getElementById('nombre').value.trim(),fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,ciudad=document.getElementById('ciudad').value.trim(),pais=document.getElementById('pais').value.trim()||'Argentina';
+  if(!nombre||!fecha||!ciudad){mostrarMensaje('error-msg','Completá nombre, fecha y ciudad para continuar.');return;}
+  ocultarMsg('error-msg'); mostrar('section-loader'); ocultar('section-form');
+  try {
+    setLoaderText('buscando tu ciudad en el mapa...');
+    const coords=await getCoordenadas(ciudad,pais);
+    setLoaderText('calculando tu zona horaria...');
+    const timezone=await getTimezone(coords.lat,coords.lon);
+    setLoaderText('calculando posiciones planetarias...');
+    const chartData=await obtenerCartaNatal(fecha,hora,coords.lat,coords.lon,timezone,nombre,ciudad,pais);
+    cartaData=chartData;
+    renderRueda(chartData); renderPlanetas(chartData); renderAspectos(chartData);
+    ocultar('section-loader'); mostrar('section-result');
+    setLoaderText('escribiendo tu lectura esencial...');
+    const prompt=buildPromptBasico(nombre,chartData);
+    try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
+    catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
+    const params=new URLSearchParams(window.location.search);
+    if(params.get('lectura')==='ok'){const prod=params.get('prod'),emailParam=params.get('email'),nombreParam=params.get('nombre')||nombre;if(prod&&emailParam){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');const extrasPaypal=pendienteData?.extras||{};sessionStorage.removeItem('pendiente');await generarYEnviarLectura(prod,emailParam,nombreParam,extrasPaypal,false);}}
+  }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
+}
+
+// --- UTILIDADES ---
+function mostrar(id){document.getElementById(id)?.classList.remove('hidden');}
+function ocultar(id){document.getElementById(id)?.classList.add('hidden');}
+function mostrarMensaje(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
+function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
+function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
+function reiniciar(){ocultar('section-result');mostrar('section-form');cartaData=null;window.history.replaceState({},'',window.location.pathname);}
+function setEjemplo(texto){document.getElementById('pregunta-texto').value=texto;}
+
+window.addEventListener('load',()=>{const params=new URLSearchParams(window.location.search);if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}if(params.get('lectura')==='ok'){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){document.getElementById('nombre').value=pendienteData.nombre||'';document.getElementById('fecha').value=pendienteData.fecha||'';if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;document.getElementById('ciudad').value=pendienteData.ciudad||'';document.getElementById('pais').value=pendienteData.pais||'Argentina';calcularCarta();}}});
+</script>
+
+</body>
+</html>

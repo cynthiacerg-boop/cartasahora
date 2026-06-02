@@ -127,6 +127,7 @@ export default {
           'sinastria': { nombre: 'Sinastría — Compatibilidad de Pareja', precio: '$9 USD' },
           'transitos': { nombre: 'Tránsitos Actuales', precio: '$5 USD' },
           'pregunta': { nombre: 'Pregunta Puntual', precio: '$2 USD' },
+          'lectura-profunda': { nombre: 'Lectura Profunda · Análisis Completo', precio: '$13 USD' },
         };
 
         const prod = productos[producto] || { nombre: producto, precio: '' };
@@ -184,13 +185,15 @@ export default {
     <div style="padding:32px;">
       ${htmlLectura}
     </div>
-    <div style="background:#f9f7f4;padding:32px;text-align:center;border-top:1px solid #e8e4de;">
+    ${producto === 'carta-completa' ? `<div style="background:#f9f7f4;padding:32px;text-align:center;border-top:1px solid #e8e4de;">
+      <p style="font-size:14px;color:#5a5a5a;margin:0 0 8px;">¿Querés ir más profundo?</p>
+      <p style="font-size:13px;color:#888;margin:0 0 20px;">Análisis completo de todos tus aspectos + coaching evolutivo · Solo USD 7 más</p>
+      <a href="https://cartasahora.espaciolibra.com?upgrade=lectura-profunda" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">✦ Quiero mi lectura profunda · USD 7</a>
+      <p style="font-size:11px;color:#aaa;margin:12px 0 0;">Pago seguro vía PayPal · Entrega en menos de 5 min</p>
+    </div>` : `<div style="background:#f9f7f4;padding:32px;text-align:center;border-top:1px solid #e8e4de;">
       <p style="font-size:14px;color:#5a5a5a;margin:0 0 16px;">¿Querés profundizar más?</p>
-      <a href="https://cartasahora.espaciolibra.com"
-         style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">
-        Ver más lecturas
-      </a>
-    </div>
+      <a href="https://cartasahora.espaciolibra.com" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">Ver más lecturas</a>
+    </div>`}
     <div style="padding:24px 32px;text-align:center;background:#0a0a12;">
       <p style="font-size:10px;letter-spacing:0.2em;color:rgba(255,255,255,0.2);margin:0;">
         ESPACIO LIBRA · ASTROLOGÍA EVOLUTIVA · cartasahora.espaciolibra.com

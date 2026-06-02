@@ -1,0 +1,4 @@
+name = "cartasahora-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+account_id = "d149d7ddb5563d01911c96de5a1f0ae5"

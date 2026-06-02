@@ -128,6 +128,12 @@
     <div class="divider"></div>
   </div>
 
+  <div id="upgrade-banner" class="card hidden" style="border-color:rgba(138,77,171,0.4);background:linear-gradient(135deg,rgba(138,77,171,0.08),rgba(130,179,102,0.04));text-align:center;">
+    <p style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;color:#8A4DAB;text-transform:uppercase;margin:0 0 10px;">✦ Upgrade disponible</p>
+    <p style="font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 6px;">Para completar tu upgrade a Lectura Profunda,</p>
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">calculá tu carta natal y pagá los USD 7 restantes.</p>
+  </div>
+
   <div class="card" id="section-form">
     <div class="form-grid">
       <div class="form-group full">
@@ -241,6 +247,32 @@
             <p class="error-msg hidden" id="error-carta-completa"></p>
             <p class="success-msg hidden" id="success-carta-completa"></p>
             <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
+            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          </div>
+        </div>
+
+        <div class="producto-card">
+          <div class="producto-header">
+            <div class="producto-nombre">Lectura Profunda · Análisis Completo</div>
+            <div class="producto-precio">USD 13</div>
+          </div>
+          <p class="producto-desc">Todos los aspectos de tu carta en profundidad más coaching evolutivo con fortalezas, áreas de crecimiento y plan de trabajo personal.</p>
+          <ul class="producto-items">
+            <li>Análisis profundo de todos tus aspectos (trígonos, sextiles, cuadraturas, oposiciones)</li>
+            <li>Tus dones naturales y cómo usarlos conscientemente</li>
+            <li>Tus áreas de crecimiento como experiencias evolutivas</li>
+            <li>Coaching evolutivo con fortalezas y debilidades</li>
+            <li>Plan de trabajo personal a 30 días, 6 meses y 1 año</li>
+          </ul>
+          <div class="compra-form" id="form-lectura-profunda">
+            <input type="email" id="email-lectura-profunda" placeholder="Tu email para recibir la lectura" />
+            <div class="promo-row">
+              <input type="text" id="promo-lectura-profunda" placeholder="Código de descuento (opcional)" />
+              <button class="btn-promo" onclick="aplicarPromo('lectura-profunda')">Aplicar</button>
+            </div>
+            <p class="error-msg hidden" id="error-lectura-profunda"></p>
+            <p class="success-msg hidden" id="success-lectura-profunda"></p>
+            <button class="btn-paypal" onclick="procesarCompra('lectura-profunda', 13)">✦ Obtener mi lectura · USD 13</button>
             <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
           </div>
         </div>
@@ -846,6 +878,32 @@ Respondé esta pregunta específica basándote en la carta natal desde la perspe
 
 Un solo bloque de texto, con un título inicial entre dobles asteriscos que reformule la pregunta de manera poética.`;
 
+  if (producto === 'lectura-profunda') return `${base}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Escribí una LECTURA PROFUNDA Y DE COACHING EVOLUTIVO para ${nombre}. Esta lectura va a mayor profundidad que la carta natal estándar. Cada sección 2-3 párrafos.
+
+**Los aspectos armónicos · Tus dones naturales**
+Analizá en profundidad todos los trígonos y sextiles de la carta. Para cada uno: qué energía fluye naturalmente, qué don o talento representa, y cómo usarlo conscientemente. Los dones no usados conscientemente se desperdician.
+
+**Los aspectos desafiantes · Las tensiones que te forman**
+Analizá en profundidad todas las cuadraturas y oposiciones. Para cada una: qué tensión crea, cómo se experimenta en la vida cotidiana, y cuál es el aprendizaje evolutivo que esconde.
+
+**Tus fortalezas como recursos conscientes**
+Las 4-5 mayores fortalezas de esta carta considerando planetas, casas Y aspectos en conjunto. Para cada una: qué es y CÓMO usarla como recurso concreto en la vida.
+
+**Tus áreas de crecimiento como experiencias evolutivas**
+Las 4-5 principales áreas de crecimiento. Siempre como oportunidades evolutivas, nunca como defectos. Para cada una: qué patrón se repite, qué lo activa, qué pequeño cambio puede transformarlo.
+
+**Tu plan de trabajo evolutivo**
+Un plan concreto de 3 niveles:
+- Qué observar en vos misma en los próximos 30 días
+- Qué soltar o transformar en los próximos 6 meses
+- Qué construir o desarrollar en el próximo año
+
+Cerrá con una frase poderosa y personal basada en la carta de ${nombre}.`;
+
   return `${base}\n\nHacé una lectura general evolutiva de la carta natal en 5 párrafos profundos.`;
 }
 
@@ -869,6 +927,7 @@ function aplicarPromo(producto) {
 
 // --- PROCESAR COMPRA ---
 async function procesarCompra(producto, precio) {
+  if(producto==='lectura-profunda'&&new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
   const emailId=producto==='pregunta'?'email-pregunta':`email-${producto}`;
   const email=document.getElementById(emailId)?.value?.trim();
   const errorId=`error-${producto}`,successId=`success-${producto}`;
@@ -967,6 +1026,7 @@ async function calcularCarta() {
     cartaData=chartData;
     renderRueda(chartData); renderPlanetas(chartData); renderAspectos(chartData);
     ocultar('section-loader'); mostrar('section-result');
+    if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);}
     setLoaderText('escribiendo tu lectura esencial...');
     const prompt=buildPromptBasico(nombre,chartData);
     try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
@@ -985,7 +1045,7 @@ function setLoaderText(txt){document.getElementById('loader-text').textContent=t
 function reiniciar(){ocultar('section-result');mostrar('section-form');cartaData=null;window.history.replaceState({},'',window.location.pathname);}
 function setEjemplo(texto){document.getElementById('pregunta-texto').value=texto;}
 
-window.addEventListener('load',()=>{const params=new URLSearchParams(window.location.search);if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}if(params.get('lectura')==='ok'){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){document.getElementById('nombre').value=pendienteData.nombre||'';document.getElementById('fecha').value=pendienteData.fecha||'';if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;document.getElementById('ciudad').value=pendienteData.ciudad||'';document.getElementById('pais').value=pendienteData.pais||'Argentina';calcularCarta();}}});
+window.addEventListener('load',()=>{const params=new URLSearchParams(window.location.search);if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}if(params.get('upgrade')==='lectura-profunda'){mostrar('upgrade-banner');}if(params.get('lectura')==='ok'){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){document.getElementById('nombre').value=pendienteData.nombre||'';document.getElementById('fecha').value=pendienteData.fecha||'';if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;document.getElementById('ciudad').value=pendienteData.ciudad||'';document.getElementById('pais').value=pendienteData.pais||'Argentina';calcularCarta();}}});
 </script>
 
 </body>

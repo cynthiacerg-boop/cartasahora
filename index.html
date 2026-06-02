@@ -217,166 +217,6 @@
       </div>
     </div>
 
-    <div class="card" id="section-upsell">
-      <div class="section-title">Lecturas completas</div>
-      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
-        Elegí la lectura que más te resuena. Ingresás tu email, pagás y la recibís en menos de 5 minutos.
-      </p>
-      <div class="productos-grid">
-
-        <div class="producto-card destacado">
-          <div class="badge-popular">✦ Más elegida</div>
-          <div class="producto-header">
-            <div class="producto-nombre">Carta Natal Completa</div>
-            <div class="producto-precio">USD 6</div>
-          </div>
-          <p class="producto-desc">Interpretación profunda de los 10 planetas, casas, aspectos y síntesis evolutiva de tu camino de alma.</p>
-          <ul class="producto-items">
-            <li>Los 10 planetas en profundidad</li>
-            <li>Análisis de todas las casas astrológicas</li>
-            <li>Quirón, Lilith y Nodos del destino</li>
-            <li>Síntesis evolutiva de tu camino de alma</li>
-            <li>Patrones dominantes y dones ocultos</li>
-          </ul>
-          <div class="compra-form" id="form-carta-completa">
-            <input type="email" id="email-carta-completa" placeholder="Tu email para recibir la lectura" />
-            <div class="promo-row">
-              <input type="text" id="promo-carta-completa" placeholder="Código de descuento (opcional)" />
-              <button class="btn-promo" onclick="aplicarPromo('carta-completa')">Aplicar</button>
-            </div>
-            <p class="error-msg hidden" id="error-carta-completa"></p>
-            <p class="success-msg hidden" id="success-carta-completa"></p>
-            <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
-            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
-          </div>
-        </div>
-
-        <div class="producto-card">
-          <div class="producto-header">
-            <div class="producto-nombre">Lectura Profunda · Análisis Completo</div>
-            <div class="producto-precio">USD 13</div>
-          </div>
-          <p class="producto-desc">Todos los aspectos de tu carta en profundidad más coaching evolutivo con fortalezas, áreas de crecimiento y plan de trabajo personal.</p>
-          <ul class="producto-items">
-            <li>Análisis profundo de todos tus aspectos (trígonos, sextiles, cuadraturas, oposiciones)</li>
-            <li>Tus dones naturales y cómo usarlos conscientemente</li>
-            <li>Tus áreas de crecimiento como experiencias evolutivas</li>
-            <li>Coaching evolutivo con fortalezas y debilidades</li>
-            <li>Plan de trabajo personal a 30 días, 6 meses y 1 año</li>
-          </ul>
-          <div class="compra-form" id="form-lectura-profunda">
-            <input type="email" id="email-lectura-profunda" placeholder="Tu email para recibir la lectura" />
-            <div class="promo-row">
-              <input type="text" id="promo-lectura-profunda" placeholder="Código de descuento (opcional)" />
-              <button class="btn-promo" onclick="aplicarPromo('lectura-profunda')">Aplicar</button>
-            </div>
-            <p class="error-msg hidden" id="error-lectura-profunda"></p>
-            <p class="success-msg hidden" id="success-lectura-profunda"></p>
-            <button class="btn-paypal" onclick="procesarCompra('lectura-profunda', 13)">✦ Obtener mi lectura · USD 13</button>
-            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
-          </div>
-        </div>
-
-        <div class="producto-card">
-          <div class="producto-header">
-            <div class="producto-nombre">Revolución Solar</div>
-            <div class="producto-precio">USD 9</div>
-          </div>
-          <p class="producto-desc">Tu año personal desde tu último cumpleaños. Qué viene, qué se activa, cuáles son tus meses clave.</p>
-          <ul class="producto-items">
-            <li>Carta de revolución solar interpretada</li>
-            <li>Meses clave del año</li>
-            <li>Amor, trabajo y crecimiento personal</li>
-            <li>Temas centrales de tu año evolutivo</li>
-          </ul>
-          <div class="compra-form" id="form-revolucion-solar">
-            <input type="email" id="email-revolucion-solar" placeholder="Tu email para recibir la lectura" />
-            <div class="rs-campos">
-              <label>¿Qué revolución solar querés leer?</label>
-              <select id="rs-anio">
-                <option value="">Elegí el año de tu cumpleaños</option>
-                <option value="2024">Cumpleaños 2024</option>
-                <option value="2025">Cumpleaños 2025</option>
-                <option value="2026">Cumpleaños 2026</option>
-              </select>
-              <label style="margin-top:10px;">Ciudad donde pasaste o pasarás ese cumpleaños</label>
-              <input type="text" id="rs-ciudad" placeholder="Ej: Buenos Aires, Madrid, México DF..." />
-              <label style="margin-top:10px;">País</label>
-              <input type="text" id="rs-pais" placeholder="Argentina" />
-            </div>
-            <div class="promo-row">
-              <input type="text" id="promo-revolucion-solar" placeholder="Código de descuento (opcional)" />
-              <button class="btn-promo" onclick="aplicarPromo('revolucion-solar')">Aplicar</button>
-            </div>
-            <p class="error-msg hidden" id="error-revolucion-solar"></p>
-            <p class="success-msg hidden" id="success-revolucion-solar"></p>
-            <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">✦ Obtener mi lectura · USD 9</button>
-            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
-          </div>
-        </div>
-
-        <div class="producto-card">
-          <div class="producto-header">
-            <div class="producto-nombre">Sinastría · Compatibilidad</div>
-            <div class="producto-precio">USD 9</div>
-          </div>
-          <p class="producto-desc">La química real entre dos cartas natales. Qué los une, qué los desafía, el karma compartido.</p>
-          <ul class="producto-items">
-            <li>Análisis de aspectos cruzados entre ambas cartas</li>
-            <li>Venus, Marte, Sol y Luna en relación</li>
-            <li>Karma compartido y Nodos</li>
-            <li>Desafíos y dones de la relación</li>
-          </ul>
-          <div class="compra-form" id="form-sinastria">
-            <input type="email" id="email-sinastria" placeholder="Tu email para recibir la lectura" />
-            <div class="rs-campos" style="margin:10px 0;">
-              <label>Datos de la otra persona</label>
-              <input type="text" id="sinastria-nombre2" placeholder="Nombre" style="margin-bottom:8px;" />
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-                <input type="date" id="sinastria-fecha2" />
-                <input type="time" id="sinastria-hora2" />
-              </div>
-              <input type="text" id="sinastria-ciudad2" placeholder="Ciudad de nacimiento" style="margin-bottom:8px;" />
-              <input type="text" id="sinastria-pais2" placeholder="País" value="Argentina" />
-            </div>
-            <div class="promo-row">
-              <input type="text" id="promo-sinastria" placeholder="Código de descuento (opcional)" />
-              <button class="btn-promo" onclick="aplicarPromo('sinastria')">Aplicar</button>
-            </div>
-            <p class="error-msg hidden" id="error-sinastria"></p>
-            <p class="success-msg hidden" id="success-sinastria"></p>
-            <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">✦ Obtener mi lectura · USD 9</button>
-            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
-          </div>
-        </div>
-
-        <div class="producto-card">
-          <div class="producto-header">
-            <div class="producto-nombre">Tránsitos Actuales</div>
-            <div class="producto-precio">USD 5</div>
-          </div>
-          <p class="producto-desc">Qué están activando los planetas en tu carta ahora mismo. Por qué sentís lo que sentís hoy.</p>
-          <ul class="producto-items">
-            <li>Planetas en tránsito sobre tu carta natal</li>
-            <li>Qué área de tu vida está siendo activada</li>
-            <li>Duración y cómo trabajar cada tránsito</li>
-          </ul>
-          <div class="compra-form" id="form-transitos">
-            <input type="email" id="email-transitos" placeholder="Tu email para recibir la lectura" />
-            <div class="promo-row">
-              <input type="text" id="promo-transitos" placeholder="Código de descuento (opcional)" />
-              <button class="btn-promo" onclick="aplicarPromo('transitos')">Aplicar</button>
-            </div>
-            <p class="error-msg hidden" id="error-transitos"></p>
-            <p class="success-msg hidden" id="success-transitos"></p>
-            <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">✦ Obtener mi lectura · USD 5</button>
-            <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
     <div class="card">
       <div class="section-title">Pregunta Puntual</div>
       <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
@@ -411,6 +251,166 @@
       </button>
     </div>
 
+  </div>
+
+  <div class="card hidden" id="section-upsell">
+    <div class="section-title">Lecturas completas</div>
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
+      Elegí la lectura que más te resuena. Ingresás tu email, pagás y la recibís en menos de 5 minutos.
+    </p>
+    <div class="productos-grid">
+
+      <div class="producto-card destacado">
+        <div class="badge-popular">✦ Más elegida</div>
+        <div class="producto-header">
+          <div class="producto-nombre">Carta Natal Completa</div>
+          <div class="producto-precio">USD 6</div>
+        </div>
+        <p class="producto-desc">Interpretación profunda de los 10 planetas, casas, aspectos y síntesis evolutiva de tu camino de alma.</p>
+        <ul class="producto-items">
+          <li>Los 10 planetas en profundidad</li>
+          <li>Análisis de todas las casas astrológicas</li>
+          <li>Quirón, Lilith y Nodos del destino</li>
+          <li>Síntesis evolutiva de tu camino de alma</li>
+          <li>Patrones dominantes y dones ocultos</li>
+        </ul>
+        <div class="compra-form" id="form-carta-completa">
+          <input type="email" id="email-carta-completa" placeholder="Tu email para recibir la lectura" />
+          <div class="promo-row">
+            <input type="text" id="promo-carta-completa" placeholder="Código de descuento (opcional)" />
+            <button class="btn-promo" onclick="aplicarPromo('carta-completa')">Aplicar</button>
+          </div>
+          <p class="error-msg hidden" id="error-carta-completa"></p>
+          <p class="success-msg hidden" id="success-carta-completa"></p>
+          <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
+          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        </div>
+      </div>
+
+      <div class="producto-card">
+        <div class="producto-header">
+          <div class="producto-nombre">Lectura Profunda · Análisis Completo</div>
+          <div class="producto-precio">USD 13</div>
+        </div>
+        <p class="producto-desc">Todos los aspectos de tu carta en profundidad más coaching evolutivo con fortalezas, áreas de crecimiento y plan de trabajo personal.</p>
+        <ul class="producto-items">
+          <li>Análisis profundo de todos tus aspectos (trígonos, sextiles, cuadraturas, oposiciones)</li>
+          <li>Tus dones naturales y cómo usarlos conscientemente</li>
+          <li>Tus áreas de crecimiento como experiencias evolutivas</li>
+          <li>Coaching evolutivo con fortalezas y debilidades</li>
+          <li>Plan de trabajo personal a 30 días, 6 meses y 1 año</li>
+        </ul>
+        <div class="compra-form" id="form-lectura-profunda">
+          <input type="email" id="email-lectura-profunda" placeholder="Tu email para recibir la lectura" />
+          <div class="promo-row">
+            <input type="text" id="promo-lectura-profunda" placeholder="Código de descuento (opcional)" />
+            <button class="btn-promo" onclick="aplicarPromo('lectura-profunda')">Aplicar</button>
+          </div>
+          <p class="error-msg hidden" id="error-lectura-profunda"></p>
+          <p class="success-msg hidden" id="success-lectura-profunda"></p>
+          <button class="btn-paypal" onclick="procesarCompra('lectura-profunda', 13)">✦ Obtener mi lectura · USD 13</button>
+          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        </div>
+      </div>
+
+      <div class="producto-card">
+        <div class="producto-header">
+          <div class="producto-nombre">Revolución Solar</div>
+          <div class="producto-precio">USD 9</div>
+        </div>
+        <p class="producto-desc">Tu año personal desde tu último cumpleaños. Qué viene, qué se activa, cuáles son tus meses clave.</p>
+        <ul class="producto-items">
+          <li>Carta de revolución solar interpretada</li>
+          <li>Meses clave del año</li>
+          <li>Amor, trabajo y crecimiento personal</li>
+          <li>Temas centrales de tu año evolutivo</li>
+        </ul>
+        <div class="compra-form" id="form-revolucion-solar">
+          <input type="email" id="email-revolucion-solar" placeholder="Tu email para recibir la lectura" />
+          <div class="rs-campos">
+            <label>¿Qué revolución solar querés leer?</label>
+            <select id="rs-anio">
+              <option value="">Elegí el año de tu cumpleaños</option>
+              <option value="2024">Cumpleaños 2024</option>
+              <option value="2025">Cumpleaños 2025</option>
+              <option value="2026">Cumpleaños 2026</option>
+            </select>
+            <label style="margin-top:10px;">Ciudad donde pasaste o pasarás ese cumpleaños</label>
+            <input type="text" id="rs-ciudad" placeholder="Ej: Buenos Aires, Madrid, México DF..." />
+            <label style="margin-top:10px;">País</label>
+            <input type="text" id="rs-pais" placeholder="Argentina" />
+          </div>
+          <div class="promo-row">
+            <input type="text" id="promo-revolucion-solar" placeholder="Código de descuento (opcional)" />
+            <button class="btn-promo" onclick="aplicarPromo('revolucion-solar')">Aplicar</button>
+          </div>
+          <p class="error-msg hidden" id="error-revolucion-solar"></p>
+          <p class="success-msg hidden" id="success-revolucion-solar"></p>
+          <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">✦ Obtener mi lectura · USD 9</button>
+          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        </div>
+      </div>
+
+      <div class="producto-card">
+        <div class="producto-header">
+          <div class="producto-nombre">Sinastría · Compatibilidad</div>
+          <div class="producto-precio">USD 9</div>
+        </div>
+        <p class="producto-desc">La química real entre dos cartas natales. Qué los une, qué los desafía, el karma compartido.</p>
+        <ul class="producto-items">
+          <li>Análisis de aspectos cruzados entre ambas cartas</li>
+          <li>Venus, Marte, Sol y Luna en relación</li>
+          <li>Karma compartido y Nodos</li>
+          <li>Desafíos y dones de la relación</li>
+        </ul>
+        <div class="compra-form" id="form-sinastria">
+          <input type="email" id="email-sinastria" placeholder="Tu email para recibir la lectura" />
+          <div class="rs-campos" style="margin:10px 0;">
+            <label>Datos de la otra persona</label>
+            <input type="text" id="sinastria-nombre2" placeholder="Nombre" style="margin-bottom:8px;" />
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+              <input type="date" id="sinastria-fecha2" />
+              <input type="time" id="sinastria-hora2" />
+            </div>
+            <input type="text" id="sinastria-ciudad2" placeholder="Ciudad de nacimiento" style="margin-bottom:8px;" />
+            <input type="text" id="sinastria-pais2" placeholder="País" value="Argentina" />
+          </div>
+          <div class="promo-row">
+            <input type="text" id="promo-sinastria" placeholder="Código de descuento (opcional)" />
+            <button class="btn-promo" onclick="aplicarPromo('sinastria')">Aplicar</button>
+          </div>
+          <p class="error-msg hidden" id="error-sinastria"></p>
+          <p class="success-msg hidden" id="success-sinastria"></p>
+          <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">✦ Obtener mi lectura · USD 9</button>
+          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        </div>
+      </div>
+
+      <div class="producto-card">
+        <div class="producto-header">
+          <div class="producto-nombre">Tránsitos Actuales</div>
+          <div class="producto-precio">USD 5</div>
+        </div>
+        <p class="producto-desc">Qué están activando los planetas en tu carta ahora mismo. Por qué sentís lo que sentís hoy.</p>
+        <ul class="producto-items">
+          <li>Planetas en tránsito sobre tu carta natal</li>
+          <li>Qué área de tu vida está siendo activada</li>
+          <li>Duración y cómo trabajar cada tránsito</li>
+        </ul>
+        <div class="compra-form" id="form-transitos">
+          <input type="email" id="email-transitos" placeholder="Tu email para recibir la lectura" />
+          <div class="promo-row">
+            <input type="text" id="promo-transitos" placeholder="Código de descuento (opcional)" />
+            <button class="btn-promo" onclick="aplicarPromo('transitos')">Aplicar</button>
+          </div>
+          <p class="error-msg hidden" id="error-transitos"></p>
+          <p class="success-msg hidden" id="success-transitos"></p>
+          <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">✦ Obtener mi lectura · USD 5</button>
+          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 </div>
@@ -1025,7 +1025,7 @@ async function calcularCarta() {
     const chartData=await obtenerCartaNatal(fecha,hora,coords.lat,coords.lon,timezone,nombre,ciudad,pais);
     cartaData=chartData;
     renderRueda(chartData); renderPlanetas(chartData); renderAspectos(chartData);
-    ocultar('section-loader'); mostrar('section-result');
+    ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell');
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);}
     setLoaderText('escribiendo tu lectura esencial...');
     const prompt=buildPromptBasico(nombre,chartData);
@@ -1042,10 +1042,10 @@ function ocultar(id){document.getElementById(id)?.classList.add('hidden');}
 function mostrarMensaje(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
 function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
-function reiniciar(){ocultar('section-result');mostrar('section-form');cartaData=null;window.history.replaceState({},'',window.location.pathname);}
+function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;window.history.replaceState({},'',window.location.pathname);}
 function setEjemplo(texto){document.getElementById('pregunta-texto').value=texto;}
 
-window.addEventListener('load',()=>{const params=new URLSearchParams(window.location.search);if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}if(params.get('upgrade')==='lectura-profunda'){mostrar('upgrade-banner');ocultar('section-form');mostrar('section-result');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}if(params.get('lectura')==='ok'){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){document.getElementById('nombre').value=pendienteData.nombre||'';document.getElementById('fecha').value=pendienteData.fecha||'';if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;document.getElementById('ciudad').value=pendienteData.ciudad||'';document.getElementById('pais').value=pendienteData.pais||'Argentina';calcularCarta();}}});
+window.addEventListener('load',()=>{const params=new URLSearchParams(window.location.search);if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}if(params.get('upgrade')==='lectura-profunda'){mostrar('upgrade-banner');ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}if(params.get('lectura')==='ok'){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){document.getElementById('nombre').value=pendienteData.nombre||'';document.getElementById('fecha').value=pendienteData.fecha||'';if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;document.getElementById('ciudad').value=pendienteData.ciudad||'';document.getElementById('pais').value=pendienteData.pais||'Argentina';calcularCarta();}}});
 </script>
 
 </body>

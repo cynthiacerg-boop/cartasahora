@@ -112,7 +112,7 @@ export default {
     if (path === '/enviar-lectura' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { email, nombre, producto, lectura, codigoPromo } = body;
+        const { email, nombre, producto, lectura, codigoPromo, fecha, hora, ciudad, pais } = body;
 
         const CODIGO_PRUEBA = 'ESPACIO2025';
         const esPrueba = codigoPromo === CODIGO_PRUEBA;
@@ -188,7 +188,7 @@ export default {
     ${producto === 'carta-completa' ? `<div style="background:#f9f7f4;padding:32px;text-align:center;border-top:1px solid #e8e4de;">
       <p style="font-size:14px;color:#5a5a5a;margin:0 0 8px;">¿Querés ir más profundo?</p>
       <p style="font-size:13px;color:#888;margin:0 0 20px;">Análisis completo de todos tus aspectos + coaching evolutivo · Solo USD 7 más</p>
-      <a href="https://cartasahora.espaciolibra.com?upgrade=lectura-profunda" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">✦ Quiero mi lectura profunda · USD 7</a>
+      <a href="https://cartasahora.espaciolibra.com?upgrade=lectura-profunda&nombre=${encodeURIComponent(nombre||'')}&fecha=${encodeURIComponent(fecha||'')}&hora=${encodeURIComponent(hora||'')}&ciudad=${encodeURIComponent(ciudad||'')}&pais=${encodeURIComponent(pais||'Argentina')}" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">✦ Quiero mi lectura profunda · USD 7</a>
       <p style="font-size:11px;color:#aaa;margin:12px 0 0;">Pago seguro vía PayPal · Entrega en menos de 5 min</p>
     </div>` : ''}
     <div style="padding:24px 32px;text-align:center;background:#0a0a12;">

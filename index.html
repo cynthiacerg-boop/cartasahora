@@ -297,9 +297,15 @@
           </ul>
           <div class="compra-form" id="form-sinastria">
             <input type="email" id="email-sinastria" placeholder="Tu email para recibir la lectura" />
-            <div class="form-group" style="margin:10px 0;">
-              <label>Nombre y fecha de nacimiento de la otra persona</label>
-              <input type="text" id="sinastria-persona2" placeholder="Ej: Juan, 15/03/1990, Buenos Aires" />
+            <div class="rs-campos" style="margin:10px 0;">
+              <label>Datos de la otra persona</label>
+              <input type="text" id="sinastria-nombre2" placeholder="Nombre" style="margin-bottom:8px;" />
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <input type="date" id="sinastria-fecha2" />
+                <input type="time" id="sinastria-hora2" />
+              </div>
+              <input type="text" id="sinastria-ciudad2" placeholder="Ciudad de nacimiento" style="margin-bottom:8px;" />
+              <input type="text" id="sinastria-pais2" placeholder="País" value="Argentina" />
             </div>
             <div class="promo-row">
               <input type="text" id="promo-sinastria" placeholder="Código de descuento (opcional)" />
@@ -745,32 +751,53 @@ Qué se activa en el área profesional, vocacional y de propósito de vida de ${
 Consejos concretos y evolutivos para que ${nombre} fluya con lo que el año trae. Qué actitud, qué práctica, qué mirada interna le va a permitir vivir este año desde su expresión más auténtica.`;
   }
 
-  if (producto === 'sinastria') return `${base}
+  if (producto === 'sinastria') {
+    const nombre2=extras?.nombre2||'Persona 2';
+    let carta2Text='';
+    const carta2=extras?.cartaPersona2;
+    if(carta2&&carta2.chart_data){
+      const subj2=carta2.chart_data.subject||{};
+      const asc2=subj2.first_house||subj2.ascendant||subj2.asc||null;
+      const asc2Sign=asc2?(SIGN_MAP[asc2.sign]||asc2.sign):'?';
+      const planets2Text=PLANET_KEYS.map(key=>{const p=subj2[key];if(!p)return null;const pName=PLANET_KEY_NAME[key];return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;}).filter(Boolean).join(', ');
+      carta2Text=`Carta natal de ${nombre2}:\nPlanetas: ${planets2Text}\nAscendente: ${asc2Sign}`;
+    } else {
+      carta2Text=`Persona 2: ${nombre2} — datos de carta no disponibles`;
+    }
+    return `${base}
 
-Persona 2: ${extras?.persona2||'datos no disponibles'}
+${carta2Text}
 
-Escribí una LECTURA DE SINASTRÍA desde la perspectiva evolutiva. La sinastría no es sobre si son compatibles o no: es el estudio de cómo dos almas se encuentran, qué se activan mutuamente y qué vienen a aprender una de la otra. Cada sección 2 párrafos.
+Escribí una LECTURA DE SINASTRÍA desde la perspectiva evolutiva. La sinastría no es sobre si son compatibles o no: es el estudio de cómo dos almas se encuentran, qué se activan mutuamente y qué vienen a aprender una de la otra. Cada sección 2-3 párrafos.
 
-**La química inicial**
-La primera impresión y la atracción. Qué se sienten mutuamente al encontrarse.
+Reglas de interpretación:
+- CRÍTICO: hablá siempre en segunda persona dirigiéndote a ${nombre} (persona 1). Usá "vos", "tu", "te". NUNCA uses tercera persona para referirte a ${nombre}
+- Para referirte a ${nombre2} (persona 2) podés usar tercera persona normalmente
+- El tono nunca es fatalista: los vínculos son portales de crecimiento, no destinos
+- Usás castellano rioplatense, cálido, profundo, sin terminología esotérica superficial
+- NUNCA menciones autores, escuelas ni metodologías
 
-**Venus y Marte en relación**
-La atracción, el deseo, la forma en que se seducen y se complementan o tensionan en lo erótico y afectivo.
+**La química entre vos y ${nombre2}**
+Hablale directamente a ${nombre} sobre la energía de este vínculo. Qué se activa en vos cuando estás con ${nombre2}. La atracción, la primera impresión, lo que genera esta conexión.
 
-**Sol y Luna: la compatibilidad profunda**
-Cómo se relacionan sus identidades y sus mundos emocionales. Dónde hay comprensión natural y dónde hay roces.
+**Venus y Marte: el deseo y la acción**
+Cómo se relacionan Venus y Marte de ambas cartas. La atracción, el deseo, la forma en que se complementan o tensionan en lo afectivo y erótico. Hablale a ${nombre} sobre lo que su Venus y su Marte hacen en esta relación.
+
+**Sol y Luna: la profundidad del vínculo**
+Cómo dialogan las identidades y los mundos emocionales de ambas cartas. Dónde hay comprensión natural y dónde hay roces. Dirigite a ${nombre} sobre cómo su Sol y su Luna se relacionan con los de ${nombre2}.
 
 **Los desafíos de esta relación**
-Los aspectos tensos entre las cartas. No son obstáculos sino áreas de crecimiento mutuo que requieren conciencia.
+Los aspectos tensos entre las cartas. No son obstáculos: son áreas de crecimiento mutuo. Hablale a ${nombre} sobre qué le pide trabajar conscientemente este vínculo.
 
 **El karma compartido**
-Los Nodos y lo que estas dos almas vienen a trabajar juntas. El tema evolutivo de este vínculo.
+Los Nodos de ambas cartas y lo que estas dos almas vienen a trabajar juntas. El tema evolutivo de este vínculo. Qué viene a despertar ${nombre2} en ${nombre}.
 
 **El potencial de esta unión**
-Lo mejor que esta relación puede dar cuando ambas personas están en su mejor versión.
+Lo mejor que esta relación puede dar cuando ambas personas están en su mejor versión. Hablale a ${nombre} sobre el regalo de este vínculo.
 
 **Síntesis**
-Qué tiene para enseñarles esta relación. Qué viene a despertar en cada uno.`;
+Qué tiene para enseñarle esta relación a ${nombre}. Qué viene a despertar, a sanar, a construir este encuentro de dos almas.`;
+  }
 
   if (producto === 'transitos') return `${base}
 
@@ -841,7 +868,15 @@ async function procesarCompra(producto, precio) {
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
   const extras={};
-  if(producto==='sinastria')extras.persona2=document.getElementById('sinastria-persona2')?.value;
+  if(producto==='sinastria'){
+    const nombre2=document.getElementById('sinastria-nombre2')?.value?.trim();
+    const fecha2=document.getElementById('sinastria-fecha2')?.value;
+    const hora2=document.getElementById('sinastria-hora2')?.value;
+    const ciudad2=document.getElementById('sinastria-ciudad2')?.value?.trim();
+    const pais2=document.getElementById('sinastria-pais2')?.value?.trim()||'Argentina';
+    if(!nombre2||!fecha2||!hora2||!ciudad2){mostrarMensaje(errorId,'Completá todos los datos de la otra persona.');return;}
+    extras.nombre2=nombre2;extras.fecha2=fecha2;extras.hora2=hora2;extras.ciudad2=ciudad2;extras.pais2=pais2;
+  }
   if(producto==='pregunta'){extras.pregunta=document.getElementById('pregunta-texto')?.value?.trim();if(!extras.pregunta){mostrarMensaje(errorId,'Escribí tu pregunta antes de continuar.');return;}}
   if(producto==='revolucion-solar'){
     const anioRS=document.getElementById('rs-anio')?.value;
@@ -884,6 +919,20 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
           mostrarMensaje(successId,'⟳ Interpretando tu revolución solar...');
         }
       }catch(rsErr){console.warn('Error RS:',rsErr);}
+    }
+    if(producto==='sinastria'&&extras.nombre2&&extras.fecha2){
+      try{
+        mostrarMensaje(successId,'⟳ Calculando la carta de '+extras.nombre2+'...');
+        const coords2=await getCoordenadas(extras.ciudad2,extras.pais2||'Argentina');
+        const tz2=await getTimezone(coords2.lat,coords2.lon);
+        const PAIS_CODIGOS={'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
+        const nationCode2=PAIS_CODIGOS[(extras.pais2||'Argentina').toLowerCase()]||(extras.pais2||'AR').toUpperCase().slice(0,2);
+        const [year2,month2,day2]=extras.fecha2.split('-').map(Number);
+        const [hour2,minute2]=extras.hora2?extras.hora2.split(':').map(Number):[12,0];
+        const carta2Res=await fetch(`${WORKER_URL}/carta`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:{name:extras.nombre2,year:year2,month:month2,day:day2,hour:hour2,minute:minute2,longitude:coords2.lon,latitude:coords2.lat,timezone:tz2,city:extras.ciudad2,nation:nationCode2}})});
+        const carta2Data=await carta2Res.json();
+        if(carta2Data&&!carta2Data.error){extras.cartaPersona2=carta2Data;mostrarMensaje(successId,'⟳ Interpretando la sinastría...');}
+      }catch(sin2Err){console.warn('Error carta persona 2:',sin2Err);}
     }
     const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
     const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre,producto,system:SYSTEM_EVOLUTIVO,lectura:prompt,codigoPromo:esPrueba?CODIGO_PRUEBA:'',pagado:true})});

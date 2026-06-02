@@ -1005,8 +1005,8 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
     const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre,producto,system:SYSTEM_EVOLUTIVO,lectura:prompt,codigoPromo:esPrueba?CODIGO_PRUEBA:'',pagado:true})});
     const data=await res.json();
     if(data.ok){mostrarMensaje(successId,`✦ ¡Listo! Tu lectura fue enviada a ${email}. Revisá tu bandeja de entrada.`);}
-    else{mostrarMensaje(errorId,'Error al enviar. Contactanos por WhatsApp.');}
-  }catch(e){mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');}
+    else{console.error('Worker error:',data);mostrarMensaje(errorId,'Error al enviar. Contactanos por WhatsApp.');}
+  }catch(e){console.error('Error lectura-profunda:',e);mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');}
 }
 
 // --- CALCULAR CARTA ---

@@ -239,7 +239,6 @@
       </div>
       <div class="preguntas-section">
         <textarea id="pregunta-texto" placeholder="Escribí tu pregunta aquí..."></textarea>
-        <input type="email" id="email-pregunta" placeholder="Tu email para recibir la respuesta" style="margin-top:10px;" />
         <div class="promo-row" style="margin-top:10px;">
           <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
           <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
@@ -283,7 +282,6 @@
           <li>Patrones dominantes y dones ocultos</li>
         </ul>
         <div class="compra-form" id="form-carta-completa">
-          <input type="email" id="email-carta-completa" placeholder="Tu email para recibir la lectura" />
           <div class="promo-row">
             <input type="text" id="promo-carta-completa" placeholder="Código de descuento (opcional)" />
             <button class="btn-promo" onclick="aplicarPromo('carta-completa')">Aplicar</button>
@@ -308,7 +306,6 @@
           <li>Coaching evolutivo con fortalezas y debilidades</li>
         </ul>
         <div class="compra-form" id="form-lectura-profunda">
-          <input type="email" id="email-lectura-profunda" placeholder="Tu email para recibir la lectura" />
           <div class="promo-row">
             <input type="text" id="promo-lectura-profunda" placeholder="Código de descuento (opcional)" />
             <button class="btn-promo" onclick="aplicarPromo('lectura-profunda')">Aplicar</button>
@@ -333,7 +330,6 @@
           <li>Temas centrales de tu año evolutivo</li>
         </ul>
         <div class="compra-form" id="form-revolucion-solar">
-          <input type="email" id="email-revolucion-solar" placeholder="Tu email para recibir la lectura" />
           <div class="rs-campos">
             <label>¿Qué revolución solar querés leer?</label>
             <select id="rs-anio">
@@ -371,7 +367,6 @@
           <li>Desafíos y dones de la relación</li>
         </ul>
         <div class="compra-form" id="form-sinastria">
-          <input type="email" id="email-sinastria" placeholder="Tu email para recibir la lectura" />
           <div class="rs-campos" style="margin:10px 0;">
             <label>Datos de la otra persona</label>
             <input type="text" id="sinastria-nombre2" placeholder="Nombre" style="margin-bottom:8px;" />
@@ -405,7 +400,6 @@
           <li>Duración y cómo trabajar cada tránsito</li>
         </ul>
         <div class="compra-form" id="form-transitos">
-          <input type="email" id="email-transitos" placeholder="Tu email para recibir la lectura" />
           <div class="promo-row">
             <input type="text" id="promo-transitos" placeholder="Código de descuento (opcional)" />
             <button class="btn-promo" onclick="aplicarPromo('transitos')">Aplicar</button>
@@ -712,8 +706,11 @@ Júpiter: dónde está su crecimiento natural, su filosofía de vida, su sentido
 **Estructura y desafío**
 Saturno como vehículo de evolución: dónde la vida le pide madurez, disciplina y hacerse cargo. Sus desafíos son sus mayores maestros. Incluí los aspectos de Saturno.
 
+**Plutón: la transformación profunda**
+Plutón como el mayor apego del alma y lo que viene a transformar en esta encarnación. El poder personal, la sombra, los ciclos de muerte y renacimiento en su vida. Cómo Plutón opera desde el inconsciente y qué pide ser integrado para que el alma evolucione. Incluí los aspectos de Plutón.
+
 **Tu camino de alma**
-Nodo Norte (hacia dónde va el alma) y Nodo Sur (de dónde viene). Quirón: la herida que al ser integrada se convierte en don. Plutón: el apego más profundo del alma y lo que viene a transformar.
+Nodo Norte (hacia dónde va el alma) y Nodo Sur (de dónde viene). Quirón: la herida que al ser integrada se convierte en don.
 
 **Síntesis evolutiva**
 Una síntesis de 2-3 párrafos que integre todo: el viaje de esta alma en esta encarnación, los temas centrales, el regalo que tiene para el mundo cuando vive desde su expresión más auténtica.
@@ -933,8 +930,6 @@ function aplicarPromo(producto) {
 // --- PROCESAR COMPRA ---
 async function procesarCompra(producto, precio) {
   if(producto==='lectura-profunda'&&new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
-  const emailId=producto==='pregunta'?'email-pregunta':`email-${producto}`;
-  const email=document.getElementById(emailId)?.value?.trim();
   const errorId=`error-${producto}`,successId=`success-${producto}`;
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
@@ -961,8 +956,8 @@ async function procesarCompra(producto, precio) {
   }
   if(esPrueba){await generarYEnviarLectura(producto,nombre,extras,true);}
   else{
-    sessionStorage.setItem('pendiente',JSON.stringify({producto,email,nombre,extras,precio,fecha:document.getElementById('fecha').value,hora:document.getElementById('hora').value,ciudad:document.getElementById('ciudad').value.trim(),pais:document.getElementById('pais').value.trim()||'Argentina'}));
-    const returnUrl=encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&email=${encodeURIComponent(email)}&nombre=${encodeURIComponent(nombre)}`);
+    sessionStorage.setItem('pendiente',JSON.stringify({producto,nombre,extras,precio,fecha:document.getElementById('fecha').value,hora:document.getElementById('hora').value,ciudad:document.getElementById('ciudad').value.trim(),pais:document.getElementById('pais').value.trim()||'Argentina'}));
+    const returnUrl=encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&nombre=${encodeURIComponent(nombre)}`);
     window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`,'_blank');
     mostrarMensaje(successId,'✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
   }
@@ -1079,7 +1074,7 @@ async function calcularCarta() {
     try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
-    if(params.get('lectura')==='ok'){const prod=params.get('prod'),emailParam=params.get('email'),nombreParam=params.get('nombre')||nombre;if(prod&&emailParam){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');const extrasPaypal=pendienteData?.extras||{};sessionStorage.removeItem('pendiente');await generarYEnviarLectura(prod,nombreParam,extrasPaypal,false);}}
+    if(params.get('lectura')==='ok'){const prod=params.get('prod'),nombreParam=params.get('nombre')||nombre;if(prod){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');const extrasPaypal=pendienteData?.extras||{};sessionStorage.removeItem('pendiente');await generarYEnviarLectura(prod,nombreParam,extrasPaypal,false);}}
   }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 

@@ -108,7 +108,7 @@ export default {
       }
     }
 
-    // ── RUTA 4: Enviar lectura por email via SendGrid ──
+    // ── RUTA 4: Generar lectura con Claude; envía email por SendGrid solo si se provee email ──
     if (path === '/enviar-lectura' && request.method === 'POST') {
       try {
         const body = await request.json();
@@ -120,17 +120,6 @@ export default {
         if (!esPrueba && !body.pagado) {
           return json({ error: 'Pago no confirmado' }, 403);
         }
-
-        const productos = {
-          'carta-completa': { nombre: 'Carta Natal Completa', precio: '$6 USD' },
-          'revolucion-solar': { nombre: 'Revolución Solar', precio: '$9 USD' },
-          'sinastria': { nombre: 'Sinastría — Compatibilidad de Pareja', precio: '$9 USD' },
-          'transitos': { nombre: 'Tránsitos Actuales', precio: '$5 USD' },
-          'pregunta': { nombre: 'Pregunta Puntual', precio: '$2 USD' },
-          'lectura-profunda': { nombre: 'Lectura Profunda · Análisis Completo', precio: '$13 USD' },
-        };
-
-        const prod = productos[producto] || { nombre: producto, precio: '' };
 
         // Generar lectura con Claude
         const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
@@ -153,19 +142,31 @@ export default {
         const claudeData = await claudeRes.json();
         const texto = claudeData.content?.map(b => b.text || '').join('') || '';
 
-        // Formatear texto para HTML
-        const htmlLectura = texto
-          .split('\n')
-          .map(linea => {
-            if (!linea.trim()) return '<br>';
-            if (linea.startsWith('**') && linea.endsWith('**')) {
-              return `<h2 style="color:#82B366;font-family:Georgia,serif;font-size:18px;margin:24px 0 8px;border-bottom:1px solid rgba(130,179,102,0.3);padding-bottom:6px;">${linea.replace(/\*\*/g, '')}</h2>`;
-            }
-            return `<p style="margin:0 0 12px;line-height:1.8;color:#3a3a3a;">${linea.replace(/\*\*/g, '')}</p>`;
-          })
-          .join('');
+        // Si hay email, mandar por SendGrid
+        if (email) {
+          const productos = {
+            'carta-completa': { nombre: 'Carta Natal Completa', precio: '$6 USD' },
+            'revolucion-solar': { nombre: 'Revolución Solar', precio: '$9 USD' },
+            'sinastria': { nombre: 'Sinastría — Compatibilidad de Pareja', precio: '$9 USD' },
+            'transitos': { nombre: 'Tránsitos Actuales', precio: '$5 USD' },
+            'pregunta': { nombre: 'Pregunta Puntual', precio: '$2 USD' },
+            'lectura-profunda': { nombre: 'Lectura Profunda · Análisis Completo', precio: '$13 USD' },
+          };
 
-        const emailHtml = `
+          const prod = productos[producto] || { nombre: producto, precio: '' };
+
+          const htmlLectura = texto
+            .split('\n')
+            .map(linea => {
+              if (!linea.trim()) return '<br>';
+              if (linea.startsWith('**') && linea.endsWith('**')) {
+                return `<h2 style="color:#82B366;font-family:Georgia,serif;font-size:18px;margin:24px 0 8px;border-bottom:1px solid rgba(130,179,102,0.3);padding-bottom:6px;">${linea.replace(/\*\*/g, '')}</h2>`;
+              }
+              return `<p style="margin:0 0 12px;line-height:1.8;color:#3a3a3a;">${linea.replace(/\*\*/g, '')}</p>`;
+            })
+            .join('');
+
+          const emailHtml = `
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
@@ -200,27 +201,28 @@ export default {
 </body>
 </html>`;
 
-        const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${env.SENDGRID_KEY}`,
-          },
-          body: JSON.stringify({
-            personalizations: [{ to: [{ email, name: nombre }] }],
-            from: { email: 'cartas@espaciolibra.com', name: 'Espacio Libra' },
-            reply_to: { email: 'contacto@espaciolibra.com', name: 'Cynthia · Espacio Libra' },
-            subject: `✦ Tu ${prod.nombre} — Espacio Libra`,
-            content: [{ type: 'text/html', value: emailHtml }],
-          }),
-        });
+          const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${env.SENDGRID_KEY}`,
+            },
+            body: JSON.stringify({
+              personalizations: [{ to: [{ email, name: nombre }] }],
+              from: { email: 'cartas@espaciolibra.com', name: 'Espacio Libra' },
+              reply_to: { email: 'contacto@espaciolibra.com', name: 'Cynthia · Espacio Libra' },
+              subject: `✦ Tu ${prod.nombre} — Espacio Libra`,
+              content: [{ type: 'text/html', value: emailHtml }],
+            }),
+          });
 
-        if (!sgRes.ok) {
-          const err = await sgRes.text();
-          return json({ error: 'Error al enviar email: ' + err }, 500);
+          if (!sgRes.ok) {
+            const err = await sgRes.text();
+            return json({ error: 'Error al enviar email: ' + err }, 500);
+          }
         }
 
-        return json({ ok: true, mensaje: 'Lectura enviada a ' + email });
+        return json({ ok: true, texto });
 
       } catch (e) {
         return json({ error: e.message }, 500);

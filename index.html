@@ -936,7 +936,6 @@ async function procesarCompra(producto, precio) {
   const emailId=producto==='pregunta'?'email-pregunta':`email-${producto}`;
   const email=document.getElementById(emailId)?.value?.trim();
   const errorId=`error-${producto}`,successId=`success-${producto}`;
-  if(!email||!email.includes('@')){mostrarMensaje(errorId,'Ingresá un email válido para recibir tu lectura.');return;}
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
   const extras={};

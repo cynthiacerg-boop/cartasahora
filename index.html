@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cartas Ahora · Espacio Libra</title>
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { background: #0a0a12; color: #e8e4de; font-family: 'Jost', sans-serif; min-height: 100vh; overflow-x: hidden; }
@@ -99,6 +100,13 @@
     textarea:focus { border-color: rgba(130,179,102,0.5); }
     textarea::placeholder { color: rgba(255,255,255,0.2); }
     .footer { text-align: center; margin-top: 48px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
+    .lectura-acciones { margin-top: 24px; }
+    .lectura-acciones-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .btn-accion { padding: 12px 20px; border-radius: 8px; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; transition: opacity 0.2s; background: linear-gradient(135deg, #82B366, #6a9652); border: none; color: white; letter-spacing: 0.05em; }
+    .btn-accion:hover { opacity: 0.85; }
+    .btn-accion-outline { background: transparent; border: 1px solid rgba(130,179,102,0.4); color: #82B366; }
+    .btn-accion-outline:hover { background: rgba(130,179,102,0.1); opacity: 1; }
+    .email-envio-form { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
     .hidden { display: none !important; }
     .chart-wheel-container { display: flex; justify-content: center; padding: 20px 0 10px; }
     #chart-wheel { max-width: 380px; width: 100%; filter: drop-shadow(0 0 20px rgba(130,179,102,0.15)); }
@@ -421,6 +429,8 @@ const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
 const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
 const CODIGO_PRUEBA = 'ESPACIO2025';
 const promoAplicada = {};
+const _lecturaContexto = {};
+const PRODUCT_NOMBRES = {'carta-completa':'Carta Natal Completa','revolucion-solar':'Revolución Solar','sinastria':'Sinastría','transitos':'Tránsitos Actuales','pregunta':'Pregunta Puntual','lectura-profunda':'Lectura Profunda'};
 
 (function() {
   const container = document.getElementById('stars');
@@ -948,7 +958,7 @@ async function procesarCompra(producto, precio) {
     extras.ciudadRS=ciudadRS;
     extras.paisRS=paisRS;
   }
-  if(esPrueba){await generarYEnviarLectura(producto,email,nombre,extras,true);}
+  if(esPrueba){await generarYEnviarLectura(producto,nombre,extras,true);}
   else{
     sessionStorage.setItem('pendiente',JSON.stringify({producto,email,nombre,extras,precio,fecha:document.getElementById('fecha').value,hora:document.getElementById('hora').value,ciudad:document.getElementById('ciudad').value.trim(),pais:document.getElementById('pais').value.trim()||'Argentina'}));
     const returnUrl=encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&email=${encodeURIComponent(email)}&nombre=${encodeURIComponent(nombre)}`);
@@ -958,11 +968,10 @@ async function procesarCompra(producto, precio) {
 }
 
 // --- GENERAR Y ENVIAR LECTURA ---
-async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) {
+async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   const errorId=`error-${producto}`,successId=`success-${producto}`;
   mostrarMensaje(successId,'⟳ Generando tu lectura...');
   try {
-    // Para revolución solar, primero obtener los datos de la RS desde la API
     let chartDataParaPrompt=cartaData;
     if(producto==='revolucion-solar'&&extras.anioRS){
       try{
@@ -974,10 +983,7 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
         const nationCodeRS=PAIS_CODIGOS[(extras.paisRS||'Argentina').toLowerCase()]||(extras.paisRS||'AR').toUpperCase().slice(0,2);
         const rsRes=await fetch(`${WORKER_URL}/revolucion-solar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:{name:subject.name,year:subject.year||new Date().getFullYear(),month:subject.month,day:subject.day,hour:subject.hour,minute:subject.minute,longitude:subject.lng,latitude:subject.lat,timezone:subject.tz_str,city:subject.city,nation:subject.nation},year:parseInt(extras.anioRS),return_location:{city:extras.ciudadRS,nation:nationCodeRS,longitude:coordsRS.lon,latitude:coordsRS.lat,timezone:tzRS}})});
         const rsData=await rsRes.json();
-        if(rsData&&!rsData.error){
-          extras.rsData=rsData;
-          mostrarMensaje(successId,'⟳ Interpretando tu revolución solar...');
-        }
+        if(rsData&&!rsData.error){extras.rsData=rsData;mostrarMensaje(successId,'⟳ Interpretando tu revolución solar...');}
       }catch(rsErr){console.warn('Error RS:',rsErr);}
     }
     if(producto==='sinastria'&&extras.nombre2&&extras.fecha2){
@@ -995,12 +1001,58 @@ async function generarYEnviarLectura(producto, email, nombre, extras, esPrueba) 
       }catch(sin2Err){console.warn('Error carta persona 2:',sin2Err);}
     }
     const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
-    const _fecha=document.getElementById('fecha')?.value||'';const _hora=document.getElementById('hora')?.value||'';const _ciudad=document.getElementById('ciudad')?.value?.trim()||'';const _pais=document.getElementById('pais')?.value?.trim()||'Argentina';
-    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre,producto,system:SYSTEM_EVOLUTIVO,lectura:prompt,codigoPromo:esPrueba?CODIGO_PRUEBA:'',pagado:true,fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais})});
+    const _fecha=document.getElementById('fecha')?.value||'';
+    const _hora=document.getElementById('hora')?.value||'';
+    const _ciudad=document.getElementById('ciudad')?.value?.trim()||'';
+    const _pais=document.getElementById('pais')?.value?.trim()||'Argentina';
+
+    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre,producto,system:SYSTEM_EVOLUTIVO,lectura:prompt,codigoPromo:esPrueba?CODIGO_PRUEBA:'',pagado:true,fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais})});
     const data=await res.json();
-    if(data.ok){mostrarMensaje(successId,`✦ ¡Listo! Tu lectura fue enviada a ${email}. Revisá tu bandeja de entrada.`);}
-    else{console.error('Worker error:',data);mostrarMensaje(errorId,'Error al enviar. Contactanos por WhatsApp.');}
-  }catch(e){console.error('Error lectura-profunda:',e);mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');}
+    if(!data.ok||!data.texto){console.error('Worker error:',data);mostrarMensaje(errorId,'Error al generar la lectura. Contactanos por WhatsApp.');return;}
+
+    const productoNombre=PRODUCT_NOMBRES[producto]||producto;
+    _lecturaContexto[producto]={nombre,productoNombre,prompt,system:SYSTEM_EVOLUTIVO,codigoPromo:esPrueba?CODIGO_PRUEBA:'',fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais};
+
+    const container=document.getElementById('section-lecturas-desbloqueadas');
+    let card=document.getElementById(`card-lectura-${producto}`);
+    if(!card){card=document.createElement('div');card.className='card';card.id=`card-lectura-${producto}`;container.appendChild(card);}
+    card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div><div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion" onclick="descargarPDF('${producto}')">⬇ Descargar PDF</button><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Recibir por mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><input type="email" id="email-enviar-${producto}" placeholder="tu@email.com" /><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">✦ Enviar a mi email</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
+
+    renderInterp(data.texto,`texto-lectura-${producto}`);
+    card.scrollIntoView({behavior:'smooth',block:'start'});
+    mostrarMensaje(successId,'✦ ¡Tu lectura está lista!');
+  }catch(e){console.error('Error lectura:',e);mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');}
+}
+
+function mostrarEmailInput(producto) {
+  document.getElementById(`email-envio-${producto}`)?.classList.toggle('hidden');
+}
+
+async function enviarPorMail(producto) {
+  const email=document.getElementById(`email-enviar-${producto}`)?.value?.trim();
+  const successEl=document.getElementById(`success-email-${producto}`);
+  const errorEl=document.getElementById(`error-email-${producto}`);
+  if(!email||!email.includes('@')){if(errorEl){errorEl.textContent='Ingresá un email válido.';errorEl.classList.remove('hidden');}return;}
+  const ctx=_lecturaContexto[producto];if(!ctx)return;
+  if(successEl){successEl.textContent='⟳ Enviando...';successEl.classList.remove('hidden');}
+  if(errorEl)errorEl.classList.add('hidden');
+  try{
+    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre:ctx.nombre,producto,system:ctx.system,lectura:ctx.prompt,codigoPromo:ctx.codigoPromo,pagado:true,fecha:ctx.fecha,hora:ctx.hora,ciudad:ctx.ciudad,pais:ctx.pais})});
+    const data=await res.json();
+    if(data.ok){if(successEl)successEl.textContent=`✦ ¡Enviado a ${email}! Revisá tu bandeja de entrada.`;}
+    else{if(errorEl){errorEl.textContent='Error al enviar. Intentá de nuevo.';errorEl.classList.remove('hidden');}if(successEl)successEl.classList.add('hidden');}
+  }catch(e){if(errorEl){errorEl.textContent='Error de conexión. Intentá de nuevo.';errorEl.classList.remove('hidden');}if(successEl)successEl.classList.add('hidden');}
+}
+
+function descargarPDF(producto) {
+  const ctx=_lecturaContexto[producto];if(!ctx)return;
+  const contenido=document.getElementById(`texto-lectura-${producto}`);if(!contenido)return;
+  const contenedor=document.createElement('div');
+  contenedor.style.cssText='font-family:Georgia,serif;color:#1a1a1a;padding:40px;max-width:680px;';
+  contenedor.innerHTML=`<div style="text-align:center;margin-bottom:32px;border-bottom:2px solid #82B366;padding-bottom:24px;"><p style="font-size:10px;letter-spacing:0.3em;color:#5a8a3a;text-transform:uppercase;margin:0 0 10px;">Espacio Libra · Astrología Evolutiva</p><h1 style="font-size:22px;font-weight:400;color:#1a1a1a;margin:0 0 8px;">${ctx.productoNombre}</h1><p style="font-size:13px;color:#555;margin:0;">Lectura personal para ${ctx.nombre}</p></div>${contenido.innerHTML}<div style="text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;"><p style="font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p></div>`;
+  contenedor.querySelectorAll('.interp-text').forEach(el=>{el.style.color='#333';});
+  contenedor.querySelectorAll('.interp-title').forEach(el=>{el.style.color='#2a6a10';});
+  html2pdf().set({margin:10,filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(contenedor).save();
 }
 
 // --- CALCULAR CARTA ---
@@ -1026,7 +1078,7 @@ async function calcularCarta() {
     try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
-    if(params.get('lectura')==='ok'){const prod=params.get('prod'),emailParam=params.get('email'),nombreParam=params.get('nombre')||nombre;if(prod&&emailParam){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');const extrasPaypal=pendienteData?.extras||{};sessionStorage.removeItem('pendiente');await generarYEnviarLectura(prod,emailParam,nombreParam,extrasPaypal,false);}}
+    if(params.get('lectura')==='ok'){const prod=params.get('prod'),emailParam=params.get('email'),nombreParam=params.get('nombre')||nombre;if(prod&&emailParam){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');const extrasPaypal=pendienteData?.extras||{};sessionStorage.removeItem('pendiente');await generarYEnviarLectura(prod,nombreParam,extrasPaypal,false);}}
   }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 

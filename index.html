@@ -558,7 +558,6 @@ function renderRueda(chartData) {
 }
 
 function renderPlanetas(chartData) {
-  console.log('renderPlanetas llamada con:', JSON.stringify(chartData?.chart_data?.subject));
   const tbody=document.getElementById('tabla-planetas'); tbody.innerHTML='';
   const subject=chartData?.chart_data?.subject||{};
   let ascInserted=false;
@@ -577,7 +576,6 @@ function renderPlanetas(chartData) {
 }
 
 function renderAspectos(chartData) {
-  console.log('renderAspectos llamada con:', chartData?.chart_data?.aspects?.length, 'aspectos');
   const tbody=document.getElementById('tabla-aspectos'); tbody.innerHTML='';
   const aspects=chartData?.chart_data?.aspects||[];
   const mainTypes=['conjunction','opposition','trine','square','sextile'];

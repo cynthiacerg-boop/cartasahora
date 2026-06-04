@@ -1006,7 +1006,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
     if(!data.ok||!data.texto){console.error('Worker error:',data);mostrarMensaje(errorId,'Error al generar la lectura. Contactanos por WhatsApp.');return;}
 
     const productoNombre=PRODUCT_NOMBRES[producto]||producto;
-    _lecturaContexto[producto]={nombre,productoNombre,prompt,system:SYSTEM_EVOLUTIVO,codigoPromo:esPrueba?CODIGO_PRUEBA:'',fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais};
+    _lecturaContexto[producto]={nombre,productoNombre,prompt,texto:data.texto,system:SYSTEM_EVOLUTIVO,codigoPromo:esPrueba?CODIGO_PRUEBA:'',fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais};
 
     const container=document.getElementById('section-lecturas-desbloqueadas');
     let card=document.getElementById(`card-lectura-${producto}`);
@@ -1032,7 +1032,7 @@ async function enviarPorMail(producto) {
   if(successEl){successEl.textContent='⟳ Enviando...';successEl.classList.remove('hidden');}
   if(errorEl)errorEl.classList.add('hidden');
   try{
-    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre:ctx.nombre,producto,system:ctx.system,lectura:ctx.prompt,codigoPromo:ctx.codigoPromo,pagado:true,fecha:ctx.fecha,hora:ctx.hora,ciudad:ctx.ciudad,pais:ctx.pais})});
+    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre:ctx.nombre,producto,texto:ctx.texto,codigoPromo:ctx.codigoPromo,pagado:true,fecha:ctx.fecha,hora:ctx.hora,ciudad:ctx.ciudad,pais:ctx.pais})});
     const data=await res.json();
     if(data.ok){if(successEl)successEl.textContent=`✦ ¡Enviado a ${email}! Revisá tu bandeja de entrada.`;}
     else{if(errorEl){errorEl.textContent='Error al enviar. Intentá de nuevo.';errorEl.classList.remove('hidden');}if(successEl)successEl.classList.add('hidden');}

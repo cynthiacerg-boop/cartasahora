@@ -273,13 +273,11 @@
           <div class="producto-nombre">Carta Natal Completa</div>
           <div class="producto-precio">USD 6</div>
         </div>
-        <p class="producto-desc">Interpretación profunda de los 10 planetas, casas, aspectos y síntesis evolutiva de tu camino de alma.</p>
+        <p class="producto-desc">Interpretación profunda de los planetas, casas, aspectos y síntesis evolutiva de tu camino de alma.</p>
         <ul class="producto-items">
-          <li>Los 10 planetas en profundidad</li>
+          <li>Los planetas en profundidad</li>
           <li>Análisis de todas las casas astrológicas</li>
-          <li>Quirón, Lilith y Nodos del destino</li>
           <li>Síntesis evolutiva de tu camino de alma</li>
-          <li>Patrones dominantes y dones ocultos</li>
         </ul>
         <div class="compra-form" id="form-carta-completa">
           <div class="promo-row">
@@ -674,46 +672,49 @@ Aspectos principales: ${topAspects}`;
 
   if (producto === 'carta-completa') return `${base}
 
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. No digas el nombre de la persona como sujeto de la oración. Ejemplo correcto: "Tu Sol en Libra, ${nombre}, te pide..." Ejemplo incorrecto: "${nombre} tiene un Sol en Libra que..."
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
-Para cada sección, identificá y mencioná los aspectos más importantes que involucran al planeta de esa sección. Los aspectos disponibles son: ${topAspects}. Cuando hablés del Sol, mencioná sus aspectos más exactos. Cuando hablés de la Luna, ídem. Y así para cada planeta. Los aspectos definen cómo cada energía se expresa en relación con las demás — son tan importantes como el signo y la casa.
+Escribí una CARTA NATAL COMPLETA desde la perspectiva evolutiva. La carta tiene que sentirse como una lectura real hecha por una astróloga humana: fluida, profunda, sin repeticiones innecesarias.
 
-Escribí una LECTURA NATAL COMPLETA Y PROFUNDA desde la perspectiva evolutiva. Cada sección 2-3 párrafos.
+REGLA CLAVE DE ASPECTOS: cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si Sol tiene una oposición con Luna, se desarrolla en el bloque del Sol. Cuando llegues a Luna, mencionás esa oposición solo de pasada ("como ya vimos") y continuás. Nunca repitas el análisis completo de un aspecto ya desarrollado.
+
+Los aspectos disponibles para esta carta son: ${topAspects}
+
+Para cada bloque: signo + casa + energía evolutiva + aspectos que involucran a ese planeta (conjunciones, trígonos, sextiles, cuadraturas, oposiciones) + cómo esa energía se complementa o choca con lo dicho en bloques anteriores. Si algún aspecto involucra a Urano, Neptuno, Plutón, Quirón o Lilith, mencioná brevemente qué simboliza esa conexión sin desarrollar ese planeta.
+
+Orden de bloques:
 
 **Tu esencia solar**
-El Sol como punto evolutivo: la llama auténtica que viene a encender en esta vida, el proceso de individualización, la paradoja entre quién cree que es y quién realmente es. Mencioná los aspectos exactos del Sol y cómo modulan esa expresión.
+Sol: el punto evolutivo central. Lo que viene a aprender a ser en esta vida, no lo que ya es. La llama que se enciende cuando vive desde su expresión más auténtica. Sus aspectos y cómo modulan esa expresión.
 
 **Tu mundo emocional**
-La Luna como mecanismo de seguridad aprendido en la infancia: qué busca para sentirse contenido/a, cómo reacciona ante la vulnerabilidad, el niño/a interno/a que sigue pidiendo ser cuidado/a. Incluí los aspectos de la Luna.
+Luna: el mecanismo de seguridad emocional. Cómo procesa lo que siente, qué necesita para sentirse segura, el niño interno. Sus aspectos. Referenciá brevemente lo que ya se dijo en el Sol si hay aspectos compartidos.
 
 **Tu presencia en el mundo**
-El Ascendente como energía nueva a integrar: la máscara, el filtro, lo que viene a aprender a ser en este plano.
+Ascendente: la energía nueva a integrar. Cómo la perciben, cómo se presenta, lo que viene a aprender a ser en su forma de moverse por el mundo. Sus aspectos.
 
 **Tu mente y tu voz**
-Mercurio: cómo piensa, aprende y se comunica. Incluí los aspectos de Mercurio y cómo colorean su forma de expresarse.
+Mercurio: cómo piensa, aprende y se comunica. Sus aspectos y cómo colorean su forma de expresarse.
 
 **El amor y los vínculos**
-Venus: qué busca en el amor, cómo se relaciona, qué le atrae y qué le cuesta en los vínculos. Mencioná los aspectos de Venus.
+Venus: qué busca en el amor, cómo se relaciona, qué le atrae y qué le cuesta. Sus aspectos.
 
 **Tu fuerza y tu acción**
-Marte: cómo actúa, defiende lo que quiere, maneja la energía y el enojo. Incluí los aspectos de Marte.
+Marte: cómo actúa, defiende lo que quiere, maneja la energía. Sus aspectos.
 
 **Expansión y abundancia**
-Júpiter: dónde está su crecimiento natural, su filosofía de vida, su sentido de abundancia. Incluí los aspectos de Júpiter.
+Júpiter: dónde está su crecimiento natural, su filosofía de vida, su sentido de abundancia. Sus aspectos. Si Júpiter tiene aspectos con planetas transpersonales, mencioná brevemente qué activa.
 
 **Estructura y desafío**
-Saturno como vehículo de evolución: dónde la vida le pide madurez, disciplina y hacerse cargo. Sus desafíos son sus mayores maestros. Incluí los aspectos de Saturno.
+Saturno: dónde la vida le pide madurez y hacerse cargo. Sus desafíos como vehículo de evolución. Sus aspectos.
 
-**Plutón: la transformación profunda**
-Plutón como el mayor apego del alma y lo que viene a transformar en esta encarnación. El poder personal, la sombra, los ciclos de muerte y renacimiento en su vida. Cómo Plutón opera desde el inconsciente y qué pide ser integrado para que el alma evolucione. Incluí los aspectos de Plutón.
+**Patrones dominantes**
+Analizá: elemento dominante (fuego/tierra/aire/agua), modalidad dominante (cardinal/fija/mutable), concentración de planetas por casa o signo. Qué dice eso sobre la forma en que esta alma procesa la vida y dónde pone su energía naturalmente.
 
-**Tu camino de alma**
-Nodo Norte (hacia dónde va el alma) y Nodo Sur (de dónde viene). Quirón: la herida que al ser integrada se convierte en don.
+**El mapa de tus casas**
+Mencioná las casas más activadas (con más planetas o con planetas angulares) y su impacto concreto en la vida de ${nombre}. Luego las casas vacías más relevantes y qué significa eso en términos prácticos — no como ausencia sino como áreas que se trabajan desde afuera.
 
-**Síntesis evolutiva**
-Una síntesis de 2-3 párrafos que integre todo: el viaje de esta alma en esta encarnación, los temas centrales, el regalo que tiene para el mundo cuando vive desde su expresión más auténtica.
-
-Cerrá con una frase poética y poderosa.`;
+Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta alma. Sin título. Que suene a verdad, no a resumen. La última oración tiene que ser una invitación natural y cálida a ir más profundo — mencioná que hay una capa más: Quirón, Lilith, los Nodos y los patrones inconscientes que esta carta todavía tiene para revelar. Que suene a curiosidad, no a publicidad.`;
 
   if (producto === 'revolucion-solar') {
     const anioRS=extras?.anioRS||'2025';
@@ -1042,11 +1043,12 @@ function descargarPDF(producto) {
   const ctx=_lecturaContexto[producto];if(!ctx)return;
   const contenido=document.getElementById(`texto-lectura-${producto}`);if(!contenido)return;
   const contenedor=document.createElement('div');
-  contenedor.style.cssText='font-family:Georgia,serif;color:#1a1a1a;padding:40px;max-width:680px;';
+  contenedor.style.cssText='font-family:Georgia,serif;color:#1a1a1a;padding:40px;max-width:680px;position:fixed;left:-9999px;top:0;';
   contenedor.innerHTML=`<div style="text-align:center;margin-bottom:32px;border-bottom:2px solid #82B366;padding-bottom:24px;"><p style="font-size:10px;letter-spacing:0.3em;color:#5a8a3a;text-transform:uppercase;margin:0 0 10px;">Espacio Libra · Astrología Evolutiva</p><h1 style="font-size:22px;font-weight:400;color:#1a1a1a;margin:0 0 8px;">${ctx.productoNombre}</h1><p style="font-size:13px;color:#555;margin:0;">Lectura personal para ${ctx.nombre}</p></div>${contenido.innerHTML}<div style="text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;"><p style="font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p></div>`;
   contenedor.querySelectorAll('.interp-text').forEach(el=>{el.style.color='#333';});
   contenedor.querySelectorAll('.interp-title').forEach(el=>{el.style.color='#2a6a10';});
-  html2pdf().set({margin:10,filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(contenedor).save();
+  document.body.appendChild(contenedor);
+  html2pdf().set({margin:10,filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(contenedor).save().then(()=>{document.body.removeChild(contenedor);});
 }
 
 // --- CALCULAR CARTA ---

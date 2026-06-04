@@ -4,30 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Cartas Ahora · Espacio Libra</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&family=Cinzel:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #0a0a12; color: #e8e4de; font-family: 'Jost', sans-serif; min-height: 100vh; overflow-x: hidden; }
+    body { background: #0a0a12; color: #e8e4de; font-family: 'Montserrat', sans-serif; min-height: 100vh; overflow-x: hidden; }
     #stars { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
     .star { position: absolute; background: white; border-radius: 50%; animation: twinkle var(--d) ease-in-out infinite alternate; }
     @keyframes twinkle { from { opacity: 0.05; } to { opacity: 0.5; } }
     .container { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
     .header { text-align: center; margin-bottom: 48px; }
-    .brand { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.35em; color: #82B366; text-transform: uppercase; margin-bottom: 14px; opacity: 0.9; }
-    h1 { font-family: 'Cormorant Garamond', serif; font-size: clamp(36px, 7vw, 58px); font-weight: 300; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
-    .subtitle { font-family: 'Cormorant Garamond', serif; font-size: 17px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.6; }
+    .brand { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.35em; color: #82B366; text-transform: uppercase; margin-bottom: 14px; opacity: 0.9; }
+    h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px, 7vw, 58px); font-weight: 400; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
+    .subtitle { font-family: 'Playfair Display', serif; font-size: 17px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.6; }
     .divider { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, #82B366, transparent); margin: 20px auto 0; }
     .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 36px 32px; backdrop-filter: blur(10px); margin-bottom: 20px; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     .form-group { display: flex; flex-direction: column; gap: 7px; }
     .form-group.full { grid-column: 1 / -1; }
-    label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
-    input, select { background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Jost', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
+    label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+    input, select { background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
     input:focus, select:focus { border-color: rgba(130,179,102,0.5); }
     input::placeholder { color: rgba(255,255,255,0.2); }
     select option { background: #1a1a2e; }
-    .btn-primary { width: 100%; margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #82B366, #6a9652); border: none; border-radius: 10px; color: white; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(130,179,102,0.3); }
+    .btn-primary { width: 100%; margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #82B366, #6a9652); border: none; border-radius: 10px; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(130,179,102,0.3); }
     .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .error-msg { color: #e07070; font-size: 13px; margin-top: 12px; text-align: center; }
@@ -40,11 +40,11 @@
     .r3 { inset: 22px; border-color: rgba(130,179,102,0.5); animation: spin 1.5s linear infinite; }
     .r4 { inset: 35px; background: #82B366; box-shadow: 0 0 12px rgba(130,179,102,0.6); }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    .loader p { font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 0.15em; color: #82B366; opacity: 0.8; }
-    .section-title { font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 0.25em; color: #82B366; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+    .loader p { font-family: 'Playfair Display', serif; font-size: 15px; letter-spacing: 0.1em; color: #82B366; opacity: 0.8; font-style: italic; }
+    .section-title { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.25em; color: #82B366; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
     .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(130,179,102,0.2); }
     .planets-table { width: 100%; border-collapse: collapse; }
-    .planets-table th { font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.15em; color: rgba(255,255,255,0.3); text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .planets-table th { font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.15em; color: rgba(255,255,255,0.3); text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .planets-table td { padding: 10px 12px; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.04); }
     .planets-table tr:last-child td { border-bottom: none; }
     .planet-name { display: flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.75); }
@@ -61,34 +61,34 @@
     .aspect-bar.armonico { background: #82B366; }
     .aspect-bar.poderoso { background: #f0c040; }
     .aspect-bar.desafiante { background: #e06060; }
-    .aspect-quality { font-size: 12px; font-weight: 500; }
+    .aspect-quality { font-size: 12px; font-weight: 600; }
     .aspect-quality.armonico { color: #82B366; }
     .aspect-quality.poderoso { color: #f0c040; }
     .aspect-quality.desafiante { color: #e06060; }
     .aspect-orb { color: rgba(255,255,255,0.3); font-size: 12px; }
     .aspect-right { display: flex; align-items: center; gap: 6px; justify-content: flex-end; }
     .interp-block { margin-bottom: 24px; }
-    .interp-title { font-family: 'Cormorant Garamond', serif; font-size: 19px; color: #82B366; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(130,179,102,0.15); letter-spacing: 0.03em; }
-    .interp-text { font-family: 'Jost', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.72); }
+    .interp-title { font-family: 'Playfair Display', serif; font-size: 19px; color: #82B366; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(130,179,102,0.15); letter-spacing: 0.03em; }
+    .interp-text { font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.72); }
     .productos-grid { display: grid; gap: 16px; margin-top: 8px; }
     .producto-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; transition: border-color 0.2s, background 0.2s; cursor: pointer; }
     .producto-card:hover { border-color: rgba(138,77,171,0.4); background: rgba(138,77,171,0.05); }
     .producto-card.destacado { border-color: rgba(138,77,171,0.35); background: linear-gradient(135deg, rgba(138,77,171,0.1), rgba(130,179,102,0.05)); }
     .producto-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-    .producto-nombre { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: #f0ede8; }
-    .producto-precio { font-family: 'Cormorant Garamond', serif; font-size: 26px; color: #8A4DAB; font-weight: 300; }
+    .producto-nombre { font-family: 'Playfair Display', serif; font-size: 20px; font-weight: 400; color: #f0ede8; }
+    .producto-precio { font-family: 'Playfair Display', serif; font-size: 26px; color: #8A4DAB; font-weight: 400; }
     .producto-desc { font-size: 13px; color: rgba(255,255,255,0.45); line-height: 1.6; margin-bottom: 16px; }
     .producto-items { list-style: none; margin-bottom: 16px; }
     .producto-items li { font-size: 12px; color: rgba(255,255,255,0.55); padding: 3px 0; display: flex; align-items: center; gap: 7px; }
     .producto-items li::before { content: '✦'; color: #8A4DAB; font-size: 9px; }
-    .badge-popular { display: inline-block; background: rgba(130,179,102,0.2); border: 1px solid rgba(130,179,102,0.4); border-radius: 20px; padding: 3px 12px; font-size: 10px; letter-spacing: 0.1em; color: #82B366; margin-bottom: 10px; }
+    .badge-popular { display: inline-block; background: rgba(130,179,102,0.2); border: 1px solid rgba(130,179,102,0.4); border-radius: 20px; padding: 3px 12px; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; color: #82B366; margin-bottom: 10px; }
     .compra-form { margin-top: 16px; }
     .compra-form input, .compra-form select { margin-bottom: 10px; }
     .promo-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .promo-row input { margin-bottom: 0; flex: 1; }
-    .btn-promo { padding: 13px 16px; background: transparent; border: 1px solid rgba(130,179,102,0.3); border-radius: 8px; color: #82B366; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
+    .btn-promo { padding: 13px 16px; background: transparent; border: 1px solid rgba(130,179,102,0.3); border-radius: 8px; color: #82B366; font-family: 'Montserrat', sans-serif; font-size: 13px; cursor: pointer; white-space: nowrap; transition: background 0.2s; }
     .btn-promo:hover { background: rgba(130,179,102,0.1); }
-    .btn-paypal { width: 100%; padding: 16px; background: linear-gradient(135deg, #8A4DAB, #6a3a85); border: none; border-radius: 10px; color: white; font-family: 'Cinzel', serif; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(138,77,171,0.35); margin-top: 4px; }
+    .btn-paypal { width: 100%; padding: 16px; background: linear-gradient(135deg, #8A4DAB, #6a3a85); border: none; border-radius: 10px; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(138,77,171,0.35); margin-top: 4px; }
     .btn-paypal:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-paypal:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
     .paypal-note { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
@@ -96,13 +96,13 @@
     .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
     .pregunta-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; }
     .pregunta-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.8); }
-    textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Jost', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
+    textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
     textarea:focus { border-color: rgba(130,179,102,0.5); }
     textarea::placeholder { color: rgba(255,255,255,0.2); }
-    .footer { text-align: center; margin-top: 48px; font-family: 'Cinzel', serif; font-size: 10px; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
+    .footer { text-align: center; margin-top: 48px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.25em; color: rgba(255,255,255,0.12); }
     .lectura-acciones { margin-top: 24px; }
     .lectura-acciones-btns { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-    .btn-accion { padding: 12px 20px; border-radius: 8px; font-family: 'Jost', sans-serif; font-size: 13px; cursor: pointer; transition: opacity 0.2s; background: linear-gradient(135deg, #82B366, #6a9652); border: none; color: white; letter-spacing: 0.05em; }
+    .btn-accion { padding: 12px 20px; border-radius: 8px; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity 0.2s; background: linear-gradient(135deg, #82B366, #6a9652); border: none; color: white; letter-spacing: 0.05em; }
     .btn-accion:hover { opacity: 0.85; }
     .btn-accion-outline { background: transparent; border: 1px solid rgba(130,179,102,0.4); color: #82B366; }
     .btn-accion-outline:hover { background: rgba(130,179,102,0.1); opacity: 1; }
@@ -137,7 +137,7 @@
   </div>
 
   <div id="upgrade-banner" class="card hidden" style="border-color:rgba(138,77,171,0.4);background:linear-gradient(135deg,rgba(138,77,171,0.08),rgba(130,179,102,0.04));text-align:center;">
-    <p style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:0.2em;color:#8A4DAB;text-transform:uppercase;margin:0 0 10px;">✦ Upgrade disponible</p>
+    <p style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.2em;color:#8A4DAB;text-transform:uppercase;margin:0 0 10px;">✦ Upgrade disponible</p>
     <p style="font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 6px;">Para completar tu upgrade a Lectura Profunda,</p>
     <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">calculá tu carta natal y pagá los USD 7 restantes.</p>
   </div>
@@ -253,7 +253,7 @@
     <div id="section-lecturas-desbloqueadas"></div>
 
     <div style="text-align:center;margin-top:20px;">
-      <button onclick="reiniciar()" style="background:transparent;border:1px solid rgba(130,179,102,0.25);border-radius:8px;padding:10px 24px;color:#82B366;font-family:'Jost',sans-serif;font-size:13px;cursor:pointer;letter-spacing:0.05em;">
+      <button onclick="reiniciar()" style="background:transparent;border:1px solid rgba(130,179,102,0.25);border-radius:8px;padding:10px 24px;color:#82B366;font-family:'Montserrat',sans-serif;font-size:13px;cursor:pointer;letter-spacing:0.05em;">
         Nueva consulta
       </button>
     </div>
@@ -298,7 +298,7 @@
         </div>
         <p class="producto-desc">Todos los aspectos de tu carta en profundidad más coaching evolutivo con fortalezas y áreas de crecimiento.</p>
         <ul class="producto-items">
-          <li>Análisis profundo de todos tus aspectos (trígonos, sextiles, cuadraturas, oposiciones)</li>
+          <li>Análisis profundo de todos tus aspectos</li>
           <li>Tus dones naturales y cómo usarlos conscientemente</li>
           <li>Tus áreas de crecimiento como experiencias evolutivas</li>
           <li>Coaching evolutivo con fortalezas y debilidades</li>
@@ -488,6 +488,9 @@ async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad
   return await res.json();
 }
 
+// FIX 1+2: llamarClaude llama directamente a /interpretar y devuelve el texto.
+// generarYEnviarLectura usa esta función para obtener el texto ANTES de llamar a /enviar-lectura.
+// /enviar-lectura recibe el texto ya generado → nunca vuelve a llamar a Claude.
 async function llamarClaude(prompt) {
   const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt})});
   if (!res.ok) throw new Error('Error al obtener la interpretación.');
@@ -538,8 +541,8 @@ function renderRueda(chartData) {
   finalCusps.forEach((cuspEcl,h) => { const isAngular=angularHouses.has(h),houseRad=eclToSvg(cuspEcl),r1=isAngular?R_SIGN_IN:R_HOUSE,r2=R_CENTER+2; const x1h=cx+r1*Math.cos(houseRad),y1h=cy+r1*Math.sin(houseRad),x2h=cx+r2*Math.cos(houseRad),y2h=cy+r2*Math.sin(houseRad); const hLine=createSVGEl('line'); hLine.setAttribute('x1',x1h); hLine.setAttribute('y1',y1h); hLine.setAttribute('x2',x2h); hLine.setAttribute('y2',y2h); hLine.setAttribute('stroke',isAngular?'rgba(200,170,80,0.6)':'rgba(255,255,255,0.13)'); hLine.setAttribute('stroke-width',isAngular?'1.2':'0.6'); if(!isAngular)hLine.setAttribute('stroke-dasharray','3,4'); svg.appendChild(hLine); const nextCusp=finalCusps[(h+1)%12],span=(nextCusp-cuspEcl+360)%360,midEcl=cuspEcl+span/2,labelRad=eclToSvg(midEcl),labelR=R_HOUSE-14,lx=cx+labelR*Math.cos(labelRad),ly=cy+labelR*Math.sin(labelRad); const hLabel=createSVGEl('text'); hLabel.setAttribute('x',lx); hLabel.setAttribute('y',ly); hLabel.setAttribute('text-anchor','middle'); hLabel.setAttribute('dominant-baseline','middle'); hLabel.setAttribute('font-size',isAngular?'9':'7'); hLabel.setAttribute('fill',isAngular?'rgba(200,170,80,0.85)':'rgba(255,255,255,0.22)'); hLabel.textContent=String(h+1); svg.appendChild(hLabel); });
   const ascRad=eclToSvg(ascAbsPos),dcAbsPos=(ascAbsPos+180)%360,dcRad=eclToSvg(dcAbsPos);
   const axisDC=createSVGEl('line'); axisDC.setAttribute('x1',cx+R_SIGN_IN*Math.cos(ascRad)); axisDC.setAttribute('y1',cy+R_SIGN_IN*Math.sin(ascRad)); axisDC.setAttribute('x2',cx+R_SIGN_IN*Math.cos(dcRad)); axisDC.setAttribute('y2',cy+R_SIGN_IN*Math.sin(dcRad)); axisDC.setAttribute('stroke','rgba(200,170,80,0.3)'); axisDC.setAttribute('stroke-width','0.8'); svg.appendChild(axisDC);
-  const acLabel=createSVGEl('text'); acLabel.setAttribute('x',cx+(R_OUTER-15)*Math.cos(ascRad)); acLabel.setAttribute('y',cy+(R_OUTER-15)*Math.sin(ascRad)); acLabel.setAttribute('text-anchor','middle'); acLabel.setAttribute('dominant-baseline','middle'); acLabel.setAttribute('font-size','10'); acLabel.setAttribute('fill','rgba(200,170,80,0.95)'); acLabel.setAttribute('font-family','Cinzel, serif'); acLabel.textContent='AC'; svg.appendChild(acLabel);
-  const dcLabel=createSVGEl('text'); dcLabel.setAttribute('x',cx+(R_OUTER-15)*Math.cos(dcRad)); dcLabel.setAttribute('y',cy+(R_OUTER-15)*Math.sin(dcRad)); dcLabel.setAttribute('text-anchor','middle'); dcLabel.setAttribute('dominant-baseline','middle'); dcLabel.setAttribute('font-size','10'); dcLabel.setAttribute('fill','rgba(200,170,80,0.6)'); dcLabel.setAttribute('font-family','Cinzel, serif'); dcLabel.textContent='DC'; svg.appendChild(dcLabel);
+  const acLabel=createSVGEl('text'); acLabel.setAttribute('x',cx+(R_OUTER-15)*Math.cos(ascRad)); acLabel.setAttribute('y',cy+(R_OUTER-15)*Math.sin(ascRad)); acLabel.setAttribute('text-anchor','middle'); acLabel.setAttribute('dominant-baseline','middle'); acLabel.setAttribute('font-size','10'); acLabel.setAttribute('fill','rgba(200,170,80,0.95)'); acLabel.setAttribute('font-family','Montserrat, sans-serif'); acLabel.textContent='AC'; svg.appendChild(acLabel);
+  const dcLabel=createSVGEl('text'); dcLabel.setAttribute('x',cx+(R_OUTER-15)*Math.cos(dcRad)); dcLabel.setAttribute('y',cy+(R_OUTER-15)*Math.sin(dcRad)); dcLabel.setAttribute('text-anchor','middle'); dcLabel.setAttribute('dominant-baseline','middle'); dcLabel.setAttribute('font-size','10'); dcLabel.setAttribute('fill','rgba(200,170,80,0.6)'); dcLabel.setAttribute('font-family','Montserrat, sans-serif'); dcLabel.textContent='DC'; svg.appendChild(dcLabel);
   const subject=chartData?.chart_data?.subject||{};
   const planetPositions={};
   PLANET_KEYS.forEach(key => { const p=subject[key]; if(!p||p.abs_pos===undefined)return; const angleRad=eclToSvg(p.abs_pos),px=cx+R_PLANET*Math.cos(angleRad),py=cy+R_PLANET*Math.sin(angleRad); planetPositions[key]={x:px,y:py,abs_pos:p.abs_pos,name:PLANET_KEY_NAME[key]}; });
@@ -582,16 +585,40 @@ function renderAspectos(chartData) {
   filtered.forEach(a => { const p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'',tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,orb=a.orbit!==undefined?Math.abs(a.orbit).toFixed(2)+'°':'',cls=aspectClass(tipo); const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="aspect-name"><div class="aspect-bar ${cls}"></div>${p1} ${tipoEs} ${p2}</div></td><td><div class="aspect-right"><span class="aspect-quality ${cls}">${cls==='poderoso'?'poderoso':cls==='armonico'?'armónico':'desafiante'}</span><span class="aspect-orb">${orb}</span></div></td>`; tbody.appendChild(tr); });
 }
 
+// FIX 4: renderInterp con fallback robusto — si no hay títulos con **, renderiza igual como párrafos
 function renderInterp(texto, containerId) {
   const container=document.getElementById(containerId); if(!container)return;
-  if(!texto||!texto.trim()){container.innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura. Verificá tu conexión e intentá de nuevo.</p>';return;}
+  if(!texto||!texto.trim()){
+    container.innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura. Verificá tu conexión e intentá de nuevo.</p>';
+    return;
+  }
   container.innerHTML='';
+  const tieneTitulos = /\*\*[^*]+\*\*/.test(texto);
+  if (!tieneTitulos) {
+    // Fallback: texto plano sin títulos → renderizar como párrafos directos
+    const bloq = document.createElement('div'); bloq.className='interp-block';
+    texto.split('\n').forEach(linea => {
+      if (!linea.trim()) return;
+      const p=document.createElement('p'); p.className='interp-text'; p.style.marginBottom='10px';
+      p.textContent=linea.replace(/\*/g,'').trim(); bloq.appendChild(p);
+    });
+    container.appendChild(bloq);
+    return;
+  }
   const lineas=texto.split('\n'); let currentBlock=null;
   lineas.forEach(linea => {
     if(!linea.trim()){if(currentBlock){container.appendChild(currentBlock);currentBlock=null;}return;}
     const esTitulo=(linea.startsWith('**')&&linea.endsWith('**'))||(linea.startsWith('**')&&linea.includes('**',2));
-    if(esTitulo){if(currentBlock)container.appendChild(currentBlock);currentBlock=document.createElement('div');currentBlock.className='interp-block';const title=document.createElement('div');title.className='interp-title';title.textContent=linea.replace(/\*\*/g,'').trim();currentBlock.appendChild(title);}
-    else{if(!currentBlock){currentBlock=document.createElement('div');currentBlock.className='interp-block';}const p=document.createElement('p');p.className='interp-text';p.style.marginBottom='10px';p.textContent=linea.replace(/\*\*/g,'').replace(/\*/g,'').trim();currentBlock.appendChild(p);}
+    if(esTitulo){
+      if(currentBlock)container.appendChild(currentBlock);
+      currentBlock=document.createElement('div');currentBlock.className='interp-block';
+      const title=document.createElement('div');title.className='interp-title';
+      title.textContent=linea.replace(/\*\*/g,'').trim();currentBlock.appendChild(title);
+    } else {
+      if(!currentBlock){currentBlock=document.createElement('div');currentBlock.className='interp-block';}
+      const p=document.createElement('p');p.className='interp-text';p.style.marginBottom='10px';
+      p.textContent=linea.replace(/\*\*/g,'').replace(/\*/g,'').trim();currentBlock.appendChild(p);
+    }
   });
   if(currentBlock)container.appendChild(currentBlock);
 }
@@ -619,7 +646,7 @@ PRINCIPIOS DE INTERPRETACIÓN:
 - Usás títulos de sección entre dobles asteriscos en línea propia.
 - NUNCA menciones autores, escuelas o metodologías específicas.`;
 
-// --- PROMPT BASICO ---
+// --- PROMPT BASICO (lectura gratuita) ---
 function buildPromptBasico(nombre, chartData) {
   const subject=chartData?.chart_data?.subject||{};
   const sol=subject.sun,luna=subject.moon,asc=subject.first_house||subject.ascendant||subject.asc||null;
@@ -670,59 +697,58 @@ Planetas: ${planetsText}
 Ascendente: ${ascSign}
 Aspectos principales: ${topAspects}`;
 
+  // FIX PROMPT: máximo 1 párrafo por planeta, 80-120 palabras, total no más de 900 palabras
   if (producto === 'carta-completa') return `${base}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
 Escribí una CARTA NATAL COMPLETA desde la perspectiva evolutiva. La carta tiene que sentirse como una lectura real hecha por una astróloga humana: fluida, profunda, sin relleno.
 
-LONGITUD: máximo 1 párrafo por bloque. Denso, preciso, sin relleno. Cada párrafo entre 80 y 120 palabras. Total de la carta: no más de 900 palabras.
+LONGITUD ESTRICTA: exactamente 1 párrafo por bloque. Entre 80 y 120 palabras por párrafo. Total máximo: 900 palabras. Sin excepciones.
 
 REGLA CLAVE DE ASPECTOS: cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si Sol tiene una oposición con Luna, se desarrolla en el bloque del Sol. Cuando llegues a Luna, mencionás esa oposición solo de pasada ("como ya vimos") y continuás. Nunca repitas el análisis completo de un aspecto ya desarrollado.
 
 Los aspectos disponibles para esta carta son: ${topAspects}
 
-Para cada bloque: signo + casa + energía evolutiva + aspectos que involucran a ese planeta (conjunciones, trígonos, sextiles, cuadraturas, oposiciones) + cómo esa energía se complementa o choca con lo dicho en bloques anteriores. Si algún aspecto involucra a Urano, Neptuno, Plutón, Quirón o Lilith, mencioná brevemente qué simboliza esa conexión sin desarrollar ese planeta.
+Para cada bloque: signo + casa + energía evolutiva + aspectos que involucran a ese planeta + cómo esa energía se complementa o choca con lo dicho en bloques anteriores.
 
 Orden de bloques:
 
 **Tu esencia solar**
-Sol: el punto evolutivo central. Lo que viene a aprender a ser en esta vida, no lo que ya es. La llama que se enciende cuando vive desde su expresión más auténtica. Sus aspectos y cómo modulan esa expresión.
+Sol: el punto evolutivo central. Lo que viene a aprender a ser en esta vida, no lo que ya es. La llama que se enciende cuando vive desde su expresión más auténtica. Sus aspectos y cómo modulan esa expresión. 1 párrafo, máximo 120 palabras.
 
 **Tu mundo emocional**
-Luna: el mecanismo de seguridad emocional. Cómo procesa lo que siente, qué necesita para sentirse segura, el niño interno. Sus aspectos. Referenciá brevemente lo que ya se dijo en el Sol si hay aspectos compartidos.
+Luna: el mecanismo de seguridad emocional. Cómo procesa lo que siente, qué necesita para sentirse segura, el niño interno. Sus aspectos. 1 párrafo, máximo 120 palabras.
 
 **Tu presencia en el mundo**
-Ascendente: la energía nueva a integrar. Cómo la perciben, cómo se presenta, lo que viene a aprender a ser en su forma de moverse por el mundo. Sus aspectos.
+Ascendente: la energía nueva a integrar. Cómo la perciben, cómo se presenta, lo que viene a aprender a ser en su forma de moverse por el mundo. 1 párrafo, máximo 120 palabras.
 
 **Tu mente y tu voz**
-Mercurio: cómo piensa, aprende y se comunica. Sus aspectos y cómo colorean su forma de expresarse.
+Mercurio: cómo piensa, aprende y se comunica. Sus aspectos. 1 párrafo, máximo 100 palabras.
 
 **El amor y los vínculos**
-Venus: qué busca en el amor, cómo se relaciona, qué le atrae y qué le cuesta. Sus aspectos.
+Venus: qué busca en el amor, cómo se relaciona. Sus aspectos. 1 párrafo, máximo 100 palabras.
 
 **Tu fuerza y tu acción**
-Marte: cómo actúa, defiende lo que quiere, maneja la energía. Sus aspectos.
+Marte: cómo actúa, defiende lo que quiere, maneja la energía. Sus aspectos. 1 párrafo, máximo 100 palabras.
 
 **Expansión y abundancia**
-Júpiter: dónde está su crecimiento natural, su filosofía de vida, su sentido de abundancia. Sus aspectos. Si Júpiter tiene aspectos con planetas transpersonales, mencioná brevemente qué activa.
+Júpiter: dónde está su crecimiento natural, su filosofía de vida. Sus aspectos. 1 párrafo, máximo 100 palabras.
 
 **Estructura y desafío**
-Saturno: dónde la vida le pide madurez y hacerse cargo. Sus desafíos como vehículo de evolución. Sus aspectos.
+Saturno: dónde la vida le pide madurez. Sus desafíos como vehículo de evolución. 1 párrafo, máximo 100 palabras.
 
 **Patrones dominantes**
-Analizá: elemento dominante (fuego/tierra/aire/agua), modalidad dominante (cardinal/fija/mutable), concentración de planetas por casa o signo. Qué dice eso sobre la forma en que esta alma procesa la vida y dónde pone su energía naturalmente.
+Elemento dominante (fuego/tierra/aire/agua), modalidad dominante (cardinal/fija/mutable), concentración de planetas. Qué dice eso sobre cómo esta alma procesa la vida. 1 párrafo, máximo 100 palabras.
 
 **El mapa de tus casas**
-Mencioná las casas más activadas (con más planetas o con planetas angulares) y su impacto concreto en la vida de ${nombre}. Luego las casas vacías más relevantes y qué significa eso en términos prácticos — no como ausencia sino como áreas que se trabajan desde afuera.
+Casas más activadas y su impacto concreto en la vida de ${nombre}. Casas vacías más relevantes. 1 párrafo, máximo 100 palabras.
 
-Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta alma. Sin título. Que suene a verdad, no a resumen. La última oración tiene que ser una invitación natural y cálida a ir más profundo — mencioná que hay una capa más: Quirón, Lilith, los Nodos y los patrones inconscientes que esta carta todavía tiene para revelar. Que suene a curiosidad, no a publicidad.`;
+Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta alma. Sin título. Que suene a verdad. La última oración invita a explorar Quirón, Lilith y los Nodos — que suene a curiosidad, no a publicidad.`;
 
   if (producto === 'revolucion-solar') {
     const anioRS=extras?.anioRS||'2025';
     const ciudadRS=extras?.ciudadRS||'su ciudad de residencia';
-
-    // Extraer datos reales de la RS si están disponibles
     let rsSection='';
     const rsData=extras?.rsData;
     if(rsData&&rsData.chart_data){
@@ -734,66 +760,12 @@ Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta a
       const rsMarte=`${SIGN_MAP[ss.mars?.sign]||ss.mars?.sign||'?'}, casa ${HOUSE_MAP[ss.mars?.house]||'?'}`;
       const rsJupiter=`${SIGN_MAP[ss.jupiter?.sign]||ss.jupiter?.sign||'?'}, casa ${HOUSE_MAP[ss.jupiter?.house]||'?'}`;
       const rsSaturno=`${SIGN_MAP[ss.saturn?.sign]||ss.saturn?.sign||'?'}, casa ${HOUSE_MAP[ss.saturn?.house]||'?'}`;
-      const rsAspectos=(rsData.chart_data.aspects||[])
-        .sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0))
-        .slice(0,5)
-        .map(a=>{const tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'';return `${p1} natal ${tipoEs} ${p2} RS (orbe ${Math.abs(a.orbit||0).toFixed(1)}°)`;})
-        .join('\n');
-      rsSection=`
-Datos de la Revolución Solar ${anioRS} (calculada para ${ciudadRS}):
-- Ascendente RS: ${rsAsc} → energía nueva a integrar este año
-- Sol RS: ${rsSol}
-- Luna RS: ${rsLuna}
-- Venus RS: ${rsVenus}
-- Marte RS: ${rsMarte}
-- Júpiter RS: ${rsJupiter}
-- Saturno RS: ${rsSaturno}
-
-Aspectos cruzados natal-RS más exactos:
-${rsAspectos}`;
+      const rsAspectos=(rsData.chart_data.aspects||[]).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,5).map(a=>{const tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'';return `${p1} natal ${tipoEs} ${p2} RS (orbe ${Math.abs(a.orbit||0).toFixed(1)}°)`;}).join('\n');
+      rsSection=`\nDatos de la Revolución Solar ${anioRS} (calculada para ${ciudadRS}):\n- Ascendente RS: ${rsAsc}\n- Sol RS: ${rsSol}\n- Luna RS: ${rsLuna}\n- Venus RS: ${rsVenus}\n- Marte RS: ${rsMarte}\n- Júpiter RS: ${rsJupiter}\n- Saturno RS: ${rsSaturno}\n\nAspectos cruzados natal-RS más exactos:\n${rsAspectos}`;
     } else {
       rsSection=`\nRevolución Solar ${anioRS} calculada para ${ciudadRS}. Interpretá el año basándote en la carta natal de ${nombre} y los principios evolutivos del ciclo personal.`;
     }
-
-    return `${base}
-${rsSection}
-
-Escribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} desde la perspectiva evolutiva. Cada sección 2-3 párrafos.
-
-Reglas de interpretación:
-- CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. No digas el nombre de la persona como sujeto de la oración, sino como vocativo. Ejemplo correcto: "Tu Ascendente en Cáncer, ${nombre}, marca..." Ejemplo incorrecto: "${nombre} tiene un Ascendente en Cáncer que..."
-- El Ascendente de la RS marca el tono evolutivo del año: qué energía nueva viene a integrar ${nombre} en este ciclo
-- La Luna de la RS muestra la necesidad emocional dominante del año
-- Los planetas lentos (Júpiter, Saturno) en la RS son portales energéticos que activan áreas de la carta natal, nunca predicciones fijas
-- Los aspectos cruzados natal-RS muestran cómo el año dialoga con el mapa del alma
-- El tono nunca es fatalista: es siempre una invitación al movimiento consciente
-- Usás castellano rioplatense, "vos", cálido, profundo, sin terminología esotérica superficial
-- NUNCA menciones autores, escuelas ni metodologías
-- Dirigite directamente a ${nombre} en cada sección al menos una vez
-
-**El tono del año ${anioRS}**
-Hablale directamente a ${nombre} sobre qué energía trae el Ascendente de la RS en este año. Cuál es el tono evolutivo dominante. Empezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..." y continuá desde ahí en segunda persona.
-
-**Tu mundo emocional este año**
-La Luna de la RS: qué necesita ${nombre} emocionalmente este año, cómo procesa lo que siente en este ciclo, qué busca para sentirse contenida/o y segura/o.
-
-**Los planetas que marcan el ritmo**
-Cómo Venus, Marte, Júpiter y Saturno de la RS están activando áreas específicas de la vida de ${nombre}. Qué se expande, qué se estructura, qué se moviliza, qué se desafía.
-
-**Los aspectos clave entre tu carta natal y tu revolución solar**
-Cómo el año dialoga con el mapa del alma de ${nombre}. Qué se activa en la carta natal a través de los aspectos cruzados. Qué conversación hay entre quién es ${nombre} y lo que este año viene a despertar.
-
-**Los meses clave**
-Qué períodos del año tienen mayor activación o movimiento para ${nombre}. Dónde hay oportunidades y dónde hay desafíos a trabajar con conciencia.
-
-**Amor y vínculos en este año**
-Qué se mueve en el área de los vínculos y el amor en este ciclo personal de ${nombre}. Qué pide ser mirado, transformado o profundizado.
-
-**Trabajo y propósito en este año**
-Qué se activa en el área profesional, vocacional y de propósito de vida de ${nombre}. Qué viene a construir o a soltar en este ciclo.
-
-**Cómo aprovechar esta energía**
-Consejos concretos y evolutivos para que ${nombre} fluya con lo que el año trae. Qué actitud, qué práctica, qué mirada interna le va a permitir vivir este año desde su expresión más auténtica.`;
+    return `${base}\n${rsSection}\n\nEscribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} desde la perspectiva evolutiva. Cada sección 2-3 párrafos.\n\nReglas:\n- CRÍTICO: hablá siempre en segunda persona, "vos", directamente a ${nombre}.\n- El Ascendente de la RS marca el tono evolutivo del año\n- La Luna de la RS muestra la necesidad emocional dominante\n- Los planetas lentos son portales energéticos, no predicciones\n- Tono siempre de invitación al movimiento consciente, nunca fatalista\n- Usás castellano rioplatense, cálido, profundo\n- NUNCA menciones autores, escuelas ni metodologías\n\n**El tono del año ${anioRS}**\nEmpezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..."\n\n**Tu mundo emocional este año**\nLa Luna de la RS: qué necesita ${nombre} emocionalmente este año.\n\n**Los planetas que marcan el ritmo**\nVenus, Marte, Júpiter y Saturno de la RS activando áreas específicas.\n\n**Los aspectos clave entre tu carta natal y tu revolución solar**\nCómo el año dialoga con el mapa del alma de ${nombre}.\n\n**Los meses clave**\nQué períodos del año tienen mayor activación.\n\n**Amor y vínculos en este año**\nQué se mueve en el área de los vínculos en este ciclo.\n\n**Trabajo y propósito en este año**\nQué se activa en el área profesional y vocacional.\n\n**Cómo aprovechar esta energía**\nConsejos concretos y evolutivos para fluir con lo que el año trae.`;
   }
 
   if (producto === 'sinastria') {
@@ -809,103 +781,14 @@ Consejos concretos y evolutivos para que ${nombre} fluya con lo que el año trae
     } else {
       carta2Text=`Persona 2: ${nombre2} — datos de carta no disponibles`;
     }
-    return `${base}
-
-${carta2Text}
-
-Escribí una LECTURA DE SINASTRÍA desde la perspectiva evolutiva. La sinastría no es sobre si son compatibles o no: es el estudio de cómo dos almas se encuentran, qué se activan mutuamente y qué vienen a aprender una de la otra. Cada sección 2-3 párrafos.
-
-Reglas de interpretación:
-- CRÍTICO: hablá siempre en segunda persona dirigiéndote a ${nombre} (persona 1). Usá "vos", "tu", "te". NUNCA uses tercera persona para referirte a ${nombre}
-- Para referirte a ${nombre2} (persona 2) podés usar tercera persona normalmente
-- El tono nunca es fatalista: los vínculos son portales de crecimiento, no destinos
-- Usás castellano rioplatense, cálido, profundo, sin terminología esotérica superficial
-- NUNCA menciones autores, escuelas ni metodologías
-
-**La química entre vos y ${nombre2}**
-Hablale directamente a ${nombre} sobre la energía de este vínculo. Qué se activa en vos cuando estás con ${nombre2}. La atracción, la primera impresión, lo que genera esta conexión.
-
-**Venus y Marte: el deseo y la acción**
-Cómo se relacionan Venus y Marte de ambas cartas. La atracción, el deseo, la forma en que se complementan o tensionan en lo afectivo y erótico. Hablale a ${nombre} sobre lo que su Venus y su Marte hacen en esta relación.
-
-**Sol y Luna: la profundidad del vínculo**
-Cómo dialogan las identidades y los mundos emocionales de ambas cartas. Dónde hay comprensión natural y dónde hay roces. Dirigite a ${nombre} sobre cómo su Sol y su Luna se relacionan con los de ${nombre2}.
-
-**Los desafíos de esta relación**
-Los aspectos tensos entre las cartas. No son obstáculos: son áreas de crecimiento mutuo. Hablale a ${nombre} sobre qué le pide trabajar conscientemente este vínculo.
-
-**El karma compartido**
-Los Nodos de ambas cartas y lo que estas dos almas vienen a trabajar juntas. El tema evolutivo de este vínculo. Qué viene a despertar ${nombre2} en ${nombre}.
-
-**El potencial de esta unión**
-Lo mejor que esta relación puede dar cuando ambas personas están en su mejor versión. Hablale a ${nombre} sobre el regalo de este vínculo.
-
-**Síntesis**
-Qué tiene para enseñarle esta relación a ${nombre}. Qué viene a despertar, a sanar, a construir este encuentro de dos almas.`;
+    return `${base}\n\n${carta2Text}\n\nEscribí una LECTURA DE SINASTRÍA desde la perspectiva evolutiva. Cada sección 2-3 párrafos.\n\nReglas:\n- CRÍTICO: hablá en segunda persona dirigiéndote a ${nombre}. Usá "vos", "tu", "te". Para ${nombre2} podés usar tercera persona.\n- Tono nunca fatalista: los vínculos son portales de crecimiento\n- Castellano rioplatense, cálido, profundo\n- NUNCA menciones autores, escuelas ni metodologías\n\n**La química entre vos y ${nombre2}**\nQué se activa en vos cuando estás con ${nombre2}. La atracción, la primera impresión.\n\n**Venus y Marte: el deseo y la acción**\nCómo se relacionan Venus y Marte de ambas cartas.\n\n**Sol y Luna: la profundidad del vínculo**\nCómo dialogan las identidades y los mundos emocionales.\n\n**Los desafíos de esta relación**\nAspectos tensos como áreas de crecimiento mutuo.\n\n**El karma compartido**\nLos Nodos de ambas cartas y lo que estas almas vienen a trabajar juntas.\n\n**El potencial de esta unión**\nLo mejor que esta relación puede dar cuando ambas personas están en su mejor versión.\n\n**Síntesis**\nQué tiene para enseñarle esta relación a ${nombre}.`;
   }
 
-  if (producto === 'transitos') return `${base}
+  if (producto === 'transitos') return `${base}\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nEscribí una LECTURA DE TRÁNSITOS ACTUALES (mayo-junio 2026) desde la perspectiva evolutiva.\n\nLos tránsitos son portales energéticos, no predicciones fijas. Para cada tránsito explicá dos caminos: qué pasa cuando la persona fluye con esa energía y qué pasa cuando la resiste. Cada sección 2 párrafos.\n\n**El momento que estás viviendo**\nUna visión general de la energía que está rodeando a esta persona ahora.\n\n**Saturno en Aries: lo que se consolida y desafía**\nQué área de la carta natal está siendo saturnizada.\n\n**Neptuno en Aries: lo que se disuelve y transforma**\nDónde está llegando la energía neptuniana.\n\n**Urano en Géminis: los cambios que vienen**\nQué área de la carta está siendo uranizada.\n\n**Júpiter en Cáncer: dónde está tu expansión**\nDónde está el viento a favor ahora mismo.\n\n**Cómo trabajar con esta energía**\nConsejos concretos y evolutivos para fluir con lo que los planetas están pidiendo.`;
 
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. No digas el nombre de la persona como sujeto de la oración. Ejemplo correcto: "Tu Sol en Libra, ${nombre}, está siendo activado por..." Ejemplo incorrecto: "${nombre} tiene un tránsito de Saturno que..."
+  if (producto === 'pregunta') return `${base}\n\nLa persona pregunta: "${extras?.pregunta||''}"\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nRespondé esta pregunta específica basándote en la carta natal desde la perspectiva evolutiva:\n- Directa y clara, 3-4 párrafos\n- Identificá qué planetas, casas o aspectos de la carta son relevantes para esta pregunta\n- Respondé desde el autoconocimiento, no desde el determinismo\n- Incluí un consejo práctico y evolutivo al final\n- No predecís ni juzgás: acompañás\n\nUn solo bloque de texto, con un título inicial entre dobles asteriscos que reformule la pregunta de manera poética.`;
 
-Escribí una LECTURA DE TRÁNSITOS ACTUALES (mayo-junio 2026) desde la perspectiva evolutiva.
-
-IMPORTANTE: Los tránsitos no son predicciones fijas. Son portales energéticos, irradiaciones planetarias que se activan sobre la carta natal. La persona puede fluir con ellos o resistirlos. Tu rol es explicar qué energía está llegando, sobre qué área de la vida, y qué quiere movilizar internamente. El tono es siempre de oportunidad y autoconocimiento, nunca de fatalismo. Para cada tránsito explicá dos caminos posibles: qué pasa cuando la persona fluye con esa energía y qué pasa cuando la resiste. Esto le da a la persona una comprensión real de su libre albedrío y de las consecuencias de cada elección.
-
-Considerá los tránsitos de los planetas lentos que son los más significativos: Saturno, Urano, Neptuno, Plutón, Júpiter. Relacioná cada tránsito con los planetas natales que activan en esta carta específica. Cada sección 2 párrafos.
-
-**El momento que estás viviendo**
-Una visión general de la energía que está rodeando a esta persona ahora. Qué tipo de ciclo vital está transitando.
-
-**Saturno en Aries: lo que se consolida y desafía**
-Qué área de la carta natal está siendo saturnizada. Qué viene a madurar, estructurar o poner a prueba en esta persona.
-
-**Neptuno en Aries: lo que se disuelve y transforma**
-Dónde está llegando la energía neptuniana. Qué se está disolviendo, confundiendo o espiritualizando en la vida de esta persona.
-
-**Urano en Géminis: los cambios que vienen**
-Qué área de la carta está siendo uranizada. Dónde la vida pide libertad, ruptura con lo conocido e innovación.
-
-**Júpiter en Cáncer: dónde está tu expansión**
-Dónde está el viento a favor ahora mismo. Qué área de la vida tiene mayor potencial de crecimiento y abundancia en este período.
-
-**Cómo trabajar con esta energía**
-Consejos concretos y evolutivos. Cómo fluir con lo que los planetas están pidiendo en lugar de resistirlo.`;
-
-  if (producto === 'pregunta') return `${base}
-
-La persona pregunta: "${extras?.pregunta||''}"
-
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. No digas el nombre de la persona como sujeto de la oración. Ejemplo correcto: "Tu Luna en Escorpio, ${nombre}, explica por qué..." Ejemplo incorrecto: "${nombre} tiene una Luna en Escorpio que..."
-
-Respondé esta pregunta específica basándote en la carta natal desde la perspectiva evolutiva:
-- Directa y clara, 3-4 párrafos
-- Identificá qué planetas, casas o aspectos de la carta son relevantes para esta pregunta
-- Respondé desde el autoconocimiento, no desde el determinismo
-- Incluí un consejo práctico y evolutivo al final
-- No predicás ni juzgás: acompañás
-
-Un solo bloque de texto, con un título inicial entre dobles asteriscos que reformule la pregunta de manera poética.`;
-
-  if (producto === 'lectura-profunda') return `${base}
-
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
-
-Escribí una LECTURA PROFUNDA para ${nombre}. Sé conciso y directo — cada aspecto en 1 párrafo, fortalezas y áreas de crecimiento en 3 items de 1 párrafo cada uno.
-
-**Los aspectos armónicos · Tus dones naturales**
-Para cada trígono y sextil de la carta: qué energía fluye naturalmente y qué don representa. 1 párrafo por aspecto.
-
-**Los aspectos desafiantes · Las tensiones que te forman**
-Para cada cuadratura y oposición: qué tensión crea y cuál es el aprendizaje evolutivo que esconde. 1 párrafo por aspecto.
-
-**Tus fortalezas como recursos conscientes**
-Las 3 mayores fortalezas considerando planetas, casas y aspectos en conjunto. 1 párrafo por fortaleza: qué es y cómo usarla concretamente.
-
-**Tus áreas de crecimiento como experiencias evolutivas**
-Las 3 principales áreas de crecimiento, siempre como oportunidades evolutivas. 1 párrafo por área: qué patrón se repite y qué pequeño cambio puede transformarlo.
-
-Cerrá con una frase poderosa y personal basada en la carta de ${nombre}.`;
+  if (producto === 'lectura-profunda') return `${base}\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nEscribí una LECTURA PROFUNDA para ${nombre}. 1 párrafo por aspecto, 3 ítems por sección.\n\n**Los aspectos armónicos · Tus dones naturales**\nPara cada trígono y sextil: qué energía fluye naturalmente y qué don representa. 1 párrafo por aspecto.\n\n**Los aspectos desafiantes · Las tensiones que te forman**\nPara cada cuadratura y oposición: qué tensión crea y cuál es el aprendizaje evolutivo. 1 párrafo por aspecto.\n\n**Tus fortalezas como recursos conscientes**\nLas 3 mayores fortalezas. 1 párrafo por fortaleza: qué es y cómo usarla concretamente.\n\n**Tus áreas de crecimiento como experiencias evolutivas**\nLas 3 principales áreas de crecimiento como oportunidades. 1 párrafo por área.\n\nCerrá con una frase poderosa y personal basada en la carta de ${nombre}.`;
 
   return `${base}\n\nHacé una lectura general evolutiva de la carta natal en 5 párrafos profundos.`;
 }
@@ -935,6 +818,8 @@ async function procesarCompra(producto, precio) {
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
   const extras={};
+  if(!nombre){mostrarMensaje(errorId,'Primero calculá tu carta natal arriba.');return;}
+  if(!cartaData){mostrarMensaje(errorId,'Primero calculá tu carta natal arriba.');return;}
   if(producto==='sinastria'){
     const nombre2=document.getElementById('sinastria-nombre2')?.value?.trim();
     const fecha2=document.getElementById('sinastria-fecha2')?.value;
@@ -951,9 +836,7 @@ async function procesarCompra(producto, precio) {
     const paisRS=document.getElementById('rs-pais')?.value?.trim()||'Argentina';
     if(!anioRS){mostrarMensaje(errorId,'Elegí el año de la revolución solar.');return;}
     if(!ciudadRS){mostrarMensaje(errorId,'Ingresá la ciudad donde pasaste o pasarás ese cumpleaños.');return;}
-    extras.anioRS=anioRS;
-    extras.ciudadRS=ciudadRS;
-    extras.paisRS=paisRS;
+    extras.anioRS=anioRS;extras.ciudadRS=ciudadRS;extras.paisRS=paisRS;
   }
   if(esPrueba){await generarYEnviarLectura(producto,nombre,extras,true);}
   else{
@@ -964,12 +847,16 @@ async function procesarCompra(producto, precio) {
   }
 }
 
-// --- GENERAR Y ENVIAR LECTURA ---
+// FIX 1+2: ARQUITECTURA CORREGIDA
+// Paso 1: llamarClaude → obtiene el texto (usa /interpretar, sin timeout de envío)
+// Paso 2: mostrar texto en pantalla inmediatamente
+// Paso 3: /enviar-lectura recibe el texto ya generado → solo envía email (sin llamar a Claude)
 async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   const errorId=`error-${producto}`,successId=`success-${producto}`;
   mostrarMensaje(successId,'⟳ Generando tu lectura...');
   try {
     let chartDataParaPrompt=cartaData;
+
     if(producto==='revolucion-solar'&&extras.anioRS){
       try{
         mostrarMensaje(successId,'⟳ Calculando tu revolución solar...');
@@ -983,6 +870,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
         if(rsData&&!rsData.error){extras.rsData=rsData;mostrarMensaje(successId,'⟳ Interpretando tu revolución solar...');}
       }catch(rsErr){console.warn('Error RS:',rsErr);}
     }
+
     if(producto==='sinastria'&&extras.nombre2&&extras.fecha2){
       try{
         mostrarMensaje(successId,'⟳ Calculando la carta de '+extras.nombre2+'...');
@@ -997,60 +885,125 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
         if(carta2Data&&!carta2Data.error){extras.cartaPersona2=carta2Data;mostrarMensaje(successId,'⟳ Interpretando la sinastría...');}
       }catch(sin2Err){console.warn('Error carta persona 2:',sin2Err);}
     }
+
+    // PASO 1: generar texto con Claude via /interpretar
+    mostrarMensaje(successId,'⟳ Escribiendo tu lectura...');
     const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
+    const textoGenerado = await llamarClaude(prompt);
+
+    if(!textoGenerado||!textoGenerado.trim()){
+      mostrarMensaje(errorId,'No se pudo generar la lectura. Intentá de nuevo.');
+      return;
+    }
+
+    // PASO 2: mostrar el texto en pantalla inmediatamente
     const _fecha=document.getElementById('fecha')?.value||'';
     const _hora=document.getElementById('hora')?.value||'';
     const _ciudad=document.getElementById('ciudad')?.value?.trim()||'';
     const _pais=document.getElementById('pais')?.value?.trim()||'Argentina';
-
-    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nombre,producto,system:SYSTEM_EVOLUTIVO,lectura:prompt,codigoPromo:esPrueba?CODIGO_PRUEBA:'',pagado:true,fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais})});
-    const data=await res.json();
-    if(!data.ok||!data.texto){console.error('Worker error:',data);mostrarMensaje(errorId,'Error al generar la lectura. Contactanos por WhatsApp.');return;}
-
     const productoNombre=PRODUCT_NOMBRES[producto]||producto;
-    _lecturaContexto[producto]={nombre,productoNombre,prompt,texto:data.texto,system:SYSTEM_EVOLUTIVO,codigoPromo:esPrueba?CODIGO_PRUEBA:'',fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais};
+
+    _lecturaContexto[producto]={
+      nombre,productoNombre,prompt,texto:textoGenerado,
+      codigoPromo:esPrueba?CODIGO_PRUEBA:'',
+      fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais
+    };
 
     const container=document.getElementById('section-lecturas-desbloqueadas');
     let card=document.getElementById(`card-lectura-${producto}`);
     if(!card){card=document.createElement('div');card.className='card';card.id=`card-lectura-${producto}`;container.appendChild(card);}
     card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div><div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion" onclick="descargarPDF('${producto}')">⬇ Descargar PDF</button><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Recibir por mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><input type="email" id="email-enviar-${producto}" placeholder="tu@email.com" /><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">✦ Enviar a mi email</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
 
-    renderInterp(data.texto,`texto-lectura-${producto}`);
+    renderInterp(textoGenerado,`texto-lectura-${producto}`);
     card.scrollIntoView({behavior:'smooth',block:'start'});
     mostrarMensaje(successId,'✦ ¡Tu lectura está lista!');
-  }catch(e){console.error('Error lectura:',e);mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');}
+
+  }catch(e){
+    console.error('Error lectura:',e);
+    mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');
+  }
 }
 
-function mostrarEmailInput(producto) {
-  document.getElementById(`email-envio-${producto}`)?.classList.toggle('hidden');
-}
-
+// FIX 1: enviarPorMail usa el texto ya en _lecturaContexto — NO llama a Claude
+// El worker recibe texto:ctx.texto → nunca entra al branch que llama a Claude de nuevo
 async function enviarPorMail(producto) {
   const email=document.getElementById(`email-enviar-${producto}`)?.value?.trim();
   const successEl=document.getElementById(`success-email-${producto}`);
   const errorEl=document.getElementById(`error-email-${producto}`);
   if(!email||!email.includes('@')){if(errorEl){errorEl.textContent='Ingresá un email válido.';errorEl.classList.remove('hidden');}return;}
-  const ctx=_lecturaContexto[producto];if(!ctx)return;
+  const ctx=_lecturaContexto[producto];if(!ctx||!ctx.texto){if(errorEl){errorEl.textContent='No hay lectura para enviar.';errorEl.classList.remove('hidden');}return;}
   if(successEl){successEl.textContent='⟳ Enviando...';successEl.classList.remove('hidden');}
   if(errorEl)errorEl.classList.add('hidden');
   try{
-    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre:ctx.nombre,producto,texto:ctx.texto,codigoPromo:ctx.codigoPromo,pagado:true,fecha:ctx.fecha,hora:ctx.hora,ciudad:ctx.ciudad,pais:ctx.pais})});
+    const res=await fetch(`${WORKER_URL}/enviar-lectura`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        email,
+        nombre:ctx.nombre,
+        producto,
+        texto:ctx.texto,          // texto ya generado — worker NO llama a Claude
+        codigoPromo:ctx.codigoPromo,
+        pagado:true,
+        fecha:ctx.fecha,
+        hora:ctx.hora,
+        ciudad:ctx.ciudad,
+        pais:ctx.pais
+      })
+    });
     const data=await res.json();
     if(data.ok){if(successEl)successEl.textContent=`✦ ¡Enviado a ${email}! Revisá tu bandeja de entrada.`;}
     else{if(errorEl){errorEl.textContent='Error al enviar. Intentá de nuevo.';errorEl.classList.remove('hidden');}if(successEl)successEl.classList.add('hidden');}
   }catch(e){if(errorEl){errorEl.textContent='Error de conexión. Intentá de nuevo.';errorEl.classList.remove('hidden');}if(successEl)successEl.classList.add('hidden');}
 }
 
+function mostrarEmailInput(producto) {
+  document.getElementById(`email-envio-${producto}`)?.classList.toggle('hidden');
+}
+
+// FIX 3: PDF con colores forzados oscuro-sobre-blanco, todo inline
 function descargarPDF(producto) {
   const ctx=_lecturaContexto[producto];if(!ctx)return;
   const contenido=document.getElementById(`texto-lectura-${producto}`);if(!contenido)return;
+
   const contenedor=document.createElement('div');
-  contenedor.style.cssText='font-family:Georgia,serif;color:#1a1a1a;padding:40px;max-width:680px;position:fixed;left:-9999px;top:0;';
-  contenedor.innerHTML=`<div style="text-align:center;margin-bottom:32px;border-bottom:2px solid #82B366;padding-bottom:24px;"><p style="font-size:10px;letter-spacing:0.3em;color:#5a8a3a;text-transform:uppercase;margin:0 0 10px;">Espacio Libra · Astrología Evolutiva</p><h1 style="font-size:22px;font-weight:400;color:#1a1a1a;margin:0 0 8px;">${ctx.productoNombre}</h1><p style="font-size:13px;color:#555;margin:0;">Lectura personal para ${ctx.nombre}</p></div>${contenido.innerHTML}<div style="text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;"><p style="font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p></div>`;
-  contenedor.querySelectorAll('.interp-text').forEach(el=>{el.style.color='#333';});
-  contenedor.querySelectorAll('.interp-title').forEach(el=>{el.style.color='#2a6a10';});
+  contenedor.style.cssText='font-family:Georgia,serif;color:#1a1a1a;background:#ffffff;padding:40px;max-width:680px;position:fixed;left:-9999px;top:0;';
+
+  // Clonar el contenido y forzar todos los colores a oscuro
+  const clon = contenido.cloneNode(true);
+  clon.querySelectorAll('*').forEach(el => {
+    el.style.color = '';
+    el.style.background = '';
+    el.style.backgroundColor = '';
+    el.style.borderColor = '';
+  });
+  clon.querySelectorAll('.interp-title').forEach(el => {
+    el.style.cssText = 'font-family:Georgia,serif;font-size:18px;font-weight:600;color:#2a6a10;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #c0d8b0;';
+  });
+  clon.querySelectorAll('.interp-text').forEach(el => {
+    el.style.cssText = 'font-family:Georgia,serif;font-size:14px;line-height:1.85;color:#1a1a1a;margin-bottom:10px;';
+  });
+  clon.querySelectorAll('.interp-block').forEach(el => {
+    el.style.cssText = 'margin-bottom:24px;';
+  });
+
+  contenedor.innerHTML = `
+    <div style="text-align:center;margin-bottom:32px;border-bottom:2px solid #82B366;padding-bottom:24px;">
+      <p style="font-family:Georgia,serif;font-size:10px;letter-spacing:0.3em;color:#5a8a3a;text-transform:uppercase;margin:0 0 10px;">Espacio Libra · Astrología Evolutiva</p>
+      <h1 style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:#1a1a1a;margin:0 0 8px;">${ctx.productoNombre}</h1>
+      <p style="font-family:Georgia,serif;font-size:13px;color:#555;margin:0;">Lectura personal para ${ctx.nombre}</p>
+    </div>
+  `;
+  contenedor.appendChild(clon);
+  contenedor.innerHTML += `<div style="text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;"><p style="font-family:Georgia,serif;font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p></div>`;
+
   document.body.appendChild(contenedor);
-  html2pdf().set({margin:10,filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,html2canvas:{scale:2,backgroundColor:'#ffffff'},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(contenedor).save().then(()=>{document.body.removeChild(contenedor);});
+  html2pdf().set({
+    margin:10,
+    filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,
+    html2canvas:{scale:2,backgroundColor:'#ffffff',useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
+  }).from(contenedor).save().then(()=>{document.body.removeChild(contenedor);});
 }
 
 // --- CALCULAR CARTA ---
@@ -1089,7 +1042,32 @@ function setLoaderText(txt){document.getElementById('loader-text').textContent=t
 function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;window.history.replaceState({},'',window.location.pathname);}
 function setEjemplo(texto){document.getElementById('pregunta-texto').value=texto;}
 
-window.addEventListener('load',()=>{const params=new URLSearchParams(window.location.search);if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}if(params.get('upgrade')==='lectura-profunda'){mostrar('upgrade-banner');const _upgNombre=params.get('nombre')||'';const _upgFecha=params.get('fecha')||'';const _upgHora=params.get('hora')||'';const _upgCiudad=params.get('ciudad')||'';const _upgPais=params.get('pais')||'Argentina';if(_upgNombre)document.getElementById('nombre').value=decodeURIComponent(_upgNombre);if(_upgFecha)document.getElementById('fecha').value=_upgFecha;if(_upgHora)document.getElementById('hora').value=_upgHora;if(_upgCiudad)document.getElementById('ciudad').value=decodeURIComponent(_upgCiudad);document.getElementById('pais').value=decodeURIComponent(_upgPais);if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta();}else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}}if(params.get('lectura')==='ok'){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){document.getElementById('nombre').value=pendienteData.nombre||'';document.getElementById('fecha').value=pendienteData.fecha||'';if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;document.getElementById('ciudad').value=pendienteData.ciudad||'';document.getElementById('pais').value=pendienteData.pais||'Argentina';calcularCarta();}}});
+window.addEventListener('load',()=>{
+  const params=new URLSearchParams(window.location.search);
+  if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
+  if(params.get('upgrade')==='lectura-profunda'){
+    mostrar('upgrade-banner');
+    const _upgNombre=params.get('nombre')||'';const _upgFecha=params.get('fecha')||'';const _upgHora=params.get('hora')||'';const _upgCiudad=params.get('ciudad')||'';const _upgPais=params.get('pais')||'Argentina';
+    if(_upgNombre)document.getElementById('nombre').value=decodeURIComponent(_upgNombre);
+    if(_upgFecha)document.getElementById('fecha').value=_upgFecha;
+    if(_upgHora)document.getElementById('hora').value=_upgHora;
+    if(_upgCiudad)document.getElementById('ciudad').value=decodeURIComponent(_upgCiudad);
+    document.getElementById('pais').value=decodeURIComponent(_upgPais);
+    if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta();}
+    else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
+  }
+  if(params.get('lectura')==='ok'){
+    const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');
+    if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){
+      document.getElementById('nombre').value=pendienteData.nombre||'';
+      document.getElementById('fecha').value=pendienteData.fecha||'';
+      if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;
+      document.getElementById('ciudad').value=pendienteData.ciudad||'';
+      document.getElementById('pais').value=pendienteData.pais||'Argentina';
+      calcularCarta();
+    }
+  }
+});
 </script>
 
 </body>

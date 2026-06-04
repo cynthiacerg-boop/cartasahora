@@ -94,7 +94,7 @@ export default {
           },
           body: JSON.stringify({
             model: 'claude-sonnet-4-6',
-            max_tokens: 1500,
+            max_tokens: 6000,
             system: body.system
               ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
               : undefined,
@@ -121,26 +121,29 @@ export default {
           return json({ error: 'Pago no confirmado' }, 403);
         }
 
-        // Generar lectura con Claude
-        const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': env.ANTHROPIC_KEY,
-            'anthropic-version': '2023-06-01',
-            'anthropic-beta': 'prompt-caching-2024-07-31',
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 6000,
-            system: body.system
-              ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
-              : undefined,
-            messages: [{ role: 'user', content: lectura }],
-          }),
-        });
-        const claudeData = await claudeRes.json();
-        const texto = claudeData.content?.map(b => b.text || '').join('') || '';
+        // Si el frontend ya generó el texto, usarlo directamente
+        let texto = body.texto || '';
+        if (!texto) {
+          const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-api-key': env.ANTHROPIC_KEY,
+              'anthropic-version': '2023-06-01',
+              'anthropic-beta': 'prompt-caching-2024-07-31',
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 6000,
+              system: body.system
+                ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
+                : undefined,
+              messages: [{ role: 'user', content: lectura }],
+            }),
+          });
+          const claudeData = await claudeRes.json();
+          texto = claudeData.content?.map(b => b.text || '').join('') || '';
+        }
 
         // Si hay email, mandar por SendGrid
         if (email) {

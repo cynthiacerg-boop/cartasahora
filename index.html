@@ -995,15 +995,20 @@ function descargarPDF(producto) {
     </div>
   `;
   contenedor.appendChild(clon);
-  contenedor.innerHTML += `<div style="text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;"><p style="font-family:Georgia,serif;font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p></div>`;
+  const pdfFooter = document.createElement('div');
+  pdfFooter.style.cssText = 'text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;';
+  pdfFooter.innerHTML = '<p style="font-family:Georgia,serif;font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p>';
+  contenedor.appendChild(pdfFooter);
 
   document.body.appendChild(contenedor);
-  html2pdf().set({
-    margin:10,
-    filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,
-    html2canvas:{scale:2,backgroundColor:'#ffffff',useCORS:true},
-    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}
-  }).from(contenedor).save().then(()=>{document.body.removeChild(contenedor);});
+  setTimeout(() => {
+    html2pdf().set({
+      margin: 10,
+      filename: `${ctx.nombre} - ${ctx.productoNombre}.pdf`,
+      html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    }).from(contenedor).save().then(() => { document.body.removeChild(contenedor); });
+  }, 300);
 }
 
 // --- CALCULAR CARTA ---

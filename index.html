@@ -159,9 +159,13 @@
       </div>
       <div class="form-group full">
         <label>Ciudad de nacimiento</label>
-        <input type="text" id="ciudad" placeholder="Buenos Aires, Córdoba, Rosario..." />
+        <input type="text" id="ciudad" placeholder="Villa María, Rosario, Buenos Aires..." />
       </div>
-      <div class="form-group full">
+      <div class="form-group">
+        <label>Provincia / Estado</label>
+        <input type="text" id="provincia" placeholder="Córdoba, Santa Fe..." />
+      </div>
+      <div class="form-group">
         <label>País</label>
         <input type="text" id="pais" placeholder="Argentina" value="Argentina" />
       </div>
@@ -494,12 +498,15 @@ function aspectLineColor(type) {
   return { color: 'rgba(255,255,255,0.2)', width: 1, dash: '2,4' };
 }
 
-async function getCoordenadas(ciudad, pais) {
-  const query = encodeURIComponent(`${ciudad}, ${pais}`);
-  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {headers: {'Accept-Language': 'es'}});
+async function getCoordenadas(ciudad, pais, provincia) {
+  const partes = [ciudad];
+  if (provincia && provincia.trim()) partes.push(provincia.trim());
+  if (pais && pais.trim()) partes.push(pais.trim());
+  const query = encodeURIComponent(partes.join(", "));
+  const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, {headers: {"Accept-Language": "es"}});
   const data = await res.json();
-  if (!data || data.length === 0) throw new Error('No encontré esa ciudad. Probá con una ciudad más grande cercana.');
-  return {lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon)};
+  if (!data || data.length === 0) throw new Error("No encontré esa ciudad. Probá con una ciudad más grande o verificar el nombre.");
+  return {lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon), nombreEncontrado: data[0].display_name || partes.join(", ")};
 }
 
 async function getTimezone(lat, lon) {
@@ -1373,12 +1380,15 @@ function descargarPDF(producto) {
 let cartaData=null;
 
 async function calcularCarta() {
-  const nombre=document.getElementById('nombre').value.trim(),fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,ciudad=document.getElementById('ciudad').value.trim(),pais=document.getElementById('pais').value.trim()||'Argentina';
+  const nombre=document.getElementById('nombre').value.trim(),fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,ciudad=document.getElementById('ciudad').value.trim(),provincia=document.getElementById('provincia')?.value.trim()||'',pais=document.getElementById('pais').value.trim()||'Argentina';
   if(!nombre||!fecha||!ciudad){mostrarMensaje('error-msg','Completá nombre, fecha y ciudad para continuar.');return;}
   ocultarMsg('error-msg'); mostrar('section-loader'); ocultar('section-form');
   try {
     setLoaderText('buscando tu ciudad en el mapa...');
-    const coords=await getCoordenadas(ciudad,pais);
+    const coords=await getCoordenadas(ciudad,pais,provincia);
+    const lugarCorto=coords.nombreEncontrado.split(',').slice(0,3).join(',');
+    setLoaderText('Ὄd Ubicación encontrada: '+lugarCorto);
+    await new Promise(r=>setTimeout(r,1200));
     setLoaderText('calculando tu zona horaria...');
     const timezone=await getTimezone(coords.lat,coords.lon);
     setLoaderText('calculando posiciones planetarias...');
@@ -1416,7 +1426,7 @@ function ocultar(id){document.getElementById(id)?.classList.add('hidden');}
 function mostrarMensaje(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
 function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
-function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;preguntaSeleccionada=null;window.history.replaceState({},'',window.location.pathname);}
+function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;preguntaSeleccionada=null;const prov=document.getElementById('provincia');if(prov)prov.value='';window.history.replaceState({},'',window.location.pathname);}
 
 window.addEventListener('load',()=>{
   const params=new URLSearchParams(window.location.search);

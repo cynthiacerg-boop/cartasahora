@@ -96,6 +96,7 @@
     .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
     .pregunta-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; }
     .pregunta-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.8); }
+    .pregunta-chip.activo { border-color: rgba(138,77,171,0.6); color: rgba(255,255,255,0.9); background: rgba(138,77,171,0.1); }
     textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
     textarea:focus { border-color: rgba(130,179,102,0.5); }
     textarea::placeholder { color: rgba(255,255,255,0.2); }
@@ -225,20 +226,21 @@
       </div>
     </div>
 
+    <!-- PREGUNTAS PUNTUALES -->
     <div class="card">
       <div class="section-title">Pregunta Puntual</div>
       <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
-        Una pregunta específica respondida con tu carta natal. Amor, trabajo, decisiones, momentos clave.
+        Una pregunta respondida con tu carta natal y los tránsitos activos ahora. Amor, trabajo, decisiones, momentos clave.
       </p>
       <div class="pregunta-ejemplos">
-        <span class="pregunta-chip" onclick="setEjemplo('¿Por qué me cuesta tanto tomar decisiones importantes?')">¿Por qué me cuesta decidir?</span>
-        <span class="pregunta-chip" onclick="setEjemplo('¿Qué dice mi carta sobre el amor y los vínculos?')">¿Qué dice mi carta del amor?</span>
-        <span class="pregunta-chip" onclick="setEjemplo('¿Cuál es mi mayor fortaleza según mi carta natal?')">¿Cuál es mi mayor fortaleza?</span>
-        <span class="pregunta-chip" onclick="setEjemplo('¿Qué área de mi vida necesita más atención ahora?')">¿Qué necesita atención ahora?</span>
-        <span class="pregunta-chip" onclick="setEjemplo('¿Qué dice mi carta sobre mi propósito de vida?')">¿Mi propósito de vida?</span>
+        <span class="pregunta-chip" onclick="seleccionarPregunta('decidir', this)">¿Por qué me cuesta decidir?</span>
+        <span class="pregunta-chip" onclick="seleccionarPregunta('amor', this)">¿Qué dice mi carta del amor?</span>
+        <span class="pregunta-chip" onclick="seleccionarPregunta('fortaleza', this)">¿Cuál es mi mayor fortaleza?</span>
+        <span class="pregunta-chip" onclick="seleccionarPregunta('atencion', this)">¿Qué necesita atención ahora?</span>
+        <span class="pregunta-chip" onclick="seleccionarPregunta('proposito', this)">¿Mi propósito de vida?</span>
       </div>
       <div class="preguntas-section">
-        <textarea id="pregunta-texto" placeholder="Escribí tu pregunta aquí..."></textarea>
+        <textarea id="pregunta-texto" placeholder="Elegí una pregunta de arriba o escribí la tuya..." readonly style="cursor:default;"></textarea>
         <div class="promo-row" style="margin-top:10px;">
           <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
           <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
@@ -260,6 +262,7 @@
 
   </div>
 
+  <!-- UPSELL / PRODUCTOS -->
   <div class="card hidden" id="section-upsell">
     <div class="section-title">Lecturas completas</div>
     <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
@@ -393,7 +396,7 @@
         </div>
         <p class="producto-desc">Qué están activando los planetas en tu carta ahora mismo. Por qué sentís lo que sentís hoy.</p>
         <ul class="producto-items">
-          <li>Planetas en tránsito sobre tu carta natal</li>
+          <li>Planetas en tránsito sobre tu carta natal en tiempo real</li>
           <li>Qué área de tu vida está siendo activada</li>
           <li>Duración y cómo trabajar cada tránsito</li>
         </ul>
@@ -422,7 +425,36 @@ const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
 const CODIGO_PRUEBA = 'ESPACIO2025';
 const promoAplicada = {};
 const _lecturaContexto = {};
-const PRODUCT_NOMBRES = {'carta-completa':'Carta Natal Completa','revolucion-solar':'Revolución Solar','sinastria':'Sinastría','transitos':'Tránsitos Actuales','pregunta':'Pregunta Puntual','lectura-profunda':'Lectura Profunda'};
+
+// ID de la pregunta actualmente seleccionada (chip)
+let preguntaSeleccionada = null;
+
+const PRODUCT_NOMBRES = {
+  'carta-completa':'Carta Natal Completa',
+  'revolucion-solar':'Revolución Solar',
+  'sinastria':'Sinastría',
+  'transitos':'Tránsitos Actuales',
+  'pregunta':'Pregunta Puntual',
+  'lectura-profunda':'Lectura Profunda'
+};
+
+// Planetas relevantes por pregunta para filtrar tránsitos
+const TRANSITOS_POR_PREGUNTA = {
+  'decidir':   ['Mercury','Moon','Saturn','Mars','Venus','Neptune'],
+  'amor':      ['Venus','Moon','Mars','Pluto','Neptune','North Node'],
+  'fortaleza': ['Sun','Jupiter','Mars','Ascendant'],
+  'atencion':  null, // null = todos los tránsitos
+  'proposito': ['Sun','Saturn','Jupiter','North Node','Pluto','Chiron']
+};
+
+// Textos de cada chip para mostrar en el textarea (lectura humana)
+const PREGUNTA_TEXTOS = {
+  'decidir':   '¿Por qué me cuesta tanto tomar decisiones importantes?',
+  'amor':      '¿Qué dice mi carta natal sobre el amor y los vínculos?',
+  'fortaleza': '¿Cuál es mi mayor fortaleza según mi carta natal?',
+  'atencion':  '¿Qué área de mi vida necesita más atención ahora mismo?',
+  'proposito': '¿Cuál es mi propósito de vida según mi carta natal?'
+};
 
 (function() {
   const container = document.getElementById('stars');
@@ -445,6 +477,7 @@ const HOUSE_MAP = {'First_House':1,'Second_House':2,'Third_House':3,'Fourth_Hous
 const PLANET_KEYS = ['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune','pluto','chiron','mean_lilith','true_north_lunar_node','true_south_lunar_node'];
 const PLANET_KEY_NAME = {'sun':'Sun','moon':'Moon','mercury':'Mercury','venus':'Venus','mars':'Mars','jupiter':'Jupiter','saturn':'Saturn','uranus':'Uranus','neptune':'Neptune','pluto':'Pluto','chiron':'Chiron','mean_lilith':'Lilith','true_north_lunar_node':'North Node','true_south_lunar_node':'South Node'};
 const PLANET_COLORS = {'sun':'#f5c842','moon':'#c8d8f0','mercury':'#82B366','venus':'#f090a0','mars':'#e05050','jupiter':'#9B6FD0','saturn':'#c8a040','uranus':'#40c0c0','neptune':'#5070e0','pluto':'#b060b0','chiron':'#80b080','mean_lilith':'#c04040','true_north_lunar_node':'#d0d0d0','true_south_lunar_node':'#a0a0a0'};
+const PAIS_CODIGOS = {'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
 
 function aspectClass(type) {
   if (type === 'conjunction') return 'poderoso';
@@ -480,7 +513,6 @@ async function getTimezone(lat, lon) {
 async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad, pais) {
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
-  const PAIS_CODIGOS = {'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
   const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
   const body = {subject: {name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode}};
   const res = await fetch(`${WORKER_URL}/carta`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
@@ -488,9 +520,137 @@ async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad
   return await res.json();
 }
 
-// FIX 1+2: llamarClaude llama directamente a /interpretar y devuelve el texto.
-// generarYEnviarLectura usa esta función para obtener el texto ANTES de llamar a /enviar-lectura.
-// /enviar-lectura recibe el texto ya generado → nunca vuelve a llamar a Claude.
+// ── CALCULAR TRÁNSITOS ACTUALES ──
+// Llama al Worker con la fecha/hora de ahora y las coordenadas natales del consultante.
+// Devuelve la carta del momento actual para cruzar con la natal.
+async function calcularTransitosActuales(cartaNatal) {
+  try {
+    const subject = cartaNatal?.chart_data?.subject || {};
+    const ahora = new Date();
+
+    // Usamos las coordenadas natales del consultante para el cálculo
+    // (la carta del cielo de ahora es la misma desde cualquier lugar con pequeñas diferencias de casas)
+    const lat = subject.lat || subject.latitude || -34.6;
+    const lon = subject.lng || subject.longitude || -58.4;
+    const timezone = subject.tz_str || 'America/Argentina/Buenos_Aires';
+    const nation = subject.nation || 'AR';
+
+    const transit = {
+      year: ahora.getFullYear(),
+      month: ahora.getMonth() + 1,
+      day: ahora.getDate(),
+      hour: ahora.getHours(),
+      minute: ahora.getMinutes(),
+      latitude: lat,
+      longitude: lon,
+      timezone,
+      city: subject.city || 'current',
+      nation
+    };
+
+    const res = await fetch(`${WORKER_URL}/transitos-actuales`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ subject, transit })
+    });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('Error calculando tránsitos actuales:', e);
+    return null;
+  }
+}
+
+// ── CONSTRUIR TEXTO DE TRÁNSITOS para el prompt ──
+// transitData: carta del momento actual (misma estructura que carta natal)
+// filtro: array de nombres de planetas a incluir, o null para todos
+// cartaNatal: carta natal del consultante para calcular aspectos cruzados
+function buildTransitosText(transitData, filtro, cartaNatal) {
+  if (!transitData || !transitData.chart_data) return '';
+
+  const transitSubject = transitData.chart_data.subject || {};
+  const natalSubject = cartaNatal?.chart_data?.subject || {};
+
+  // Posiciones de planetas en tránsito
+  const lineasPosicion = [];
+  PLANET_KEYS.forEach(key => {
+    const p = transitSubject[key];
+    if (!p) return;
+    const pName = PLANET_KEY_NAME[key];
+    if (filtro && !filtro.includes(pName)) return;
+    const signEs = SIGN_MAP[p.sign] || p.sign || '?';
+    const house = HOUSE_MAP[p.house] || '?';
+    const retro = p.retrograde ? ' (Rx)' : '';
+    lineasPosicion.push(`${PLANET_ES[pName] || pName} en tránsito: ${signEs}, casa natal ${house}${retro}`);
+  });
+
+  // Aspectos cruzados: planeta en tránsito aspecto a planeta natal
+  // Los calculamos manualmente comparando posiciones absolutas
+  const ORBES = { conjunction: 8, opposition: 8, trine: 6, square: 6, sextile: 4 };
+  const aspectosCruzados = [];
+
+  PLANET_KEYS.forEach(tKey => {
+    const tPlanet = transitSubject[tKey];
+    if (!tPlanet || tPlanet.abs_pos === undefined) return;
+    const tName = PLANET_KEY_NAME[tKey];
+    if (filtro && !filtro.includes(tName)) return;
+
+    PLANET_KEYS.forEach(nKey => {
+      const nPlanet = natalSubject[nKey];
+      if (!nPlanet || nPlanet.abs_pos === undefined) return;
+      const nName = PLANET_KEY_NAME[nKey];
+
+      const diff = Math.abs(((tPlanet.abs_pos - nPlanet.abs_pos + 540) % 360) - 180);
+      const angleDiff = diff > 180 ? 360 - diff : diff;
+
+      let aspecto = null;
+      if (angleDiff <= ORBES.conjunction) aspecto = 'conjunción';
+      else if (Math.abs(angleDiff - 180) <= ORBES.opposition) aspecto = 'oposición';
+      else if (Math.abs(angleDiff - 120) <= ORBES.trine) aspecto = 'trígono';
+      else if (Math.abs(angleDiff - 90) <= ORBES.square) aspecto = 'cuadratura';
+      else if (Math.abs(angleDiff - 60) <= ORBES.sextile) aspecto = 'sextil';
+
+      if (aspecto) {
+        const orbe = (() => {
+          if (aspecto === 'conjunción') return angleDiff;
+          if (aspecto === 'oposición') return Math.abs(angleDiff - 180);
+          if (aspecto === 'trígono') return Math.abs(angleDiff - 120);
+          if (aspecto === 'cuadratura') return Math.abs(angleDiff - 90);
+          if (aspecto === 'sextil') return Math.abs(angleDiff - 60);
+          return 0;
+        })();
+        aspectosCruzados.push({
+          tName, nName, aspecto, orbe
+        });
+      }
+    });
+  });
+
+  // Ordenar por orbe más exacto y limitar
+  aspectosCruzados.sort((a, b) => a.orbe - b.orbe);
+  const limite = filtro ? 8 : 16; // más aspectos para tránsitos completos
+  const topAspectos = aspectosCruzados.slice(0, limite);
+
+  let texto = '';
+
+  if (lineasPosicion.length > 0) {
+    texto += `\nPlanetas en tránsito ahora:\n${lineasPosicion.join('\n')}`;
+  }
+
+  if (topAspectos.length > 0) {
+    texto += `\n\nAspectos activos entre tránsitos y carta natal:\n`;
+    texto += topAspectos.map(a =>
+      `${PLANET_ES[a.tName] || a.tName} (tránsito) en ${a.aspecto} con ${PLANET_ES[a.nName] || a.nName} natal (orbe ${a.orbe.toFixed(1)}°)`
+    ).join('\n');
+  }
+
+  // Fecha del cálculo
+  const ahora = new Date();
+  texto += `\n\nFecha del cálculo de tránsitos: ${ahora.toLocaleDateString('es-AR', {day:'numeric',month:'long',year:'numeric'})}`;
+
+  return texto;
+}
+
 async function llamarClaude(prompt) {
   const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt})});
   if (!res.ok) throw new Error('Error al obtener la interpretación.');
@@ -585,7 +745,6 @@ function renderAspectos(chartData) {
   filtered.forEach(a => { const p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'',tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,orb=a.orbit!==undefined?Math.abs(a.orbit).toFixed(2)+'°':'',cls=aspectClass(tipo); const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="aspect-name"><div class="aspect-bar ${cls}"></div>${p1} ${tipoEs} ${p2}</div></td><td><div class="aspect-right"><span class="aspect-quality ${cls}">${cls==='poderoso'?'poderoso':cls==='armonico'?'armónico':'desafiante'}</span><span class="aspect-orb">${orb}</span></div></td>`; tbody.appendChild(tr); });
 }
 
-// FIX 4: renderInterp con fallback robusto — si no hay títulos con **, renderiza igual como párrafos
 function renderInterp(texto, containerId) {
   const container=document.getElementById(containerId); if(!container)return;
   if(!texto||!texto.trim()){
@@ -595,7 +754,6 @@ function renderInterp(texto, containerId) {
   container.innerHTML='';
   const tieneTitulos = /\*\*[^*]+\*\*/.test(texto);
   if (!tieneTitulos) {
-    // Fallback: texto plano sin títulos → renderizar como párrafos directos
     const bloq = document.createElement('div'); bloq.className='interp-block';
     texto.split('\n').forEach(linea => {
       if (!linea.trim()) return;
@@ -623,7 +781,7 @@ function renderInterp(texto, containerId) {
   if(currentBlock)container.appendChild(currentBlock);
 }
 
-// --- SYSTEM PROMPT BASE EVOLUTIVO ---
+// ── SYSTEM PROMPT BASE EVOLUTIVO ──
 const SYSTEM_EVOLUTIVO = `Sos una astróloga especializada en astrología psicológica y evolutiva. Tu marco de interpretación se basa en los siguientes principios fundamentales:
 
 LA CARTA NATAL es un mapa evolutivo del alma, no un destino fijo. Muestra desde dónde viene el alma (puntos de pasado) y hacia dónde va su evolución en esta vida (puntos evolutivos).
@@ -646,7 +804,7 @@ PRINCIPIOS DE INTERPRETACIÓN:
 - Usás títulos de sección entre dobles asteriscos en línea propia.
 - NUNCA menciones autores, escuelas o metodologías específicas.`;
 
-// --- PROMPT BASICO (lectura gratuita) ---
+// ── PROMPT BÁSICO (lectura gratuita) ──
 function buildPromptBasico(nombre, chartData) {
   const subject=chartData?.chart_data?.subject||{};
   const sol=subject.sun,luna=subject.moon,asc=subject.first_house||subject.ascendant||subject.asc||null;
@@ -683,7 +841,7 @@ Hablá del Ascendente de ${nombre} en ${ascSign}. El Ascendente es una energía 
 Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una pregunta que invite a ${nombre} a querer saber más sobre su carta completa, una línea en blanco, y una frase poética muy breve que funcione como gancho hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
 }
 
-// --- PROMPTS POR PRODUCTO ---
+// ── PROMPTS POR PRODUCTO ──
 function buildPrompt(producto, nombre, chartData, extras) {
   const subject=chartData?.chart_data?.subject||{};
   const planetsText=PLANET_KEYS.map(key=>{const p=subject[key];if(!p)return null;const pName=PLANET_KEY_NAME[key];return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;}).filter(Boolean).join(', ');
@@ -697,7 +855,7 @@ Planetas: ${planetsText}
 Ascendente: ${ascSign}
 Aspectos principales: ${topAspects}`;
 
-  // FIX PROMPT: máximo 1 párrafo por planeta, 80-120 palabras, total no más de 900 palabras
+  // ── CARTA COMPLETA ──
   if (producto === 'carta-completa') return `${base}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
@@ -746,6 +904,7 @@ Casas más activadas y su impacto concreto en la vida de ${nombre}. Casas vacía
 
 Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta alma. Sin título. Que suene a verdad. La última oración invita a explorar Quirón, Lilith y los Nodos — que suene a curiosidad, no a publicidad.`;
 
+  // ── REVOLUCIÓN SOLAR ──
   if (producto === 'revolucion-solar') {
     const anioRS=extras?.anioRS||'2025';
     const ciudadRS=extras?.ciudadRS||'su ciudad de residencia';
@@ -768,6 +927,7 @@ Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta a
     return `${base}\n${rsSection}\n\nEscribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} desde la perspectiva evolutiva. Cada sección 2-3 párrafos.\n\nReglas:\n- CRÍTICO: hablá siempre en segunda persona, "vos", directamente a ${nombre}.\n- El Ascendente de la RS marca el tono evolutivo del año\n- La Luna de la RS muestra la necesidad emocional dominante\n- Los planetas lentos son portales energéticos, no predicciones\n- Tono siempre de invitación al movimiento consciente, nunca fatalista\n- Usás castellano rioplatense, cálido, profundo\n- NUNCA menciones autores, escuelas ni metodologías\n\n**El tono del año ${anioRS}**\nEmpezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..."\n\n**Tu mundo emocional este año**\nLa Luna de la RS: qué necesita ${nombre} emocionalmente este año.\n\n**Los planetas que marcan el ritmo**\nVenus, Marte, Júpiter y Saturno de la RS activando áreas específicas.\n\n**Los aspectos clave entre tu carta natal y tu revolución solar**\nCómo el año dialoga con el mapa del alma de ${nombre}.\n\n**Los meses clave**\nQué períodos del año tienen mayor activación.\n\n**Amor y vínculos en este año**\nQué se mueve en el área de los vínculos en este ciclo.\n\n**Trabajo y propósito en este año**\nQué se activa en el área profesional y vocacional.\n\n**Cómo aprovechar esta energía**\nConsejos concretos y evolutivos para fluir con lo que el año trae.`;
   }
 
+  // ── SINASTRÍA ──
   if (producto === 'sinastria') {
     const nombre2=extras?.nombre2||'Persona 2';
     let carta2Text='';
@@ -784,16 +944,214 @@ Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta a
     return `${base}\n\n${carta2Text}\n\nEscribí una LECTURA DE SINASTRÍA desde la perspectiva evolutiva. Cada sección 2-3 párrafos.\n\nReglas:\n- CRÍTICO: hablá en segunda persona dirigiéndote a ${nombre}. Usá "vos", "tu", "te". Para ${nombre2} podés usar tercera persona.\n- Tono nunca fatalista: los vínculos son portales de crecimiento\n- Castellano rioplatense, cálido, profundo\n- NUNCA menciones autores, escuelas ni metodologías\n\n**La química entre vos y ${nombre2}**\nQué se activa en vos cuando estás con ${nombre2}. La atracción, la primera impresión.\n\n**Venus y Marte: el deseo y la acción**\nCómo se relacionan Venus y Marte de ambas cartas.\n\n**Sol y Luna: la profundidad del vínculo**\nCómo dialogan las identidades y los mundos emocionales.\n\n**Los desafíos de esta relación**\nAspectos tensos como áreas de crecimiento mutuo.\n\n**El karma compartido**\nLos Nodos de ambas cartas y lo que estas almas vienen a trabajar juntas.\n\n**El potencial de esta unión**\nLo mejor que esta relación puede dar cuando ambas personas están en su mejor versión.\n\n**Síntesis**\nQué tiene para enseñarle esta relación a ${nombre}.`;
   }
 
-  if (producto === 'transitos') return `${base}\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nEscribí una LECTURA DE TRÁNSITOS ACTUALES (mayo-junio 2026) desde la perspectiva evolutiva.\n\nLos tránsitos son portales energéticos, no predicciones fijas. Para cada tránsito explicá dos caminos: qué pasa cuando la persona fluye con esa energía y qué pasa cuando la resiste. Cada sección 2 párrafos.\n\n**El momento que estás viviendo**\nUna visión general de la energía que está rodeando a esta persona ahora.\n\n**Saturno en Aries: lo que se consolida y desafía**\nQué área de la carta natal está siendo saturnizada.\n\n**Neptuno en Aries: lo que se disuelve y transforma**\nDónde está llegando la energía neptuniana.\n\n**Urano en Géminis: los cambios que vienen**\nQué área de la carta está siendo uranizada.\n\n**Júpiter en Cáncer: dónde está tu expansión**\nDónde está el viento a favor ahora mismo.\n\n**Cómo trabajar con esta energía**\nConsejos concretos y evolutivos para fluir con lo que los planetas están pidiendo.`;
+  // ── TRÁNSITOS ACTUALES ──
+  // Usa tránsitos reales calculados desde RapidAPI — todos los planetas, todos los aspectos
+  if (producto === 'transitos') {
+    const transitosText = extras?.transitosText || '';
+    return `${base}
+${transitosText}
 
-  if (producto === 'pregunta') return `${base}\n\nLa persona pregunta: "${extras?.pregunta||''}"\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nRespondé esta pregunta específica basándote en la carta natal desde la perspectiva evolutiva:\n- Directa y clara, 3-4 párrafos\n- Identificá qué planetas, casas o aspectos de la carta son relevantes para esta pregunta\n- Respondé desde el autoconocimiento, no desde el determinismo\n- Incluí un consejo práctico y evolutivo al final\n- No predecís ni juzgás: acompañás\n\nUn solo bloque de texto, con un título inicial entre dobles asteriscos que reformule la pregunta de manera poética.`;
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
-  if (producto === 'lectura-profunda') return `${base}\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nEscribí una LECTURA PROFUNDA para ${nombre}. 1 párrafo por aspecto, 3 ítems por sección.\n\n**Los aspectos armónicos · Tus dones naturales**\nPara cada trígono y sextil: qué energía fluye naturalmente y qué don representa. 1 párrafo por aspecto.\n\n**Los aspectos desafiantes · Las tensiones que te forman**\nPara cada cuadratura y oposición: qué tensión crea y cuál es el aprendizaje evolutivo. 1 párrafo por aspecto.\n\n**Tus fortalezas como recursos conscientes**\nLas 3 mayores fortalezas. 1 párrafo por fortaleza: qué es y cómo usarla concretamente.\n\n**Tus áreas de crecimiento como experiencias evolutivas**\nLas 3 principales áreas de crecimiento como oportunidades. 1 párrafo por área.\n\nCerrá con una frase poderosa y personal basada en la carta de ${nombre}.`;
+Escribí una LECTURA DE TRÁNSITOS ACTUALES desde la perspectiva evolutiva.
+
+Los tránsitos son portales energéticos, no predicciones fijas. Para cada tránsito activo explicá:
+- Qué área de la carta natal está siendo tocada
+- Qué proceso evolutivo está activo
+- Dos caminos posibles: qué pasa cuando la persona fluye con esa energía y qué pasa cuando la resiste
+
+Priorizá los tránsitos con orbes más exactos y los planetas más lentos (Saturno, Urano, Neptuno, Plutón) pero incluí también los personales (Sol, Venus, Marte, Luna) si tienen aspectos exactos.
+
+Cada sección 2 párrafos. Máximo 8 secciones.
+
+**El momento que estás viviendo**
+Una visión general del cielo ahora y qué tipo de energía está rodeando a ${nombre}.
+
+Luego una sección por cada tránsito significativo activo, con título descriptivo.
+
+Cerrá con:
+**Cómo trabajar con esta energía**
+Consejos concretos y evolutivos para fluir con lo que los planetas están pidiendo ahora.`;
+  }
+
+  // ── PREGUNTA PUNTUAL ──
+  // Cada pregunta tiene su propio prompt específico + tránsitos filtrados por relevancia
+  if (producto === 'pregunta') {
+    const preguntaId = extras?.preguntaId || 'decidir';
+    const transitosText = extras?.transitosText || '';
+    return buildPromptPregunta(preguntaId, nombre, base, transitosText);
+  }
+
+  // ── LECTURA PROFUNDA ──
+  if (producto === 'lectura-profunda') return `${base}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Escribí una LECTURA PROFUNDA para ${nombre}. 1 párrafo por aspecto, 3 ítems por sección.
+
+**Los aspectos armónicos · Tus dones naturales**
+Para cada trígono y sextil: qué energía fluye naturalmente y qué don representa. 1 párrafo por aspecto.
+
+**Los aspectos desafiantes · Las tensiones que te forman**
+Para cada cuadratura y oposición: qué tensión crea y cuál es el aprendizaje evolutivo. 1 párrafo por aspecto.
+
+**Tus fortalezas como recursos conscientes**
+Las 3 mayores fortalezas. 1 párrafo por fortaleza: qué es y cómo usarla concretamente.
+
+**Tus áreas de crecimiento como experiencias evolutivas**
+Las 3 principales áreas de crecimiento como oportunidades. 1 párrafo por área.
+
+Cerrá con una frase poderosa y personal basada en la carta de ${nombre}.`;
 
   return `${base}\n\nHacé una lectura general evolutiva de la carta natal en 5 párrafos profundos.`;
 }
 
-// --- PROMO CODE ---
+// ── PROMPTS ESPECÍFICOS POR PREGUNTA ──
+function buildPromptPregunta(preguntaId, nombre, base, transitosText) {
+  const trans = transitosText ? `\n\nTránsitos activos ahora relevantes para esta pregunta:\n${transitosText}` : '';
+
+  if (preguntaId === 'decidir') return `${base}${trans}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Respondé la pregunta: "¿Por qué me cuesta tomar decisiones importantes?"
+
+Analizá prioritariamente:
+- Mercurio (forma de pensar y procesar información): signo, casa y aspectos
+- Luna (seguridad emocional al elegir): necesidad de certeza antes de moverse
+- Venus (criterios de valoración): qué pesa más al elegir
+- Marte (capacidad de acción): bloqueos o impulsos en la acción
+- Saturno (miedo al error y a las consecuencias): dónde aparece el freno
+- Neptuno si aplica (confusión o idealización)
+- Casa 3 (procesamiento mental), Casa 7 (dependencia de opiniones ajenas), Casa 12 (dudas inconscientes)
+- Nodo Norte: qué tipo de decisiones requiere el crecimiento del alma
+${transitosText ? '- Tránsitos activos: qué planeta está tocando ahora los puntos de decisión' : ''}
+
+Explicá en este orden — cada uno como un párrafo fluido, no como lista:
+1. El mecanismo interno que genera la indecisión en esta carta específica
+2. El miedo subyacente que aparece al elegir
+3. El aprendizaje evolutivo detrás de esta dificultad
+4. Cómo puede tomar decisiones más alineadas con su crecimiento
+
+Un solo título al inicio entre dobles asteriscos. Tono humano, emocional, profundo. Sin determinismos. 4 párrafos, 300-400 palabras totales.`;
+
+  if (preguntaId === 'amor') return `${base}${trans}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Respondé la pregunta: "¿Qué dice mi carta del amor?"
+
+Analizá prioritariamente:
+- Venus: signo, casa, aspectos — cómo ama y qué valora en una relación
+- Luna: necesidad emocional en el vínculo — qué necesita sentir para entregarse
+- Marte: cómo desea, cómo atrae, cómo actúa en el amor
+- Casa 5 (romance y atracción) y Casa 7 (vínculos comprometidos)
+- Casa 8: la profundidad, la intimidad, la transformación en el amor
+- Descendente: qué tipo de persona atrae y por qué
+- Nodo Norte y Nodo Sur: patrones relacionales del pasado vs. el amor que el alma viene a aprender
+- Quirón si tiene aspectos con Venus o Luna: la herida en el amor
+- Plutón si aspeta a Venus o Luna: la intensidad y el poder en los vínculos
+${transitosText ? '- Tránsitos activos: qué está moviéndose ahora en el área amorosa' : ''}
+
+Respondé en este orden — párrafos fluidos:
+1. Cómo ama esta persona y qué necesita emocionalmente
+2. Qué patrones relacionales trae del pasado
+3. Qué desafíos suele encontrar en el amor y por qué
+4. Qué tipo de vínculo favorece su evolución
+5. Qué está aprendiendo el alma a través de las relaciones
+
+Un solo título al inicio entre dobles asteriscos. Tono cálido, íntimo, sin predicciones. 5 párrafos, 350-450 palabras totales.`;
+
+  if (preguntaId === 'fortaleza') return `${base}${trans}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Respondé la pregunta: "¿Cuál es mi mayor fortaleza?"
+
+Analizá prioritariamente:
+- Sol: signo, casa y aspectos — la llama auténtica que viene a encender
+- Ascendente y su regente: la energía que proyecta naturalmente
+- Júpiter: dónde está el crecimiento natural y la abundancia
+- Marte: cómo actúa y defiende lo que es suyo
+- Casa 1 (identidad y presencia), Casa 10 (vocación y legado), Casa 11 (talentos colectivos)
+- Nodo Norte: las capacidades que el alma viene a desarrollar en esta vida
+- Aspectos armónicos principales: los dones que fluyen sin esfuerzo
+
+Respondé en este orden — párrafos fluidos, sin listas genéricas:
+1. El talento más importante de esta persona según su carta
+2. Una capacidad natural que suele pasar desapercibida
+3. Cómo esa fortaleza puede ayudarla en su camino evolutivo
+4. Cómo desarrollarla conscientemente
+
+Un solo título al inicio entre dobles asteriscos que nombre la fortaleza de manera poética. Fundamentá todo en la carta natal. 4 párrafos, 300-400 palabras totales.`;
+
+  if (preguntaId === 'atencion') return `${base}${trans}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Respondé la pregunta: "¿Qué necesita atención ahora en mi vida?"
+
+${transitosText ? `Esta lectura se basa en los tránsitos reales activos sobre la carta de ${nombre} al momento de la consulta.` : ''}
+
+Analizá:
+- Los tránsitos activos y qué casas/planetas natales están siendo tocados
+- Saturno en tránsito: dónde está pidiendo estructura, madurez o límites
+- Plutón en tránsito: qué está siendo transformado profundamente
+- Neptuno en tránsito: qué se está disolviendo o requiere claridad
+- Urano en tránsito: qué está siendo sacudido o renovado
+- Los planetas personales en tránsito con aspectos exactos: qué mensaje traen ahora
+- La casa natal más activada: qué área de vida está en primer plano
+
+Respondé en este orden — párrafos fluidos:
+1. Qué proceso evolutivo está activo ahora mismo en la carta de ${nombre}
+2. Qué tema está pidiendo conciencia y atención
+3. Qué resistencia puede estar apareciendo
+4. Cuál sería la actitud más alineada para atravesar este período
+
+Un solo título al inicio entre dobles asteriscos que capture el momento. Tono de acompañamiento, nunca alarmista. 4 párrafos, 300-400 palabras totales.`;
+
+  if (preguntaId === 'proposito') return `${base}${trans}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+
+Respondé la pregunta: "¿Cuál es mi propósito de vida?"
+
+Analizá prioritariamente:
+- Nodo Norte: signo, casa — la enseñanza espiritual de esta encarnación
+- Nodo Sur: de dónde viene el alma, qué trae dominado, qué necesita trascender
+- Sol: signo, casa — el punto evolutivo central, la llama a encender
+- Medio Cielo y Casa 10: la vocación y el legado visible en el mundo
+- Saturno: dónde la vida exige madurez como vehículo de propósito
+- Júpiter: dónde está la expansión y el sentido de vida
+- Quirón: la herida que al ser trabajada se convierte en don y misión
+- Plutón: el mayor apego y el proceso de transformación del alma
+- Ascendente y su regente: la energía a integrar para que el propósito se exprese
+
+Respondé en este orden — párrafos fluidos:
+1. Qué vino a desarrollar esta alma en esta encarnación
+2. Qué patrones conocidos necesita trascender para avanzar
+3. Qué cualidades está aprendiendo a incorporar en esta vida
+4. Cómo puede reconocer que está avanzando hacia su propósito
+5. Qué tipo de contribución puede ofrecer al mundo desde su autenticidad
+
+Un solo título al inicio entre dobles asteriscos que nombre el propósito de manera poética. No hablés de destino fijo ni misión predeterminada. Enfocate en potencial evolutivo y dirección. 5 párrafos, 400-500 palabras totales.`;
+
+  // Fallback genérico
+  return `${base}${trans}\n\nRespondé la pregunta del consultante desde la carta natal con perspectiva evolutiva. 4 párrafos, tono cálido y directo.`;
+}
+
+// ── SELECCIONAR PREGUNTA DESDE CHIP ──
+function seleccionarPregunta(id, el) {
+  preguntaSeleccionada = id;
+  // Limpiar selección anterior
+  document.querySelectorAll('.pregunta-chip').forEach(c => c.classList.remove('activo'));
+  el.classList.add('activo');
+  // Mostrar texto en textarea
+  const textarea = document.getElementById('pregunta-texto');
+  if (textarea) textarea.value = PREGUNTA_TEXTOS[id] || '';
+}
+
+// ── PROMO CODE ──
 function aplicarPromo(producto) {
   const codigoEl=document.getElementById(`promo-${producto}`),errorEl=document.getElementById(`error-${producto}`),successEl=document.getElementById(`success-${producto}`);
   if(!codigoEl)return;
@@ -811,7 +1169,7 @@ function aplicarPromo(producto) {
   }
 }
 
-// --- PROCESAR COMPRA ---
+// ── PROCESAR COMPRA ──
 async function procesarCompra(producto, precio) {
   if(producto==='lectura-profunda'&&new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
   const errorId=`error-${producto}`,successId=`success-${producto}`;
@@ -820,6 +1178,8 @@ async function procesarCompra(producto, precio) {
   const extras={};
   if(!nombre){mostrarMensaje(errorId,'Primero calculá tu carta natal arriba.');return;}
   if(!cartaData){mostrarMensaje(errorId,'Primero calculá tu carta natal arriba.');return;}
+
+  // Validaciones por producto
   if(producto==='sinastria'){
     const nombre2=document.getElementById('sinastria-nombre2')?.value?.trim();
     const fecha2=document.getElementById('sinastria-fecha2')?.value;
@@ -829,7 +1189,11 @@ async function procesarCompra(producto, precio) {
     if(!nombre2||!fecha2||!hora2||!ciudad2){mostrarMensaje(errorId,'Completá todos los datos de la otra persona.');return;}
     extras.nombre2=nombre2;extras.fecha2=fecha2;extras.hora2=hora2;extras.ciudad2=ciudad2;extras.pais2=pais2;
   }
-  if(producto==='pregunta'){extras.pregunta=document.getElementById('pregunta-texto')?.value?.trim();if(!extras.pregunta){mostrarMensaje(errorId,'Escribí tu pregunta antes de continuar.');return;}}
+  if(producto==='pregunta'){
+    if(!preguntaSeleccionada){mostrarMensaje(errorId,'Elegí una pregunta de las opciones de arriba.');return;}
+    extras.preguntaId=preguntaSeleccionada;
+    extras.preguntaTexto=PREGUNTA_TEXTOS[preguntaSeleccionada]||'';
+  }
   if(producto==='revolucion-solar'){
     const anioRS=document.getElementById('rs-anio')?.value;
     const ciudadRS=document.getElementById('rs-ciudad')?.value?.trim();
@@ -838,32 +1202,37 @@ async function procesarCompra(producto, precio) {
     if(!ciudadRS){mostrarMensaje(errorId,'Ingresá la ciudad donde pasaste o pasarás ese cumpleaños.');return;}
     extras.anioRS=anioRS;extras.ciudadRS=ciudadRS;extras.paisRS=paisRS;
   }
-  if(esPrueba){await generarYEnviarLectura(producto,nombre,extras,true);}
-  else{
-    sessionStorage.setItem('pendiente',JSON.stringify({producto,nombre,extras,precio,fecha:document.getElementById('fecha').value,hora:document.getElementById('hora').value,ciudad:document.getElementById('ciudad').value.trim(),pais:document.getElementById('pais').value.trim()||'Argentina'}));
+
+  if(esPrueba){
+    await generarYEnviarLectura(producto,nombre,extras,true);
+  } else {
+    sessionStorage.setItem('pendiente',JSON.stringify({
+      producto,nombre,extras,precio,
+      fecha:document.getElementById('fecha').value,
+      hora:document.getElementById('hora').value,
+      ciudad:document.getElementById('ciudad').value.trim(),
+      pais:document.getElementById('pais').value.trim()||'Argentina'
+    }));
     const returnUrl=encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&nombre=${encodeURIComponent(nombre)}`);
     window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`,'_blank');
     mostrarMensaje(successId,'✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
   }
 }
 
-// FIX 1+2: ARQUITECTURA CORREGIDA
-// Paso 1: llamarClaude → obtiene el texto (usa /interpretar, sin timeout de envío)
-// Paso 2: mostrar texto en pantalla inmediatamente
-// Paso 3: /enviar-lectura recibe el texto ya generado → solo envía email (sin llamar a Claude)
+// ── GENERAR Y ENVIAR LECTURA ──
 async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   const errorId=`error-${producto}`,successId=`success-${producto}`;
   mostrarMensaje(successId,'⟳ Generando tu lectura...');
   try {
     let chartDataParaPrompt=cartaData;
 
+    // Revolución Solar: calcular carta RS
     if(producto==='revolucion-solar'&&extras.anioRS){
       try{
         mostrarMensaje(successId,'⟳ Calculando tu revolución solar...');
         const subject=cartaData?.chart_data?.subject||{};
         const coordsRS=await getCoordenadas(extras.ciudadRS,extras.paisRS||'Argentina');
         const tzRS=await getTimezone(coordsRS.lat,coordsRS.lon);
-        const PAIS_CODIGOS={'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
         const nationCodeRS=PAIS_CODIGOS[(extras.paisRS||'Argentina').toLowerCase()]||(extras.paisRS||'AR').toUpperCase().slice(0,2);
         const rsRes=await fetch(`${WORKER_URL}/revolucion-solar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:{name:subject.name,year:subject.year||new Date().getFullYear(),month:subject.month,day:subject.day,hour:subject.hour,minute:subject.minute,longitude:subject.lng,latitude:subject.lat,timezone:subject.tz_str,city:subject.city,nation:subject.nation},year:parseInt(extras.anioRS),return_location:{city:extras.ciudadRS,nation:nationCodeRS,longitude:coordsRS.lon,latitude:coordsRS.lat,timezone:tzRS}})});
         const rsData=await rsRes.json();
@@ -871,12 +1240,12 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
       }catch(rsErr){console.warn('Error RS:',rsErr);}
     }
 
+    // Sinastría: calcular carta de persona 2
     if(producto==='sinastria'&&extras.nombre2&&extras.fecha2){
       try{
         mostrarMensaje(successId,'⟳ Calculando la carta de '+extras.nombre2+'...');
         const coords2=await getCoordenadas(extras.ciudad2,extras.pais2||'Argentina');
         const tz2=await getTimezone(coords2.lat,coords2.lon);
-        const PAIS_CODIGOS={'argentina':'AR','uruguay':'UY','chile':'CL','brasil':'BR','brazil':'BR','colombia':'CO','peru':'PE','venezuela':'VE','bolivia':'BO','paraguay':'PY','ecuador':'EC','mexico':'MX','españa':'ES','spain':'ES','estados unidos':'US','united states':'US','usa':'US'};
         const nationCode2=PAIS_CODIGOS[(extras.pais2||'Argentina').toLowerCase()]||(extras.pais2||'AR').toUpperCase().slice(0,2);
         const [year2,month2,day2]=extras.fecha2.split('-').map(Number);
         const [hour2,minute2]=extras.hora2?extras.hora2.split(':').map(Number):[12,0];
@@ -886,7 +1255,24 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
       }catch(sin2Err){console.warn('Error carta persona 2:',sin2Err);}
     }
 
-    // PASO 1: generar texto con Claude via /interpretar
+    // Tránsitos y Pregunta Puntual: calcular tránsitos reales
+    if(producto==='transitos'||producto==='pregunta'){
+      try{
+        mostrarMensaje(successId,'⟳ Calculando los tránsitos actuales...');
+        const transitData = await calcularTransitosActuales(cartaData);
+        if(transitData){
+          // Para tránsitos completos: todos los planetas (null = sin filtro)
+          // Para pregunta: filtrar por relevancia según la pregunta
+          const filtro = producto==='pregunta'
+            ? (TRANSITOS_POR_PREGUNTA[extras.preguntaId] || null)
+            : null;
+          extras.transitosText = buildTransitosText(transitData, filtro, cartaData);
+          mostrarMensaje(successId,'⟳ Interpretando...');
+        }
+      }catch(tErr){console.warn('Error tránsitos:',tErr);}
+    }
+
+    // Generar texto con Claude
     mostrarMensaje(successId,'⟳ Escribiendo tu lectura...');
     const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
     const textoGenerado = await llamarClaude(prompt);
@@ -896,7 +1282,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
       return;
     }
 
-    // PASO 2: mostrar el texto en pantalla inmediatamente
+    // Mostrar en pantalla
     const _fecha=document.getElementById('fecha')?.value||'';
     const _hora=document.getElementById('hora')?.value||'';
     const _ciudad=document.getElementById('ciudad')?.value?.trim()||'';
@@ -924,8 +1310,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   }
 }
 
-// FIX 1: enviarPorMail usa el texto ya en _lecturaContexto — NO llama a Claude
-// El worker recibe texto:ctx.texto → nunca entra al branch que llama a Claude de nuevo
+// ── ENVIAR POR MAIL ──
 async function enviarPorMail(producto) {
   const email=document.getElementById(`email-enviar-${producto}`)?.value?.trim();
   const successEl=document.getElementById(`success-email-${producto}`);
@@ -942,7 +1327,7 @@ async function enviarPorMail(producto) {
         email,
         nombre:ctx.nombre,
         producto,
-        texto:ctx.texto,          // texto ya generado — worker NO llama a Claude
+        texto:ctx.texto,
         codigoPromo:ctx.codigoPromo,
         pagado:true,
         fecha:ctx.fecha,
@@ -961,57 +1346,30 @@ function mostrarEmailInput(producto) {
   document.getElementById(`email-envio-${producto}`)?.classList.toggle('hidden');
 }
 
-// FIX 3: PDF con colores forzados oscuro-sobre-blanco, todo inline
+// ── PDF ──
 function descargarPDF(producto) {
   const ctx=_lecturaContexto[producto];if(!ctx)return;
   const contenido=document.getElementById(`texto-lectura-${producto}`);if(!contenido)return;
-
   const contenedor=document.createElement('div');
   contenedor.style.cssText='font-family:Georgia,serif;color:#1a1a1a;background:#ffffff;padding:40px;max-width:680px;position:fixed;left:-9999px;top:0;';
-
-  // Clonar el contenido y forzar todos los colores a oscuro
   const clon = contenido.cloneNode(true);
-  clon.querySelectorAll('*').forEach(el => {
-    el.style.color = '';
-    el.style.background = '';
-    el.style.backgroundColor = '';
-    el.style.borderColor = '';
-  });
-  clon.querySelectorAll('.interp-title').forEach(el => {
-    el.style.cssText = 'font-family:Georgia,serif;font-size:18px;font-weight:600;color:#2a6a10;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #c0d8b0;';
-  });
-  clon.querySelectorAll('.interp-text').forEach(el => {
-    el.style.cssText = 'font-family:Georgia,serif;font-size:14px;line-height:1.85;color:#1a1a1a;margin-bottom:10px;';
-  });
-  clon.querySelectorAll('.interp-block').forEach(el => {
-    el.style.cssText = 'margin-bottom:24px;';
-  });
-
-  contenedor.innerHTML = `
-    <div style="text-align:center;margin-bottom:32px;border-bottom:2px solid #82B366;padding-bottom:24px;">
-      <p style="font-family:Georgia,serif;font-size:10px;letter-spacing:0.3em;color:#5a8a3a;text-transform:uppercase;margin:0 0 10px;">Espacio Libra · Astrología Evolutiva</p>
-      <h1 style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:#1a1a1a;margin:0 0 8px;">${ctx.productoNombre}</h1>
-      <p style="font-family:Georgia,serif;font-size:13px;color:#555;margin:0;">Lectura personal para ${ctx.nombre}</p>
-    </div>
-  `;
+  clon.querySelectorAll('*').forEach(el => {el.style.color='';el.style.background='';el.style.backgroundColor='';el.style.borderColor='';});
+  clon.querySelectorAll('.interp-title').forEach(el => {el.style.cssText='font-family:Georgia,serif;font-size:18px;font-weight:600;color:#2a6a10;margin:0 0 10px;padding-bottom:8px;border-bottom:1px solid #c0d8b0;';});
+  clon.querySelectorAll('.interp-text').forEach(el => {el.style.cssText='font-family:Georgia,serif;font-size:14px;line-height:1.85;color:#1a1a1a;margin-bottom:10px;';});
+  clon.querySelectorAll('.interp-block').forEach(el => {el.style.cssText='margin-bottom:24px;';});
+  contenedor.innerHTML = `<div style="text-align:center;margin-bottom:32px;border-bottom:2px solid #82B366;padding-bottom:24px;"><p style="font-family:Georgia,serif;font-size:10px;letter-spacing:0.3em;color:#5a8a3a;text-transform:uppercase;margin:0 0 10px;">Espacio Libra · Astrología Evolutiva</p><h1 style="font-family:Georgia,serif;font-size:22px;font-weight:400;color:#1a1a1a;margin:0 0 8px;">${ctx.productoNombre}</h1><p style="font-family:Georgia,serif;font-size:13px;color:#555;margin:0;">Lectura personal para ${ctx.nombre}</p></div>`;
   contenedor.appendChild(clon);
   const pdfFooter = document.createElement('div');
   pdfFooter.style.cssText = 'text-align:center;margin-top:32px;border-top:1px solid #ddd;padding-top:16px;';
   pdfFooter.innerHTML = '<p style="font-family:Georgia,serif;font-size:9px;color:#bbb;letter-spacing:0.2em;text-transform:uppercase;">cartasahora.espaciolibra.com</p>';
   contenedor.appendChild(pdfFooter);
-
   document.body.appendChild(contenedor);
   setTimeout(() => {
-    html2pdf().set({
-      margin: 10,
-      filename: `${ctx.nombre} - ${ctx.productoNombre}.pdf`,
-      html2canvas: { scale: 2, backgroundColor: '#ffffff', useCORS: true },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    }).from(contenedor).save().then(() => { document.body.removeChild(contenedor); });
+    html2pdf().set({margin:10,filename:`${ctx.nombre} - ${ctx.productoNombre}.pdf`,html2canvas:{scale:2,backgroundColor:'#ffffff',useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(contenedor).save().then(()=>{document.body.removeChild(contenedor);});
   }, 300);
 }
 
-// --- CALCULAR CARTA ---
+// ── CALCULAR CARTA ──
 let cartaData=null;
 
 async function calcularCarta() {
@@ -1028,24 +1386,37 @@ async function calcularCarta() {
     cartaData=chartData;
     renderRueda(chartData); renderPlanetas(chartData); renderAspectos(chartData);
     ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell');
-    if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);}
+    if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
+      const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');
+      if(precioEl)precioEl.textContent='USD 7';
+      const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');
+      if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';
+      setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
+    }
     setLoaderText('escribiendo tu lectura esencial...');
     const prompt=buildPromptBasico(nombre,chartData);
     try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
-    if(params.get('lectura')==='ok'){const prod=params.get('prod'),nombreParam=params.get('nombre')||nombre;if(prod){const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');const extrasPaypal=pendienteData?.extras||{};sessionStorage.removeItem('pendiente');await generarYEnviarLectura(prod,nombreParam,extrasPaypal,false);}}
+    if(params.get('lectura')==='ok'){
+      const prod=params.get('prod'),nombreParam=params.get('nombre')||nombre;
+      if(prod){
+        const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');
+        const extrasPaypal=pendienteData?.extras||{};
+        sessionStorage.removeItem('pendiente');
+        await generarYEnviarLectura(prod,nombreParam,extrasPaypal,false);
+      }
+    }
   }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 
-// --- UTILIDADES ---
+// ── UTILIDADES ──
 function mostrar(id){document.getElementById(id)?.classList.remove('hidden');}
 function ocultar(id){document.getElementById(id)?.classList.add('hidden');}
 function mostrarMensaje(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
 function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
-function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;window.history.replaceState({},'',window.location.pathname);}
-function setEjemplo(texto){document.getElementById('pregunta-texto').value=texto;}
+function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;preguntaSeleccionada=null;window.history.replaceState({},'',window.location.pathname);}
 
 window.addEventListener('load',()=>{
   const params=new URLSearchParams(window.location.search);

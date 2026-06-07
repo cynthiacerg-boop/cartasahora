@@ -1188,7 +1188,7 @@ function aplicarPromo(producto) {
 // ── PROCESAR COMPRA ──
 async function procesarCompra(producto, precio) {
   if(producto==='lectura-profunda' && new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
-  const errorId=`error-${producto}`, successId=`success-${producto}`;
+  const errorId=`error-${producto}`;
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
   const extras={};
@@ -1221,17 +1221,49 @@ async function procesarCompra(producto, precio) {
 
   if(esPrueba){
     await generarYEnviarLectura(producto, nombre, extras, true);
-  } else {
+    return;
+  }
+
+  mostrarMensaje(errorId,'');
+  const btnEl = document.querySelector(`#form-${producto} .btn-paypal`) ||
+                document.querySelector(`.preguntas-section .btn-paypal`);
+  if(btnEl){ btnEl.disabled=true; btnEl.textContent='⟳ Preparando pago...'; }
+
+  try {
     sessionStorage.setItem('pendiente', JSON.stringify({
       producto, nombre, extras, precio,
-      fecha:document.getElementById('fecha').value,
-      hora:document.getElementById('hora').value,
-      ciudad:document.getElementById('ciudad').value.trim(),
-      pais:document.getElementById('pais').value.trim()||'Argentina'
+      fecha: document.getElementById('fecha').value,
+      hora: document.getElementById('hora').value,
+      ciudad: document.getElementById('ciudad').value.trim(),
+      pais: document.getElementById('pais').value.trim()||'Argentina'
     }));
-    const stripeLink = STRIPE_LINKS[producto];
-    if(!stripeLink){mostrarMensaje(errorId,'Error: producto no encontrado.');return;}
-    window.top.location.href = stripeLink;
+
+    const res = await fetch(`${WORKER_URL}/crear-sesion-stripe`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        producto,
+        nombre,
+        email: document.getElementById(`email-enviar-${producto}`)?.value?.trim() || '',
+        fecha: document.getElementById('fecha').value,
+        hora: document.getElementById('hora').value,
+        ciudad: document.getElementById('ciudad').value.trim(),
+        pais: document.getElementById('pais').value.trim()||'Argentina'
+      })
+    });
+
+    const data = await res.json();
+    if(!data.url){
+      mostrarMensaje(errorId, data.error||'Error al iniciar el pago. Intentá de nuevo.');
+      if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.textContent.replace('⟳ Preparando pago...','✦ Obtener mi lectura');}
+      return;
+    }
+
+    window.location.href = data.url;
+
+  } catch(e) {
+    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
+    if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.textContent.replace('⟳ Preparando pago...','✦ Obtener mi lectura');}
   }
 }
 
@@ -1452,14 +1484,41 @@ window.addEventListener('load',()=>{
     else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
   }
   if(params.get('lectura')==='ok'){
-    const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');
-    if(pendienteData&&pendienteData.fecha&&pendienteData.ciudad){
-      document.getElementById('nombre').value=pendienteData.nombre||'';
-      document.getElementById('fecha').value=pendienteData.fecha||'';
-      if(pendienteData.hora)document.getElementById('hora').value=pendienteData.hora;
-      document.getElementById('ciudad').value=pendienteData.ciudad||'';
-      document.getElementById('pais').value=pendienteData.pais||'Argentina';
-      calcularCarta();
+    const sessionId = params.get('session_id');
+    const pendienteData = JSON.parse(sessionStorage.getItem('pendiente')||'null');
+    if(pendienteData && pendienteData.fecha && pendienteData.ciudad){
+      document.getElementById('nombre').value = pendienteData.nombre||'';
+      document.getElementById('fecha').value = pendienteData.fecha||'';
+      if(pendienteData.hora) document.getElementById('hora').value = pendienteData.hora;
+      document.getElementById('ciudad').value = pendienteData.ciudad||'';
+      document.getElementById('pais').value = pendienteData.pais||'Argentina';
+
+      if(sessionId){
+        const verificar = async () => {
+          let intentos = 0;
+          while(intentos < 5){
+            try{
+              const vRes = await fetch(`${WORKER_URL}/verificar-pago?session_id=${sessionId}`);
+              const vData = await vRes.json();
+              if(vData.confirmado) return true;
+            } catch(e){}
+            await new Promise(r => setTimeout(r, 2000));
+            intentos++;
+          }
+          return false;
+        };
+        calcularCarta().then(async () => {
+          const confirmado = await verificar();
+          if(confirmado){
+            sessionStorage.removeItem('pendiente');
+            await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false);
+          } else {
+            mostrarMensaje('error-msg','No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com');
+          }
+        });
+      } else {
+        calcularCarta();
+      }
     }
   }
 });

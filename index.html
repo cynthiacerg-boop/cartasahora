@@ -252,7 +252,7 @@
         <p class="error-msg hidden" id="error-pregunta"></p>
         <p class="success-msg hidden" id="success-pregunta"></p>
         <button class="btn-paypal" onclick="procesarCompra('pregunta', 2)" style="margin-top:10px;">✦ Obtener respuesta · USD 2</button>
-        <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
       </div>
     </div>
 
@@ -294,7 +294,7 @@
           <p class="error-msg hidden" id="error-carta-completa"></p>
           <p class="success-msg hidden" id="success-carta-completa"></p>
           <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
-          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -318,7 +318,7 @@
           <p class="error-msg hidden" id="error-lectura-profunda"></p>
           <p class="success-msg hidden" id="success-lectura-profunda"></p>
           <button class="btn-paypal" onclick="procesarCompra('lectura-profunda', 13)">✦ Obtener mi lectura · USD 13</button>
-          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -355,7 +355,7 @@
           <p class="error-msg hidden" id="error-revolucion-solar"></p>
           <p class="success-msg hidden" id="success-revolucion-solar"></p>
           <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">✦ Obtener mi lectura · USD 9</button>
-          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -389,7 +389,7 @@
           <p class="error-msg hidden" id="error-sinastria"></p>
           <p class="success-msg hidden" id="success-sinastria"></p>
           <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">✦ Obtener mi lectura · USD 9</button>
-          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -412,7 +412,7 @@
           <p class="error-msg hidden" id="error-transitos"></p>
           <p class="success-msg hidden" id="success-transitos"></p>
           <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">✦ Obtener mi lectura · USD 5</button>
-          <p class="paypal-note">Pago seguro vía PayPal · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -425,7 +425,16 @@
 
 <script>
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
-const PAYPAL_BASE = 'https://www.paypal.com/paypalme/cynthiacergneux';
+const STRIPE_LINKS = {
+  'carta-completa':   'https://buy.stripe.com/test_28E4gsdkCalp23bb9Q8Vi00',
+  'lectura-profunda': 'https://buy.stripe.com/test_bJedR294mfFJePX1zg8Vi06',
+  'revolucion-solar': 'https://buy.stripe.com/test_dRm3codkC79d23b6TA8Vi04',
+  'sinastria':        'https://buy.stripe.com/test_6oU3co0xQbpt7nvfq68Vi05',
+  'transitos':        'https://buy.stripe.com/test_4gMbIUcgyeBFbDL0vc8Vi02',
+  'pregunta':         'https://buy.stripe.com/test_eVq14g94m0KP7nvdhY8Vi03',
+  'proposito':        'https://buy.stripe.com/test_eVq3co94m5150Z7gua8Vi01',
+  'revolucion-lunar': 'https://buy.stripe.com/test_6oUbIUgwO8dh7nvcdU8Vi07'
+};
 const CODIGO_PRUEBA = 'ESPACIO2025';
 const promoAplicada = {};
 const _lecturaContexto = {};
@@ -1178,15 +1187,15 @@ function aplicarPromo(producto) {
 
 // ── PROCESAR COMPRA ──
 async function procesarCompra(producto, precio) {
-  if(producto==='lectura-profunda'&&new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
-  const errorId=`error-${producto}`,successId=`success-${producto}`;
+  if(producto==='lectura-profunda' && new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
+  const errorId=`error-${producto}`, successId=`success-${producto}`;
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
   const extras={};
+
   if(!nombre){mostrarMensaje(errorId,'Primero calculá tu carta natal arriba.');return;}
   if(!cartaData){mostrarMensaje(errorId,'Primero calculá tu carta natal arriba.');return;}
 
-  // Validaciones por producto
   if(producto==='sinastria'){
     const nombre2=document.getElementById('sinastria-nombre2')?.value?.trim();
     const fecha2=document.getElementById('sinastria-fecha2')?.value;
@@ -1211,18 +1220,18 @@ async function procesarCompra(producto, precio) {
   }
 
   if(esPrueba){
-    await generarYEnviarLectura(producto,nombre,extras,true);
+    await generarYEnviarLectura(producto, nombre, extras, true);
   } else {
-    sessionStorage.setItem('pendiente',JSON.stringify({
-      producto,nombre,extras,precio,
+    sessionStorage.setItem('pendiente', JSON.stringify({
+      producto, nombre, extras, precio,
       fecha:document.getElementById('fecha').value,
       hora:document.getElementById('hora').value,
       ciudad:document.getElementById('ciudad').value.trim(),
       pais:document.getElementById('pais').value.trim()||'Argentina'
     }));
-    const returnUrl=encodeURIComponent(`${window.location.href.split('?')[0]}?lectura=ok&prod=${producto}&nombre=${encodeURIComponent(nombre)}`);
-    window.open(`${PAYPAL_BASE}/${precio}USD?return=${returnUrl}`,'_blank');
-    mostrarMensaje(successId,'✦ Después de pagar, volvé a esta página y tu lectura se generará automáticamente.');
+    const stripeLink = STRIPE_LINKS[producto];
+    if(!stripeLink){mostrarMensaje(errorId,'Error: producto no encontrado.');return;}
+    window.location.href = stripeLink;
   }
 }
 

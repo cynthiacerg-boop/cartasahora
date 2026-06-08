@@ -1514,11 +1514,26 @@ window.addEventListener('load',()=>{
           return false;
         };
         calcularCarta().then(async () => {
+          // Mostrar placeholder con indicador de carga y hacer scroll inmediato
+          const _producto = pendienteData.producto;
+          const _container = document.getElementById('section-lecturas-desbloqueadas');
+          const _prodNombre = PRODUCT_NOMBRES[_producto] || _producto;
+          let _placeholderCard = document.getElementById(`card-lectura-${_producto}`);
+          if (!_placeholderCard) {
+            _placeholderCard = document.createElement('div');
+            _placeholderCard.className = 'card';
+            _placeholderCard.id = `card-lectura-${_producto}`;
+            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><p style="color:#82B366;text-align:center;padding:32px 0;font-size:15px;letter-spacing:0.05em;">✦ Generando tu lectura...</p>`;
+            _container.appendChild(_placeholderCard);
+          }
+          setTimeout(() => _placeholderCard.scrollIntoView({behavior:'smooth', block:'start'}), 300);
+
           const confirmado = await verificar();
           if(confirmado){
             localStorage.removeItem('pendiente');
             await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false);
           } else {
+            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><p style="color:rgba(255,100,100,0.8);text-align:center;padding:24px 0;">No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com</p>`;
             mostrarMensaje('error-msg','No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com');
           }
         });

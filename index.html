@@ -526,14 +526,25 @@ async function getTimezone(lat, lon) {
   } catch { return 'America/Argentina/Buenos_Aires'; }
 }
 
+function cacheKey(prefix, fecha, hora, ciudad) {
+  const norm = s => (s||'').toLowerCase().trim().replace(/\s+/g,' ');
+  return `${prefix}_${norm(fecha)}_${norm(hora)}_${norm(ciudad)}`;
+}
+
 async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad, pais) {
+  const key = cacheKey('cartaNatal', fecha, hora, ciudad);
+  const cached = localStorage.getItem(key);
+  if (cached) { try { return JSON.parse(cached); } catch(e) {} }
+
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
   const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
   const body = {subject: {name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode}};
   const res = await fetch(`${WORKER_URL}/carta`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
-  return await res.json();
+  const data = await res.json();
+  try { localStorage.setItem(key, JSON.stringify(data)); } catch(e) {}
+  return data;
 }
 
 // ── CALCULAR TRÁNSITOS ACTUALES ──
@@ -1443,7 +1454,14 @@ async function calcularCarta() {
     }
     setLoaderText('escribiendo tu lectura esencial...');
     const prompt=buildPromptBasico(nombre,chartData);
-    try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
+    try{
+      const esencialKey=cacheKey('cartaEsencial',fecha,hora,ciudad);
+      const esencialCached=localStorage.getItem(esencialKey);
+      let interpBasica;
+      if(esencialCached){interpBasica=esencialCached;}
+      else{interpBasica=await llamarClaude(prompt);try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
+      renderInterp(interpBasica,'interpretacion-basica');
+    }
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
   }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}

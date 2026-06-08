@@ -1225,44 +1225,41 @@ async function procesarCompra(producto, precio) {
   }
 
   mostrarMensaje(errorId,'');
-  const btnEl = document.querySelector(`#form-${producto} .btn-paypal`) ||
-                document.querySelector(`.preguntas-section .btn-paypal`);
-  if(btnEl){ btnEl.disabled=true; btnEl.textContent='⟳ Preparando pago...'; }
+  const btnEl=document.querySelector(`#form-${producto} .btn-paypal`)||document.querySelector('.preguntas-section .btn-paypal');
+  if(btnEl){btnEl.disabled=true;btnEl.textContent='⟳ Preparando pago...';}
 
   try {
-    sessionStorage.setItem('pendiente', JSON.stringify({
+    localStorage.setItem('pendiente', JSON.stringify({
       producto, nombre, extras, precio,
-      fecha: document.getElementById('fecha').value,
-      hora: document.getElementById('hora').value,
-      ciudad: document.getElementById('ciudad').value.trim(),
-      pais: document.getElementById('pais').value.trim()||'Argentina'
+      fecha:document.getElementById('fecha').value,
+      hora:document.getElementById('hora').value,
+      ciudad:document.getElementById('ciudad').value.trim(),
+      pais:document.getElementById('pais').value.trim()||'Argentina'
     }));
 
     const res = await fetch(`${WORKER_URL}/crear-sesion-stripe`, {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        producto,
-        nombre,
-        email: document.getElementById(`email-enviar-${producto}`)?.value?.trim() || '',
-        fecha: document.getElementById('fecha').value,
-        hora: document.getElementById('hora').value,
-        ciudad: document.getElementById('ciudad').value.trim(),
-        pais: document.getElementById('pais').value.trim()||'Argentina'
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        producto, nombre,
+        email:document.getElementById(`email-enviar-${producto}`)?.value?.trim()||'',
+        fecha:document.getElementById('fecha').value,
+        hora:document.getElementById('hora').value,
+        ciudad:document.getElementById('ciudad').value.trim(),
+        pais:document.getElementById('pais').value.trim()||'Argentina'
       })
     });
 
-    const data = await res.json();
+    const data=await res.json();
     if(!data.url){
-      mostrarMensaje(errorId, data.error||'Error al iniciar el pago. Intentá de nuevo.');
+      mostrarMensaje(errorId,data.error||'Error al iniciar el pago. Intentá de nuevo.');
       if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.textContent.replace('⟳ Preparando pago...','✦ Obtener mi lectura');}
       return;
     }
+    window.location.href=data.url;
 
-    window.location.href = data.url;
-
-  } catch(e) {
-    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
+  }catch(e){
+    mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');
     if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.textContent.replace('⟳ Preparando pago...','✦ Obtener mi lectura');}
   }
 }
@@ -1449,15 +1446,6 @@ async function calcularCarta() {
     try{const interpBasica=await llamarClaude(prompt);renderInterp(interpBasica,'interpretacion-basica');}
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
-    if(params.get('lectura')==='ok'){
-      const prod=params.get('prod'),nombreParam=params.get('nombre')||nombre;
-      if(prod){
-        const pendienteData=JSON.parse(sessionStorage.getItem('pendiente')||'null');
-        const extrasPaypal=pendienteData?.extras||{};
-        sessionStorage.removeItem('pendiente');
-        await generarYEnviarLectura(prod,nombreParam,extrasPaypal,false);
-      }
-    }
   }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 
@@ -1485,7 +1473,7 @@ window.addEventListener('load',()=>{
   }
   if(params.get('lectura')==='ok'){
     const sessionId = params.get('session_id');
-    const pendienteData = JSON.parse(sessionStorage.getItem('pendiente')||'null');
+    const pendienteData = JSON.parse(localStorage.getItem('pendiente')||'null');
     if(pendienteData && pendienteData.fecha && pendienteData.ciudad){
       document.getElementById('nombre').value = pendienteData.nombre||'';
       document.getElementById('fecha').value = pendienteData.fecha||'';
@@ -1496,7 +1484,7 @@ window.addEventListener('load',()=>{
       if(sessionId){
         const verificar = async () => {
           let intentos = 0;
-          while(intentos < 5){
+          while(intentos < 10){
             try{
               const vRes = await fetch(`${WORKER_URL}/verificar-pago?session_id=${sessionId}`);
               const vData = await vRes.json();
@@ -1510,7 +1498,7 @@ window.addEventListener('load',()=>{
         calcularCarta().then(async () => {
           const confirmado = await verificar();
           if(confirmado){
-            sessionStorage.removeItem('pendiente');
+            localStorage.removeItem('pendiente');
             await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false);
           } else {
             mostrarMensaje('error-msg','No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com');

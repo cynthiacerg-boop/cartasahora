@@ -1354,7 +1354,10 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
     const container=document.getElementById('section-lecturas-desbloqueadas');
     let card=document.getElementById(`card-lectura-${producto}`);
     if(!card){card=document.createElement('div');card.className='card';card.id=`card-lectura-${producto}`;container.appendChild(card);}
-    card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div><div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Recibir por mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><input type="email" id="email-enviar-${producto}" placeholder="tu@email.com" /><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">✦ Enviar a mi email</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
+    const preguntaHeader = (producto==='pregunta' && extras.preguntaTexto)
+      ? `<p style="font-size:14px;color:rgba(255,255,255,0.5);font-style:italic;margin:0 0 20px;padding:12px 16px;border-left:2px solid rgba(138,77,171,0.5);line-height:1.6;">${extras.preguntaTexto}</p>`
+      : '';
+    card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div>${preguntaHeader}<div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Recibir por mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><input type="email" id="email-enviar-${producto}" placeholder="tu@email.com" /><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">✦ Enviar a mi email</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
 
     renderInterp(textoGenerado,`texto-lectura-${producto}`);
     card.scrollIntoView({behavior:'smooth',block:'start'});

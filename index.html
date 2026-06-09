@@ -382,7 +382,16 @@
             <input type="text" id="sinastria-nombre2" placeholder="Nombre" style="margin-bottom:8px;" />
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
               <input type="date" id="sinastria-fecha2" />
-              <input type="time" id="sinastria-hora2" />
+              <div style="display:flex;gap:6px;align-items:center;">
+                <select id="sinastria-hora2-hh" style="flex:1;" onchange="syncHora2()">
+                  <option value="">HH</option>
+                </select>
+                <span style="color:rgba(255,255,255,0.4);font-size:18px;line-height:1;">:</span>
+                <select id="sinastria-hora2-mm" style="flex:1;" onchange="syncHora2()">
+                  <option value="">MM</option>
+                </select>
+                <input type="hidden" id="sinastria-hora2" />
+              </div>
             </div>
             <input type="text" id="sinastria-ciudad2" placeholder="Ciudad de nacimiento" style="margin-bottom:8px;" />
             <input type="text" id="sinastria-pais2" placeholder="País" value="Argentina" />
@@ -438,9 +447,9 @@
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
 
 // ── DROPDOWNS DE HORA ──
-(function initHoraDropdowns() {
-  const hhSel = document.getElementById('hora-hh');
-  const mmSel = document.getElementById('hora-mm');
+function fillHoraDropdowns(hhId, mmId) {
+  const hhSel = document.getElementById(hhId);
+  const mmSel = document.getElementById(mmId);
   for (let h = 0; h <= 23; h++) {
     const opt = document.createElement('option');
     opt.value = String(h).padStart(2,'0');
@@ -453,12 +462,20 @@ const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
     opt.textContent = String(m).padStart(2,'0');
     mmSel.appendChild(opt);
   }
-})();
+}
+fillHoraDropdowns('hora-hh', 'hora-mm');
+fillHoraDropdowns('sinastria-hora2-hh', 'sinastria-hora2-mm');
 
 function syncHora() {
   const hh = document.getElementById('hora-hh').value;
   const mm = document.getElementById('hora-mm').value;
   document.getElementById('hora').value = (hh && mm) ? `${hh}:${mm}` : '';
+}
+
+function syncHora2() {
+  const hh = document.getElementById('sinastria-hora2-hh').value;
+  const mm = document.getElementById('sinastria-hora2-mm').value;
+  document.getElementById('sinastria-hora2').value = (hh && mm) ? `${hh}:${mm}` : '';
 }
 
 function setHora(val) {

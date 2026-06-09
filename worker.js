@@ -457,7 +457,8 @@ export default {
     // ── RUTA: Listar leads (protegida) ──
     if (path === '/listar-leads' && request.method === 'GET') {
       const authHeader = request.headers.get('Authorization') || '';
-      if (authHeader !== `Bearer ${env.ADMIN_SECRET}`) return json({ error: 'No autorizado' }, 401);
+      const querySecret = url.searchParams.get('secret') || '';
+      if (authHeader !== `Bearer ${env.ADMIN_SECRET}` && querySecret !== env.ADMIN_SECRET) return json({ error: 'No autorizado' }, 401);
       try {
         const list = await env.LEADS_KV.list({ prefix: 'lead:' });
         const leads = await Promise.all(

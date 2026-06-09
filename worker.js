@@ -5,7 +5,7 @@ export default {
     const origin = request.headers.get('Origin') || '';
     const corsHeaders = {
       'Access-Control-Allow-Origin': origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : '',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
 
@@ -22,7 +22,7 @@ export default {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
 
-    // ── Rate limiting via KV (crear namespace "RATE_LIMIT" en Cloudflare y vincularlo al worker) ──
+    // ── Rate limiting via KV ──
     if (env.RATE_LIMIT) {
       const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
       const key = `rl:${ip}`;
@@ -56,14 +56,12 @@ export default {
       try {
         const body = await request.json();
         const { subject, year, return_location } = body;
-
         const payload = {
           subject,
           year: parseInt(year),
           return_location,
           wheel_type: 'dual'
         };
-
         const res = await fetch('https://astrologer.p.rapidapi.com/api/v5/chart-data/solar-return', {
           method: 'POST',
           headers: {
@@ -80,7 +78,49 @@ export default {
       }
     }
 
-    // ── RUTA 3: Interpretación via Claude (lectura gratuita) ──
+    // ── RUTA 3: Tránsitos actuales via RapidAPI ──
+    // Recibe los datos natales del sujeto + fecha/hora/coords actuales
+    // Devuelve la carta del momento actual para cruzar con la natal
+    if (path === '/transitos-actuales' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        // body.subject = datos natales originales
+        // body.transit = { year, month, day, hour, minute, latitude, longitude, timezone }
+        const { subject, transit } = body;
+
+        // Calculamos la carta del momento actual como una carta natal de "hoy"
+        // El sujeto de tránsito usa los datos actuales de fecha/hora/lugar
+        const transitSubject = {
+          name: 'Transito',
+          year: transit.year,
+          month: transit.month,
+          day: transit.day,
+          hour: transit.hour,
+          minute: transit.minute,
+          longitude: transit.longitude,
+          latitude: transit.latitude,
+          timezone: transit.timezone,
+          city: transit.city || 'current',
+          nation: transit.nation || 'AR'
+        };
+
+        const res = await fetch('https://astrologer.p.rapidapi.com/api/v5/chart/birth-chart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-RapidAPI-Host': 'astrologer.p.rapidapi.com',
+            'X-RapidAPI-Key': env.RAPIDAPI_KEY,
+          },
+          body: JSON.stringify({ subject: transitSubject }),
+        });
+        const data = await res.json();
+        return json(data);
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA 4: Interpretación via Claude ──
     if (path === '/interpretar' && request.method === 'POST') {
       try {
         const body = await request.json();
@@ -108,7 +148,7 @@ export default {
       }
     }
 
-    // ── RUTA 4: Generar lectura con Claude; envía email por SendGrid solo si se provee email ──
+    // ── RUTA 5: Enviar lectura por email via SendGrid ──
     if (path === '/enviar-lectura' && request.method === 'POST') {
       try {
         const body = await request.json();
@@ -227,6 +267,206 @@ export default {
 
         return json({ ok: true, texto });
 
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA: Crear sesión de Stripe ──
+    if (path === '/crear-sesion-stripe' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { producto, nombre, email, fecha, hora, ciudad, pais } = body;
+
+        const PRECIOS = {
+          'carta-completa': 'price_1TfiSU4BokZtOqeqkyozis2N',
+          'proposito-vida': 'price_1TfiTK4BokZtOqeqJcJik2Xk',
+          'transitos': 'price_1TfiUL4BokZtOqeqiFKkCLgb',
+          'pregunta': 'price_1TfiUr4BokZtOqeqXdfWXxa7',
+          'revolucion-solar': 'price_1TfiVK4BokZtOqeqA3Dv1qkB',
+          'sinastria': 'price_1TfiW34BokZtOqeqbGzYrcY6',
+          'lectura-profunda': 'price_1TfiWa4BokZtOqeqo9LBwU9e',
+          'revolucion-lunar': 'price_1TfiYO4BokZtOqeqH7dufScH',
+        };
+
+        const priceId = PRECIOS[producto];
+        if (!priceId) return json({ error: 'Producto no válido' }, 400);
+
+        const successUrl = 'https://cartasahora.espaciolibra.com/?lectura=ok' +
+          '&session_id={CHECKOUT_SESSION_ID}' +
+          '&producto=' + encodeURIComponent(producto) +
+          '&nombre=' + encodeURIComponent(nombre) +
+          '&fecha=' + encodeURIComponent(fecha || '') +
+          '&hora=' + encodeURIComponent(hora || '') +
+          '&ciudad=' + encodeURIComponent(ciudad || '') +
+          '&pais=' + encodeURIComponent(pais || '');
+
+        const cancelUrl = 'https://cartasahora.espaciolibra.com/?pago=cancelado';
+
+        let stripeBody = 'payment_method_types[]=card' +
+          '&line_items[0][price]=' + priceId +
+          '&line_items[0][quantity]=1' +
+          '&mode=payment' +
+          '&success_url=' + encodeURIComponent(successUrl) +
+          '&cancel_url=' + encodeURIComponent(cancelUrl) +
+          '&metadata[producto]=' + encodeURIComponent(producto) +
+          '&metadata[nombre]=' + encodeURIComponent(nombre) +
+          '&metadata[email]=' + encodeURIComponent(email || '') +
+          '&metadata[fecha]=' + encodeURIComponent(fecha || '') +
+          '&metadata[hora]=' + encodeURIComponent(hora || '') +
+          '&metadata[ciudad]=' + encodeURIComponent(ciudad || '') +
+          '&metadata[pais]=' + encodeURIComponent(pais || '');
+
+        if (email) stripeBody += '&customer_email=' + encodeURIComponent(email);
+
+        const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: stripeBody,
+        });
+
+        const data = await res.json();
+        if (!res.ok) return json({ error: data.error?.message || 'Error Stripe' }, 500);
+        return json({ url: data.url });
+
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA: Verificar pago ──
+    if (path === '/verificar-pago' && request.method === 'GET') {
+      const sessionId = url.searchParams.get('session_id');
+      if (!sessionId) return json({ confirmado: false, error: 'Falta session_id' }, 400);
+      const data = await env.PAGOS_KV.get(`pago:${sessionId}`, 'json');
+      if (data?.confirmado) {
+        return json({ confirmado: true });
+      }
+      return json({ confirmado: false });
+    }
+
+    // ── RUTA: Webhook de Stripe ──
+    if (path === '/webhook' && request.method === 'POST') {
+      try {
+        const rawBody = await request.text();
+        const signature = request.headers.get('stripe-signature');
+
+        if (!signature) {
+          return new Response('Sin firma', { status: 400 });
+        }
+
+        const secret = env.STRIPE_WEBHOOK_SECRET;
+
+        let timestamp = '';
+        let v1Sig = '';
+        for (const part of signature.split(',')) {
+          if (part.startsWith('t=')) timestamp = part.slice(2);
+          if (part.startsWith('v1=')) v1Sig = part.slice(3);
+        }
+
+        if (!timestamp || !v1Sig) {
+          return new Response('Firma inválida', { status: 400 });
+        }
+
+        const ts = parseInt(timestamp);
+        const now = Math.floor(Date.now() / 1000);
+        if (Math.abs(now - ts) > 300) {
+          return new Response('Timestamp expirado', { status: 400 });
+        }
+
+        const payload = `${timestamp}.${rawBody}`;
+        const encoder = new TextEncoder();
+        const key = await crypto.subtle.importKey(
+          'raw',
+          encoder.encode(secret),
+          { name: 'HMAC', hash: 'SHA-256' },
+          false,
+          ['sign']
+        );
+        const signatureBuffer = await crypto.subtle.sign(
+          'HMAC',
+          key,
+          encoder.encode(payload)
+        );
+        const expectedSig = Array.from(new Uint8Array(signatureBuffer))
+          .map(b => b.toString(16).padStart(2, '0'))
+          .join('');
+
+        if (expectedSig !== v1Sig) {
+          return new Response('Firma no coincide', { status: 400 });
+        }
+
+        let event;
+        try {
+          event = JSON.parse(rawBody);
+        } catch(parseErr) {
+          return new Response('JSON inválido', { status: 400 });
+        }
+
+        if (event.type === 'checkout.session.completed') {
+          const session = event.data.object;
+          const sessionId = session.id;
+          const metadata = session.metadata || {};
+
+          await env.PAGOS_KV.put(
+            `pago:${sessionId}`,
+            JSON.stringify({
+              confirmado: true,
+              producto: metadata.producto,
+              nombre: metadata.nombre,
+              email: metadata.email || session.customer_email || '',
+              fecha: metadata.fecha,
+              hora: metadata.hora,
+              ciudad: metadata.ciudad,
+              pais: metadata.pais,
+              timestamp: Date.now(),
+            }),
+            { expirationTtl: 86400 }
+          );
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+      } catch (e) {
+        return new Response('Error: ' + e.message, { status: 500 });
+      }
+    }
+
+    // ── RUTA: Guardar lead ──
+    if (path === '/guardar-lead' && request.method === 'POST') {
+      try {
+        const { email, nombre, acepta_marketing } = await request.json();
+        if (!email || !email.includes('@')) return json({ error: 'Email inválido' }, 400);
+        await env.LEADS_KV.put(
+          `lead:${email.toLowerCase().trim()}`,
+          JSON.stringify({ email, nombre: nombre || '', acepta_marketing: !!acepta_marketing, timestamp: Date.now() }),
+          { expirationTtl: 60 * 60 * 24 * 365 * 2 } // 2 años
+        );
+        return json({ ok: true });
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA: Listar leads (protegida) ──
+    if (path === '/listar-leads' && request.method === 'GET') {
+      const authHeader = request.headers.get('Authorization') || '';
+      if (authHeader !== `Bearer ${env.ADMIN_SECRET}`) return json({ error: 'No autorizado' }, 401);
+      try {
+        const list = await env.LEADS_KV.list({ prefix: 'lead:' });
+        const leads = await Promise.all(
+          list.keys.map(async k => {
+            const val = await env.LEADS_KV.get(k.name);
+            try { return JSON.parse(val); } catch { return null; }
+          })
+        );
+        return json({ leads: leads.filter(Boolean) });
       } catch (e) {
         return json({ error: e.message }, 500);
       }

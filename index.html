@@ -239,6 +239,25 @@
           <p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;">Cargando tu lectura...</p>
         </div>
       </div>
+      <div class="lectura-acciones">
+        <div class="lectura-acciones-btns">
+          <button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('esencial')">✉ Recibir por mail</button>
+        </div>
+        <div id="email-envio-esencial" class="hidden email-envio-form">
+          <input type="email" id="email-enviar-esencial" placeholder="tu@email.com" />
+          <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
+            <input type="checkbox" id="terms-esencial" style="margin-top:2px;flex-shrink:0;" />
+            <span style="flex:1;">Acepto los <a href="https://espaciolibra.com/terminos" target="_blank" style="color:#82B366;">términos y condiciones</a></span>
+          </label>
+          <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
+            <input type="checkbox" id="marketing-esencial" style="margin-top:2px;flex-shrink:0;" />
+            <span style="flex:1;">Quiero recibir novedades y promociones de Espacio Libra</span>
+          </label>
+          <button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('esencial')">✦ Enviar a mi email</button>
+          <p id="success-email-esencial" class="success-msg hidden"></p>
+          <p id="error-email-esencial" class="error-msg hidden"></p>
+        </div>
+      </div>
     </div>
 
     <div id="section-lecturas-desbloqueadas"></div>
@@ -510,7 +529,8 @@ const PRODUCT_NOMBRES = {
   'sinastria':'Sinastría',
   'transitos':'Tránsitos Actuales',
   'pregunta':'Pregunta Puntual',
-  'lectura-profunda':'Lectura Profunda'
+  'lectura-profunda':'Lectura Profunda',
+  'esencial':'Lectura Esencial Gratuita'
 };
 
 // Planetas relevantes por pregunta para filtrar tránsitos
@@ -1533,6 +1553,7 @@ async function calcularCarta() {
       if(esencialCached){interpBasica=esencialCached;}
       else{interpBasica=await llamarClaude(prompt);try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
       renderInterp(interpBasica,'interpretacion-basica');
+      _lecturaContexto['esencial']={nombre,productoNombre:'Lectura Esencial Gratuita',texto:interpBasica,codigoPromo:'',fecha,hora,ciudad,pais};
     }
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);

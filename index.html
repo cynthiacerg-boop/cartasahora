@@ -1432,6 +1432,10 @@ async function pagarConMP(producto, precio) {
 // ── GENERAR Y ENVIAR LECTURA ──
 async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   const errorId=`error-${producto}`,successId=`success-${producto}`;
+  const _btnPP=document.getElementById(`btn-paypal-${producto}`);
+  const _btnMP=document.getElementById(`btn-mp-${producto}`);
+  if(_btnPP){_btnPP.disabled=true;_btnPP.style.opacity='0.4';}
+  if(_btnMP){_btnMP.disabled=true;_btnMP.style.opacity='0.4';}
   mostrarMensaje(successId,'⟳ Generando tu lectura...');
   try {
     let chartDataParaPrompt=cartaData;
@@ -1516,10 +1520,14 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
     renderInterp(textoGenerado,`texto-lectura-${producto}`);
     card.scrollIntoView({behavior:'smooth',block:'start'});
     mostrarMensaje(successId,'✦ ¡Tu lectura está lista!');
+    if(_btnPP) _btnPP.style.display='none';
+    if(_btnMP) _btnMP.style.display='none';
 
   }catch(e){
     console.error('Error lectura:',e);
     mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');
+    if(_btnPP){_btnPP.disabled=false;_btnPP.style.opacity='';}
+    if(_btnMP){_btnMP.disabled=false;_btnMP.style.opacity='';}
   }
 }
 

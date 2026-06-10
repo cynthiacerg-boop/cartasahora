@@ -1293,6 +1293,7 @@ function aplicarPromo(producto) {
     const btnMP=_form?.querySelector('.btn-mp');
     if(btnPaypal){btnPaypal.textContent=btnPaypal.textContent.replace(/· USD \d+/,'· GRATIS');btnPaypal.style.background='linear-gradient(135deg, #82B366, #6a9652)';}
     if(btnMP){btnMP.textContent='💳 Usar código — GRATIS';btnMP.style.background='linear-gradient(135deg, #82B366, #6a9652)';}
+    procesarCompra(producto, 0);
   } else {
     if(errorEl){errorEl.textContent='Código no válido.';errorEl.classList.remove('hidden');}
     if(successEl)successEl.classList.add('hidden');

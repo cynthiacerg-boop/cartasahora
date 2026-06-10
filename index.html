@@ -1648,7 +1648,7 @@ function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
 function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;preguntaSeleccionada=null;const prov=document.getElementById('provincia');if(prov)prov.value='';window.history.replaceState({},'',window.location.pathname);}
 
-window.addEventListener('load',()=>{
+window.addEventListener('load',async ()=>{
   const params=new URLSearchParams(window.location.search);
   if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
   if(params.get('upgrade')==='lectura-profunda'){

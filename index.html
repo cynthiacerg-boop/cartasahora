@@ -91,6 +91,10 @@
     .btn-paypal { width: 100%; padding: 16px; background: linear-gradient(135deg, #8A4DAB, #6a3a85); border: none; border-radius: 10px; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(138,77,171,0.35); margin-top: 4px; }
     .btn-paypal:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-paypal:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn-mp { width: 100%; padding: 16px; background: linear-gradient(135deg, #009ee3, #0077b6); border: none; border-radius: 10px; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(0,158,227,0.35); margin-top: 8px; }
+    .btn-mp:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-mp:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .pago-btns { display: flex; flex-direction: column; gap: 0; }
     .paypal-note { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
     .preguntas-section { margin-top: 8px; }
     .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
@@ -283,8 +287,12 @@
         </div>
         <p class="error-msg hidden" id="error-pregunta"></p>
         <p class="success-msg hidden" id="success-pregunta"></p>
-        <button class="btn-paypal" onclick="procesarCompra('pregunta', 4)" style="margin-top:10px;">✦ Obtener respuesta · USD 4</button>
-        <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
+        <input type="email" id="email-pago-pregunta" placeholder="Tu email (para recibir la lectura)" style="margin-top:10px;" />
+        <div class="pago-btns" style="margin-top:10px;">
+          <button id="btn-paypal-pregunta" class="btn-paypal" onclick="pagarConPaypal('pregunta', 4)">🅿 Pagar con PayPal · USD 4</button>
+          <button id="btn-mp-pregunta" class="btn-mp" onclick="pagarConMP('pregunta', 4)">💳 Pagar con MercadoPago</button>
+        </div>
+        <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
       </div>
     </div>
 
@@ -317,8 +325,12 @@
           </div>
           <p class="error-msg hidden" id="error-carta-completa"></p>
           <p class="success-msg hidden" id="success-carta-completa"></p>
-          <button class="btn-paypal" onclick="procesarCompra('carta-completa', 6)">✦ Obtener mi lectura · USD 6</button>
-          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <input type="email" id="email-pago-carta-completa" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <div class="pago-btns">
+            <button id="btn-paypal-carta-completa" class="btn-paypal" onclick="pagarConPaypal('carta-completa', 6)">🅿 Pagar con PayPal · USD 6</button>
+            <button id="btn-mp-carta-completa" class="btn-mp" onclick="pagarConMP('carta-completa', 6)">💳 Pagar con MercadoPago</button>
+          </div>
+          <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -341,8 +353,12 @@
           </div>
           <p class="error-msg hidden" id="error-lectura-profunda"></p>
           <p class="success-msg hidden" id="success-lectura-profunda"></p>
-          <button class="btn-paypal" onclick="procesarCompra('lectura-profunda', 13)">✦ Obtener mi lectura · USD 13</button>
-          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <input type="email" id="email-pago-lectura-profunda" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <div class="pago-btns">
+            <button id="btn-paypal-lectura-profunda" class="btn-paypal" onclick="pagarConPaypal('lectura-profunda', 13)">🅿 Pagar con PayPal · USD 13</button>
+            <button id="btn-mp-lectura-profunda" class="btn-mp" onclick="pagarConMP('lectura-profunda', 13)">💳 Pagar con MercadoPago</button>
+          </div>
+          <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -378,8 +394,12 @@
           </div>
           <p class="error-msg hidden" id="error-revolucion-solar"></p>
           <p class="success-msg hidden" id="success-revolucion-solar"></p>
-          <button class="btn-paypal" onclick="procesarCompra('revolucion-solar', 9)">✦ Obtener mi lectura · USD 9</button>
-          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <input type="email" id="email-pago-revolucion-solar" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <div class="pago-btns">
+            <button id="btn-paypal-revolucion-solar" class="btn-paypal" onclick="pagarConPaypal('revolucion-solar', 9)">🅿 Pagar con PayPal · USD 9</button>
+            <button id="btn-mp-revolucion-solar" class="btn-mp" onclick="pagarConMP('revolucion-solar', 9)">💳 Pagar con MercadoPago</button>
+          </div>
+          <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -421,8 +441,12 @@
           </div>
           <p class="error-msg hidden" id="error-sinastria"></p>
           <p class="success-msg hidden" id="success-sinastria"></p>
-          <button class="btn-paypal" onclick="procesarCompra('sinastria', 9)">✦ Obtener mi lectura · USD 9</button>
-          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <input type="email" id="email-pago-sinastria" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <div class="pago-btns">
+            <button id="btn-paypal-sinastria" class="btn-paypal" onclick="pagarConPaypal('sinastria', 9)">🅿 Pagar con PayPal · USD 9</button>
+            <button id="btn-mp-sinastria" class="btn-mp" onclick="pagarConMP('sinastria', 9)">💳 Pagar con MercadoPago</button>
+          </div>
+          <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -444,8 +468,12 @@
           </div>
           <p class="error-msg hidden" id="error-transitos"></p>
           <p class="success-msg hidden" id="success-transitos"></p>
-          <button class="btn-paypal" onclick="procesarCompra('transitos', 5)">✦ Obtener mi lectura · USD 5</button>
-          <p class="paypal-note">Pago seguro vía Stripe · Tarjeta aceptada · Entrega en menos de 5 min</p>
+          <input type="email" id="email-pago-transitos" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <div class="pago-btns">
+            <button id="btn-paypal-transitos" class="btn-paypal" onclick="pagarConPaypal('transitos', 5)">🅿 Pagar con PayPal · USD 5</button>
+            <button id="btn-mp-transitos" class="btn-mp" onclick="pagarConMP('transitos', 5)">💳 Pagar con MercadoPago</button>
+          </div>
+          <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
 
@@ -506,16 +534,7 @@ function setHora(val) {
   if (mmSel) mmSel.value = (mm||'').padStart(2,'0');
   syncHora();
 }
-const STRIPE_LINKS = {
-  'carta-completa':   'https://buy.stripe.com/test_28E4gsdkCalp23bb9Q8Vi00',
-  'lectura-profunda': 'https://buy.stripe.com/test_bJedR294mfFJePX1zg8Vi06',
-  'revolucion-solar': 'https://buy.stripe.com/test_dRm3codkC79d23b6TA8Vi04',
-  'sinastria':        'https://buy.stripe.com/test_6oU3co0xQbpt7nvfq68Vi05',
-  'transitos':        'https://buy.stripe.com/test_4gMbIUcgyeBFbDL0vc8Vi02',
-  'pregunta':         'https://buy.stripe.com/test_eVq14g94m0KP7nvdhY8Vi03',
-  'proposito':        'https://buy.stripe.com/test_eVq3co94m5150Z7gua8Vi01',
-  'revolucion-lunar': 'https://buy.stripe.com/test_6oUbIUgwO8dh7nvcdU8Vi07'
-};
+// (Stripe eliminado — se usa PayPal y MercadoPago)
 const CODIGO_PRUEBA = 'ESPACIO2025';
 const promoAplicada = {};
 const _lecturaContexto = {};
@@ -1316,44 +1335,91 @@ async function procesarCompra(producto, precio) {
     await generarYEnviarLectura(producto, nombre, extras, true);
     return;
   }
+  // Si no es prueba, la compra se inicia desde pagarConPaypal / pagarConMP
+}
 
-  mostrarMensaje(errorId,'');
-  const btnEl=document.querySelector(`#form-${producto} .btn-paypal`)||document.querySelector('.preguntas-section .btn-paypal');
-  if(btnEl){btnEl.disabled=true;btnEl.textContent='⟳ Preparando pago...';}
+// ── Datos comunes de pago (usados por ambas pasarelas) ──
+function _buildPayload(producto) {
+  return {
+    producto,
+    nombre: document.getElementById('nombre')?.value?.trim() || '',
+    email:  document.getElementById(`email-pago-${producto}`)?.value?.trim() || '',
+    fecha:  document.getElementById('fecha')?.value || '',
+    hora:   document.getElementById('hora')?.value || '',
+    ciudad: document.getElementById('ciudad')?.value?.trim() || '',
+    pais:   document.getElementById('pais')?.value?.trim() || 'Argentina',
+  };
+}
+
+// ── Pagar con PayPal ──
+async function pagarConPaypal(producto, precio) {
+  const errorId = `error-${producto}`;
+  mostrarMensaje(errorId, '');
+  const btn = document.getElementById(`btn-paypal-${producto}`);
+  const btnMP = document.getElementById(`btn-mp-${producto}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Conectando con PayPal...'; }
+  if (btnMP) btnMP.disabled = true;
+
+  const payload = _buildPayload(producto);
+  localStorage.setItem('pendiente', JSON.stringify({
+    producto, nombre: payload.nombre, extras: {}, precio,
+    fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
+  }));
 
   try {
-    localStorage.setItem('pendiente', JSON.stringify({
-      producto, nombre, extras, precio,
-      fecha:document.getElementById('fecha').value,
-      hora:document.getElementById('hora').value,
-      ciudad:document.getElementById('ciudad').value.trim(),
-      pais:document.getElementById('pais').value.trim()||'Argentina'
-    }));
-
-    const res = await fetch(`${WORKER_URL}/crear-sesion-stripe`, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        producto, nombre,
-        email:document.getElementById(`email-enviar-${producto}`)?.value?.trim()||'',
-        fecha:document.getElementById('fecha').value,
-        hora:document.getElementById('hora').value,
-        ciudad:document.getElementById('ciudad').value.trim(),
-        pais:document.getElementById('pais').value.trim()||'Argentina'
-      })
+    const res = await fetch(`${WORKER_URL}/crear-pago-paypal`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
     });
-
-    const data=await res.json();
-    if(!data.url){
-      mostrarMensaje(errorId,data.error||'Error al iniciar el pago. Intentá de nuevo.');
-      if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.textContent.replace('⟳ Preparando pago...','✦ Obtener mi lectura');}
+    const data = await res.json();
+    if (!data.url) {
+      mostrarMensaje(errorId, data.error || 'Error al iniciar el pago con PayPal.');
+      if (btn) { btn.disabled = false; btn.textContent = '🅿 Pagar con PayPal · USD ' + precio; }
+      if (btnMP) btnMP.disabled = false;
       return;
     }
-    window.location.href=data.url;
+    window.location.href = data.url;
+  } catch(e) {
+    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
+    if (btn) { btn.disabled = false; btn.textContent = '🅿 Pagar con PayPal · USD ' + precio; }
+    if (btnMP) btnMP.disabled = false;
+  }
+}
 
-  }catch(e){
-    mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');
-    if(btnEl){btnEl.disabled=false;btnEl.textContent=btnEl.textContent.replace('⟳ Preparando pago...','✦ Obtener mi lectura');}
+// ── Pagar con MercadoPago ──
+async function pagarConMP(producto, precio) {
+  const errorId = `error-${producto}`;
+  mostrarMensaje(errorId, '');
+  const btn = document.getElementById(`btn-mp-${producto}`);
+  const btnPP = document.getElementById(`btn-paypal-${producto}`);
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Conectando con MercadoPago...'; }
+  if (btnPP) btnPP.disabled = true;
+
+  const payload = _buildPayload(producto);
+  localStorage.setItem('pendiente', JSON.stringify({
+    producto, nombre: payload.nombre, extras: {}, precio,
+    fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
+  }));
+
+  try {
+    const res = await fetch(`${WORKER_URL}/crear-pago-mp`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!data.url) {
+      mostrarMensaje(errorId, data.error || 'Error al iniciar el pago con MercadoPago.');
+      if (btn) { btn.disabled = false; btn.textContent = '💳 Pagar con MercadoPago'; }
+      if (btnPP) btnPP.disabled = false;
+      return;
+    }
+    window.location.href = data.url;
+  } catch(e) {
+    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
+    if (btn) { btn.disabled = false; btn.textContent = '💳 Pagar con MercadoPago'; }
+    if (btnPP) btnPP.disabled = false;
   }
 }
 
@@ -1583,7 +1649,8 @@ window.addEventListener('load',()=>{
     else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
   }
   if(params.get('lectura')==='ok'){
-    const sessionId = params.get('session_id');
+    // Soporta PayPal (order_id), MercadoPago (payment_id) y legacy Stripe (session_id)
+    const sessionId = params.get('order_id') || params.get('payment_id') || params.get('session_id');
     const pendienteData = JSON.parse(localStorage.getItem('pendiente')||'null');
     if(pendienteData && pendienteData.fecha && pendienteData.ciudad){
       document.getElementById('nombre').value = pendienteData.nombre||'';

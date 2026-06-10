@@ -535,8 +535,9 @@ function setHora(val) {
   syncHora();
 }
 // (Stripe eliminado — se usa PayPal y MercadoPago)
-const CODIGO_PRUEBA = 'ESPACIO2025';
+// El código promo ya no vive acá: se valida del lado del servidor (/validar-promo)
 const promoAplicada = {};
+const promoToken = {};
 const _lecturaContexto = {};
 
 // ID de la pregunta actualmente seleccionada (chip)
@@ -1280,12 +1281,21 @@ function seleccionarPregunta(id, el) {
 }
 
 // ── PROMO CODE ──
-function aplicarPromo(producto) {
+async function aplicarPromo(producto) {
   const codigoEl=document.getElementById(`promo-${producto}`),errorEl=document.getElementById(`error-${producto}`),successEl=document.getElementById(`success-${producto}`);
   if(!codigoEl)return;
-  const codigoIngresado=codigoEl.value.trim().toUpperCase(),codigoValido=CODIGO_PRUEBA.toUpperCase();
-  if(codigoIngresado===codigoValido){
+  const codigoIngresado=codigoEl.value.trim();
+  if(!codigoIngresado){if(errorEl){errorEl.textContent='Ingresá un código.';errorEl.classList.remove('hidden');}return;}
+  if(successEl){successEl.textContent='⟳ Validando código...';successEl.classList.remove('hidden');}
+  if(errorEl)errorEl.classList.add('hidden');
+  let data={};
+  try{
+    const res=await fetch(`${WORKER_URL}/validar-promo`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codigo:codigoIngresado})});
+    data=await res.json();
+  }catch(e){if(errorEl){errorEl.textContent='Error de conexión. Intentá de nuevo.';errorEl.classList.remove('hidden');}if(successEl)successEl.classList.add('hidden');return;}
+  if(data.valido && data.token){
     promoAplicada[producto]=true;
+    promoToken[producto]=data.token;
     if(successEl){successEl.textContent='✦ Código válido — lectura gratuita desbloqueada';successEl.classList.remove('hidden');}
     if(errorEl)errorEl.classList.add('hidden');
     const _form=codigoEl.closest('.compra-form')||codigoEl.closest('.preguntas-section');
@@ -1295,7 +1305,8 @@ function aplicarPromo(producto) {
     if(btnMP){btnMP.textContent='💳 Usar código — GRATIS';btnMP.style.background='linear-gradient(135deg, #82B366, #6a9652)';}
     procesarCompra(producto, 0);
   } else {
-    if(errorEl){errorEl.textContent='Código no válido.';errorEl.classList.remove('hidden');}
+    const msg = data.error==='limite_mensual' ? 'El código alcanzó su límite de uso este mes.' : 'Código no válido.';
+    if(errorEl){errorEl.textContent=msg;errorEl.classList.remove('hidden');}
     if(successEl)successEl.classList.add('hidden');
     promoAplicada[producto]=false;
   }
@@ -1505,7 +1516,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
 
     _lecturaContexto[producto]={
       nombre,productoNombre,prompt,texto:textoGenerado,
-      codigoPromo:esPrueba?CODIGO_PRUEBA:'',
+      promoToken:esPrueba?(promoToken[producto]||''):'',
       fecha:_fecha,hora:_hora,ciudad:_ciudad,pais:_pais
     };
 
@@ -1552,8 +1563,8 @@ async function enviarPorMail(producto) {
         nombre:ctx.nombre,
         producto,
         texto:ctx.texto,
-        codigoPromo:ctx.codigoPromo,
-        pagado:true,
+        promoToken:ctx.promoToken,
+        pagado:ctx.promoToken?false:true,
         fecha:ctx.fecha,
         hora:ctx.hora,
         ciudad:ctx.ciudad,

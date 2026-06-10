@@ -152,14 +152,27 @@ export default {
     if (path === '/enviar-lectura' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { email, nombre, producto, lectura, codigoPromo, fecha, hora, ciudad, pais } = body;
+        const { email, nombre, producto, lectura, promoToken, fecha, hora, ciudad, pais } = body;
 
-        const CODIGO_PRUEBA = 'ESPACIO2025';
-        const esPrueba = codigoPromo === CODIGO_PRUEBA;
-
+        // Validar autorización: token de promo (un solo uso) o pago confirmado
+        let esPrueba = false;
+        if (promoToken) {
+          const tok = await env.PAGOS_KV.get(`promo-token:${promoToken}`);
+          if (tok) esPrueba = true; // válido 1h; el límite mensual se aplica al validar
+        }
         if (!esPrueba && !body.pagado) {
           return json({ error: 'Pago no confirmado' }, 403);
         }
+
+        // Tope diario de envíos por IP (anti-spam SendGrid)
+        const ipEnvio = request.headers.get('CF-Connecting-IP') || 'unknown';
+        const diaEnvio = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const envioKey = `envio:${ipEnvio}:${diaEnvio}`;
+        const enviosHoy = parseInt(await env.RATE_LIMIT.get(envioKey) || '0');
+        if (enviosHoy >= 10) {
+          return json({ error: 'Límite diario de envíos alcanzado. Probá mañana.' }, 429);
+        }
+        await env.RATE_LIMIT.put(envioKey, String(enviosHoy + 1), { expirationTtl: 60 * 60 * 24 });
 
         // Si el frontend ya generó el texto, usarlo directamente
         let texto = body.texto || '';
@@ -562,6 +575,32 @@ export default {
         });
       } catch (e) {
         return new Response('Error: ' + e.message, { status: 500 });
+      }
+    }
+
+    // ── RUTA: Validar código promo (server-side, con límite mensual) ──
+    if (path === '/validar-promo' && request.method === 'POST') {
+      try {
+        const { codigo } = await request.json();
+        const ingresado = (codigo || '').trim().toUpperCase();
+        const valido = (env.PROMO_CODE || '').trim().toUpperCase();
+        if (!valido || ingresado !== valido) {
+          return json({ valido: false });
+        }
+        // Límite mensual de usos
+        const mes = new Date().toISOString().slice(0, 7); // YYYY-MM
+        const contKey = `promo-uso:${mes}`;
+        const usos = parseInt(await env.PAGOS_KV.get(contKey) || '0');
+        if (usos >= 50) {
+          return json({ valido: false, error: 'limite_mensual' });
+        }
+        await env.PAGOS_KV.put(contKey, String(usos + 1), { expirationTtl: 60 * 60 * 24 * 40 });
+        // Emitir token de un solo uso (válido 1 hora) que autoriza el envío
+        const token = crypto.randomUUID();
+        await env.PAGOS_KV.put(`promo-token:${token}`, '1', { expirationTtl: 3600 });
+        return json({ valido: true, token });
+      } catch (e) {
+        return json({ valido: false, error: e.message }, 500);
       }
     }
 

@@ -282,7 +282,7 @@ export default {
           'carta-completa':   { monto: '6.00',  titulo: 'Carta Natal Completa' },
           'proposito-vida':   { monto: '6.00',  titulo: 'Propósito de Vida' },
           'transitos':        { monto: '5.00',  titulo: 'Tránsitos Actuales' },
-          'pregunta':         { monto: '2.00',  titulo: 'Pregunta Puntual' },
+          'pregunta':         { monto: '4.00',  titulo: 'Pregunta Puntual' },
           'revolucion-solar': { monto: '9.00',  titulo: 'Revolución Solar' },
           'sinastria':        { monto: '9.00',  titulo: 'Sinastría' },
           'lectura-profunda': { monto: '13.00', titulo: 'Lectura Profunda' },
@@ -293,7 +293,7 @@ export default {
         if (!prod) return json({ error: 'Producto no válido' }, 400);
 
         // Obtener access token de PayPal
-        const tokenRes = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+        const tokenRes = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
           method: 'POST',
           headers: {
             'Authorization': 'Basic ' + btoa(`${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`),
@@ -318,7 +318,7 @@ export default {
         const cancelUrl = 'https://cartasahora.espaciolibra.com/?pago=cancelado';
 
         // Crear orden
-        const orderRes = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+        const orderRes = await fetch('https://api-m.paypal.com/v2/checkout/orders', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -354,7 +354,70 @@ export default {
       }
     }
 
-    // ── RUTA 2/4: Webhook PayPal ──
+    // ── RUTA 2/4: Capturar pago PayPal ──
+    if (path === '/capturar-pago-paypal' && request.method === 'POST') {
+      try {
+        const { orderId } = await request.json();
+        if (!orderId) return json({ ok: false, error: 'Falta orderId' }, 400);
+
+        // Obtener access token
+        const tokenRes = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + btoa(`${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`),
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'grant_type=client_credentials',
+        });
+        const tokenData = await tokenRes.json();
+        if (!tokenRes.ok) return json({ ok: false, error: 'Error auth PayPal' }, 500);
+        const accessToken = tokenData.access_token;
+
+        // Capturar la orden
+        const captureRes = await fetch(`https://api-m.paypal.com/v2/checkout/orders/${orderId}/capture`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'PayPal-Request-Id': `capture-${orderId}`,
+          },
+        });
+        const captureData = await captureRes.json();
+        if (!captureRes.ok) return json({ ok: false, error: captureData.message || 'Error al capturar', detalle: captureData }, 500);
+
+        const status = captureData.status;
+        if (status !== 'COMPLETED') return json({ ok: false, error: `Estado inesperado: ${status}` }, 400);
+
+        // Extraer metadata del custom_id
+        const unit = captureData.purchase_units?.[0];
+        let meta = {};
+        try { meta = JSON.parse(unit?.custom_id || '{}'); } catch {}
+
+        // Guardar en KV
+        await env.PAGOS_KV.put(
+          `pago:${orderId}`,
+          JSON.stringify({
+            confirmado:  true,
+            producto:    meta.producto  || '',
+            nombre:      meta.nombre    || '',
+            email:       meta.email     || '',
+            fecha:       meta.fecha     || '',
+            hora:        meta.hora      || '',
+            ciudad:      meta.ciudad    || '',
+            pais:        meta.pais      || '',
+            pasarela:    'paypal',
+            timestamp:   Date.now(),
+          }),
+          { expirationTtl: 86400 }
+        );
+
+        return json({ ok: true });
+      } catch (e) {
+        return json({ ok: false, error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA 3/4: Webhook PayPal (respaldo) ──
     if (path === '/webhook-paypal' && request.method === 'POST') {
       try {
         const event = await request.json();

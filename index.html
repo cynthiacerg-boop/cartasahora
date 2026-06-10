@@ -1674,6 +1674,17 @@ window.addEventListener('load',()=>{
       document.getElementById('pais').value = pendienteData.pais||'Argentina';
 
       if(sessionId){
+        // Si viene de PayPal, capturar el pago primero
+        if(params.get('pasarela')==='paypal' && params.get('order_id')){
+          try{
+            await fetch(`${WORKER_URL}/capturar-pago-paypal`, {
+              method: 'POST',
+              headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({ orderId: params.get('order_id') }),
+            });
+          } catch(e){ console.warn('Error capturando PayPal:', e); }
+        }
+
         const verificar = async () => {
           let intentos = 0;
           while(intentos < 10){

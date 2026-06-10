@@ -272,28 +272,149 @@ export default {
       }
     }
 
-    // ── RUTA: Crear sesión de Stripe ──
-    if (path === '/crear-sesion-stripe' && request.method === 'POST') {
+    // ── RUTA 1/4: Crear orden PayPal ──
+    if (path === '/crear-pago-paypal' && request.method === 'POST') {
       try {
         const body = await request.json();
         const { producto, nombre, email, fecha, hora, ciudad, pais } = body;
 
-        const PRECIOS = {
-          'carta-completa': 'price_1TfiSU4BokZtOqeqkyozis2N',
-          'proposito-vida': 'price_1TfiTK4BokZtOqeqJcJik2Xk',
-          'transitos': 'price_1TfiUL4BokZtOqeqiFKkCLgb',
-          'pregunta': 'price_1TfiUr4BokZtOqeqXdfWXxa7',
-          'revolucion-solar': 'price_1TfiVK4BokZtOqeqA3Dv1qkB',
-          'sinastria': 'price_1TfiW34BokZtOqeqbGzYrcY6',
-          'lectura-profunda': 'price_1TfiWa4BokZtOqeqo9LBwU9e',
-          'revolucion-lunar': 'price_1TfiYO4BokZtOqeqH7dufScH',
+        const PRECIOS_USD = {
+          'carta-completa':   { monto: '6.00',  titulo: 'Carta Natal Completa' },
+          'proposito-vida':   { monto: '6.00',  titulo: 'Propósito de Vida' },
+          'transitos':        { monto: '5.00',  titulo: 'Tránsitos Actuales' },
+          'pregunta':         { monto: '2.00',  titulo: 'Pregunta Puntual' },
+          'revolucion-solar': { monto: '9.00',  titulo: 'Revolución Solar' },
+          'sinastria':        { monto: '9.00',  titulo: 'Sinastría' },
+          'lectura-profunda': { monto: '13.00', titulo: 'Lectura Profunda' },
+          'revolucion-lunar': { monto: '9.00',  titulo: 'Revolución Lunar' },
         };
 
-        const priceId = PRECIOS[producto];
-        if (!priceId) return json({ error: 'Producto no válido' }, 400);
+        const prod = PRECIOS_USD[producto];
+        if (!prod) return json({ error: 'Producto no válido' }, 400);
 
-        const successUrl = 'https://cartasahora.espaciolibra.com/?lectura=ok' +
-          '&session_id={CHECKOUT_SESSION_ID}' +
+        // Obtener access token de PayPal
+        const tokenRes = await fetch('https://api-m.sandbox.paypal.com/v1/oauth2/token', {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Basic ' + btoa(`${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`),
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'grant_type=client_credentials',
+        });
+        const tokenData = await tokenRes.json();
+        if (!tokenRes.ok) return json({ error: 'Error auth PayPal', detalle: tokenData, status: tokenRes.status }, 500);
+        const accessToken = tokenData.access_token;
+
+        // Armar custom_id con todos los datos para recuperarlos en el webhook
+        const customId = JSON.stringify({ producto, nombre, email: email || '', fecha: fecha || '', hora: hora || '', ciudad: ciudad || '', pais: pais || '' });
+
+        const successUrl = 'https://cartasahora.espaciolibra.com/?lectura=ok&pasarela=paypal' +
+          '&producto=' + encodeURIComponent(producto) +
+          '&nombre=' + encodeURIComponent(nombre) +
+          '&fecha=' + encodeURIComponent(fecha || '') +
+          '&hora=' + encodeURIComponent(hora || '') +
+          '&ciudad=' + encodeURIComponent(ciudad || '') +
+          '&pais=' + encodeURIComponent(pais || '');
+        const cancelUrl = 'https://cartasahora.espaciolibra.com/?pago=cancelado';
+
+        // Crear orden
+        const orderRes = await fetch('https://api-m.sandbox.paypal.com/v2/checkout/orders', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+            'PayPal-Request-Id': crypto.randomUUID(),
+          },
+          body: JSON.stringify({
+            intent: 'CAPTURE',
+            purchase_units: [{
+              custom_id: customId,
+              description: prod.titulo,
+              amount: { currency_code: 'USD', value: prod.monto },
+            }],
+            application_context: {
+              brand_name: 'Espacio Libra',
+              landing_page: 'BILLING',
+              user_action: 'PAY_NOW',
+              return_url: successUrl,
+              cancel_url: cancelUrl,
+            },
+          }),
+        });
+        const orderData = await orderRes.json();
+        if (!orderRes.ok) return json({ error: orderData.message || 'Error creando orden PayPal' }, 500);
+
+        const approveLink = orderData.links?.find(l => l.rel === 'approve')?.href;
+        if (!approveLink) return json({ error: 'No se encontró link de aprobación PayPal' }, 500);
+
+        return json({ url: approveLink, orderId: orderData.id });
+
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA 2/4: Webhook PayPal ──
+    if (path === '/webhook-paypal' && request.method === 'POST') {
+      try {
+        const event = await request.json();
+
+        if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
+          const resource = event.resource;
+          const orderId = resource.supplementary_data?.related_ids?.order_id || resource.id;
+          let meta = {};
+          try { meta = JSON.parse(resource.custom_id || '{}'); } catch {}
+
+          await env.PAGOS_KV.put(
+            `pago:${orderId}`,
+            JSON.stringify({
+              confirmado: true,
+              producto:   meta.producto  || '',
+              nombre:     meta.nombre    || '',
+              email:      meta.email     || '',
+              fecha:      meta.fecha     || '',
+              hora:       meta.hora      || '',
+              ciudad:     meta.ciudad    || '',
+              pais:       meta.pais      || '',
+              pasarela:   'paypal',
+              timestamp:  Date.now(),
+            }),
+            { expirationTtl: 86400 }
+          );
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response('Error: ' + e.message, { status: 500 });
+      }
+    }
+
+    // ── RUTA 3/4: Crear preferencia MercadoPago ──
+    if (path === '/crear-pago-mp' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+        const { producto, nombre, email, fecha, hora, ciudad, pais } = body;
+
+        const PRECIOS_MP = {
+          'pregunta':         { monto:  7000, titulo: 'Pregunta Puntual' },
+          'transitos':        { monto:  8500, titulo: 'Tránsitos Actuales' },
+          'carta-completa':   { monto: 10000, titulo: 'Carta Natal Completa' },
+          'proposito-vida':   { monto: 10000, titulo: 'Propósito de Vida' },
+          'revolucion-lunar': { monto: 10000, titulo: 'Revolución Lunar' },
+          'revolucion-solar': { monto: 15000, titulo: 'Revolución Solar' },
+          'sinastria':        { monto: 15000, titulo: 'Sinastría' },
+          'lectura-profunda': { monto: 22000, titulo: 'Lectura Profunda' },
+        };
+
+        const prod = PRECIOS_MP[producto];
+        if (!prod) return json({ error: 'Producto no válido' }, 400);
+
+        const externalReference = JSON.stringify({ producto, nombre, email: email || '', fecha: fecha || '', hora: hora || '', ciudad: ciudad || '', pais: pais || '' });
+
+        const successUrl = 'https://cartasahora.espaciolibra.com/?lectura=ok&pasarela=mp' +
           '&producto=' + encodeURIComponent(producto) +
           '&nombre=' + encodeURIComponent(nombre) +
           '&fecha=' + encodeURIComponent(fecha || '') +
@@ -301,39 +422,83 @@ export default {
           '&ciudad=' + encodeURIComponent(ciudad || '') +
           '&pais=' + encodeURIComponent(pais || '');
 
-        const cancelUrl = 'https://cartasahora.espaciolibra.com/?pago=cancelado';
-
-        let stripeBody = 'payment_method_types[]=card' +
-          '&line_items[0][price]=' + priceId +
-          '&line_items[0][quantity]=1' +
-          '&mode=payment' +
-          '&success_url=' + encodeURIComponent(successUrl) +
-          '&cancel_url=' + encodeURIComponent(cancelUrl) +
-          '&metadata[producto]=' + encodeURIComponent(producto) +
-          '&metadata[nombre]=' + encodeURIComponent(nombre) +
-          '&metadata[email]=' + encodeURIComponent(email || '') +
-          '&metadata[fecha]=' + encodeURIComponent(fecha || '') +
-          '&metadata[hora]=' + encodeURIComponent(hora || '') +
-          '&metadata[ciudad]=' + encodeURIComponent(ciudad || '') +
-          '&metadata[pais]=' + encodeURIComponent(pais || '');
-
-        if (email) stripeBody += '&customer_email=' + encodeURIComponent(email);
-
-        const res = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
-            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Bearer ${env.MP_ACCESS_TOKEN}`,
+            'Content-Type': 'application/json',
           },
-          body: stripeBody,
+          body: JSON.stringify({
+            items: [{
+              title: prod.titulo,
+              quantity: 1,
+              currency_id: 'ARS',
+              unit_price: prod.monto,
+            }],
+            payer: { name: nombre, email: email || undefined },
+            external_reference: externalReference,
+            back_urls: {
+              success: successUrl,
+              failure: 'https://cartasahora.espaciolibra.com/?pago=cancelado',
+              pending: 'https://cartasahora.espaciolibra.com/?pago=pendiente',
+            },
+            auto_return: 'approved',
+            notification_url: 'https://cartasahora-proxy.cynthiacerg.workers.dev/webhook-mp',
+          }),
         });
+        const mpData = await mpRes.json();
+        if (!mpRes.ok) return json({ error: mpData.message || 'Error creando preferencia MP' }, 500);
 
-        const data = await res.json();
-        if (!res.ok) return json({ error: data.error?.message || 'Error Stripe' }, 500);
-        return json({ url: data.url });
+        return json({ url: mpData.init_point, id: mpData.id });
 
       } catch (e) {
         return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA 4/4: Webhook MercadoPago ──
+    if (path === '/webhook-mp' && request.method === 'POST') {
+      try {
+        const body = await request.json();
+
+        // MercadoPago envía type=payment con data.id del pago
+        if (body.type === 'payment' && body.data?.id) {
+          const paymentId = body.data.id;
+
+          const payRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+            headers: { 'Authorization': `Bearer ${env.MP_ACCESS_TOKEN}` },
+          });
+          const payment = await payRes.json();
+
+          if (payment.status === 'approved') {
+            let meta = {};
+            try { meta = JSON.parse(payment.external_reference || '{}'); } catch {}
+
+            await env.PAGOS_KV.put(
+              `pago:${paymentId}`,
+              JSON.stringify({
+                confirmado: true,
+                producto:   meta.producto  || '',
+                nombre:     meta.nombre    || '',
+                email:      meta.email     || payment.payer?.email || '',
+                fecha:      meta.fecha     || '',
+                hora:       meta.hora      || '',
+                ciudad:     meta.ciudad    || '',
+                pais:       meta.pais      || '',
+                pasarela:   'mercadopago',
+                timestamp:  Date.now(),
+              }),
+              { expirationTtl: 86400 }
+            );
+          }
+        }
+
+        return new Response(JSON.stringify({ received: true }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } catch (e) {
+        return new Response('Error: ' + e.message, { status: 500 });
       }
     }
 
@@ -346,96 +511,6 @@ export default {
         return json({ confirmado: true });
       }
       return json({ confirmado: false });
-    }
-
-    // ── RUTA: Webhook de Stripe ──
-    if (path === '/webhook' && request.method === 'POST') {
-      try {
-        const rawBody = await request.text();
-        const signature = request.headers.get('stripe-signature');
-
-        if (!signature) {
-          return new Response('Sin firma', { status: 400 });
-        }
-
-        const secret = env.STRIPE_WEBHOOK_SECRET;
-
-        let timestamp = '';
-        let v1Sig = '';
-        for (const part of signature.split(',')) {
-          if (part.startsWith('t=')) timestamp = part.slice(2);
-          if (part.startsWith('v1=')) v1Sig = part.slice(3);
-        }
-
-        if (!timestamp || !v1Sig) {
-          return new Response('Firma inválida', { status: 400 });
-        }
-
-        const ts = parseInt(timestamp);
-        const now = Math.floor(Date.now() / 1000);
-        if (Math.abs(now - ts) > 300) {
-          return new Response('Timestamp expirado', { status: 400 });
-        }
-
-        const payload = `${timestamp}.${rawBody}`;
-        const encoder = new TextEncoder();
-        const key = await crypto.subtle.importKey(
-          'raw',
-          encoder.encode(secret),
-          { name: 'HMAC', hash: 'SHA-256' },
-          false,
-          ['sign']
-        );
-        const signatureBuffer = await crypto.subtle.sign(
-          'HMAC',
-          key,
-          encoder.encode(payload)
-        );
-        const expectedSig = Array.from(new Uint8Array(signatureBuffer))
-          .map(b => b.toString(16).padStart(2, '0'))
-          .join('');
-
-        if (expectedSig !== v1Sig) {
-          return new Response('Firma no coincide', { status: 400 });
-        }
-
-        let event;
-        try {
-          event = JSON.parse(rawBody);
-        } catch(parseErr) {
-          return new Response('JSON inválido', { status: 400 });
-        }
-
-        if (event.type === 'checkout.session.completed') {
-          const session = event.data.object;
-          const sessionId = session.id;
-          const metadata = session.metadata || {};
-
-          await env.PAGOS_KV.put(
-            `pago:${sessionId}`,
-            JSON.stringify({
-              confirmado: true,
-              producto: metadata.producto,
-              nombre: metadata.nombre,
-              email: metadata.email || session.customer_email || '',
-              fecha: metadata.fecha,
-              hora: metadata.hora,
-              ciudad: metadata.ciudad,
-              pais: metadata.pais,
-              timestamp: Date.now(),
-            }),
-            { expirationTtl: 86400 }
-          );
-        }
-
-        return new Response(JSON.stringify({ received: true }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-      } catch (e) {
-        return new Response('Error: ' + e.message, { status: 500 });
-      }
     }
 
     // ── RUTA: Guardar lead ──

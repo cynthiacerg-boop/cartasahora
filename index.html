@@ -287,7 +287,7 @@
         </div>
         <p class="error-msg hidden" id="error-pregunta"></p>
         <p class="success-msg hidden" id="success-pregunta"></p>
-        <input type="email" id="email-pago-pregunta" placeholder="Tu email (para recibir la lectura)" style="margin-top:10px;" />
+        <input type="email" id="email-pago-pregunta" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:10px;" />
         <div class="pago-btns" style="margin-top:10px;">
           <button id="btn-paypal-pregunta" class="btn-paypal" onclick="pagarConPaypal('pregunta', 4)">🅿 Pagar con PayPal · USD 4</button>
           <button id="btn-mp-pregunta" class="btn-mp" onclick="pagarConMP('pregunta', 4)">💳 Pagar con MercadoPago</button>
@@ -325,7 +325,7 @@
           </div>
           <p class="error-msg hidden" id="error-carta-completa"></p>
           <p class="success-msg hidden" id="success-carta-completa"></p>
-          <input type="email" id="email-pago-carta-completa" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <input type="email" id="email-pago-carta-completa" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
             <button id="btn-paypal-carta-completa" class="btn-paypal" onclick="pagarConPaypal('carta-completa', 6)">🅿 Pagar con PayPal · USD 6</button>
             <button id="btn-mp-carta-completa" class="btn-mp" onclick="pagarConMP('carta-completa', 6)">💳 Pagar con MercadoPago</button>
@@ -353,7 +353,7 @@
           </div>
           <p class="error-msg hidden" id="error-lectura-profunda"></p>
           <p class="success-msg hidden" id="success-lectura-profunda"></p>
-          <input type="email" id="email-pago-lectura-profunda" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <input type="email" id="email-pago-lectura-profunda" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
             <button id="btn-paypal-lectura-profunda" class="btn-paypal" onclick="pagarConPaypal('lectura-profunda', 13)">🅿 Pagar con PayPal · USD 13</button>
             <button id="btn-mp-lectura-profunda" class="btn-mp" onclick="pagarConMP('lectura-profunda', 13)">💳 Pagar con MercadoPago</button>
@@ -394,7 +394,7 @@
           </div>
           <p class="error-msg hidden" id="error-revolucion-solar"></p>
           <p class="success-msg hidden" id="success-revolucion-solar"></p>
-          <input type="email" id="email-pago-revolucion-solar" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <input type="email" id="email-pago-revolucion-solar" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
             <button id="btn-paypal-revolucion-solar" class="btn-paypal" onclick="pagarConPaypal('revolucion-solar', 9)">🅿 Pagar con PayPal · USD 9</button>
             <button id="btn-mp-revolucion-solar" class="btn-mp" onclick="pagarConMP('revolucion-solar', 9)">💳 Pagar con MercadoPago</button>
@@ -441,7 +441,7 @@
           </div>
           <p class="error-msg hidden" id="error-sinastria"></p>
           <p class="success-msg hidden" id="success-sinastria"></p>
-          <input type="email" id="email-pago-sinastria" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <input type="email" id="email-pago-sinastria" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
             <button id="btn-paypal-sinastria" class="btn-paypal" onclick="pagarConPaypal('sinastria', 9)">🅿 Pagar con PayPal · USD 9</button>
             <button id="btn-mp-sinastria" class="btn-mp" onclick="pagarConMP('sinastria', 9)">💳 Pagar con MercadoPago</button>
@@ -468,7 +468,7 @@
           </div>
           <p class="error-msg hidden" id="error-transitos"></p>
           <p class="success-msg hidden" id="success-transitos"></p>
-          <input type="email" id="email-pago-transitos" placeholder="Tu email (para recibir la lectura)" style="margin-top:4px;" />
+          <input type="email" id="email-pago-transitos" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
             <button id="btn-paypal-transitos" class="btn-paypal" onclick="pagarConPaypal('transitos', 5)">🅿 Pagar con PayPal · USD 5</button>
             <button id="btn-mp-transitos" class="btn-mp" onclick="pagarConMP('transitos', 5)">💳 Pagar con MercadoPago</button>
@@ -1288,8 +1288,11 @@ function aplicarPromo(producto) {
     promoAplicada[producto]=true;
     if(successEl){successEl.textContent='✦ Código válido — lectura gratuita desbloqueada';successEl.classList.remove('hidden');}
     if(errorEl)errorEl.classList.add('hidden');
-    const btnPaypal=codigoEl.closest('.compra-form')?.querySelector('.btn-paypal')||codigoEl.closest('.preguntas-section')?.querySelector('.btn-paypal');
+    const _form=codigoEl.closest('.compra-form')||codigoEl.closest('.preguntas-section');
+    const btnPaypal=_form?.querySelector('.btn-paypal');
+    const btnMP=_form?.querySelector('.btn-mp');
     if(btnPaypal){btnPaypal.textContent=btnPaypal.textContent.replace(/· USD \d+/,'· GRATIS');btnPaypal.style.background='linear-gradient(135deg, #82B366, #6a9652)';}
+    if(btnMP){btnMP.textContent='💳 Usar código — GRATIS';btnMP.style.background='linear-gradient(135deg, #82B366, #6a9652)';}
   } else {
     if(errorEl){errorEl.textContent='Código no válido.';errorEl.classList.remove('hidden');}
     if(successEl)successEl.classList.add('hidden');
@@ -1353,6 +1356,7 @@ function _buildPayload(producto) {
 
 // ── Pagar con PayPal ──
 async function pagarConPaypal(producto, precio) {
+  if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   const errorId = `error-${producto}`;
   mostrarMensaje(errorId, '');
   const btn = document.getElementById(`btn-paypal-${producto}`);
@@ -1389,6 +1393,7 @@ async function pagarConPaypal(producto, precio) {
 
 // ── Pagar con MercadoPago ──
 async function pagarConMP(producto, precio) {
+  if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   const errorId = `error-${producto}`;
   mostrarMensaje(errorId, '');
   const btn = document.getElementById(`btn-mp-${producto}`);

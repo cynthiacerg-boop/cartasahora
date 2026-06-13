@@ -1,3 +1,62 @@
+// ── Notificación interna de compra (una sola vez por pago) ──
+const NOMBRES_PRODUCTO = {
+  'pregunta':         'Pregunta Puntual',
+  'transitos':        'Tránsitos Actuales',
+  'carta-completa':   'Carta Natal Completa',
+  'proposito-vida':   'Propósito de Vida',
+  'revolucion-lunar': 'Revolución Lunar',
+  'revolucion-solar': 'Revolución Solar',
+  'sinastria':        'Sinastría',
+  'lectura-profunda': 'Lectura Profunda',
+};
+
+async function notificarCompraInterna(env, pagoId, datos) {
+  try {
+    // Dedup: si ya se notificó este pago, no repetir
+    const yaNotificado = await env.PAGOS_KV.get(`notif:${pagoId}`);
+    if (yaNotificado) return;
+    await env.PAGOS_KV.put(`notif:${pagoId}`, '1', { expirationTtl: 86400 });
+
+    const prodNombre = NOMBRES_PRODUCTO[datos.producto] || datos.producto || '—';
+    const nombre = datos.nombre || 'sin nombre';
+    const cuandoAR = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const montoTxt = (datos.monto != null && datos.monto !== '')
+      ? `${datos.monto} ${datos.moneda || ''}`.trim()
+      : '—';
+
+    const html = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
+  <h2 style="color:#8A4DAB;margin:0 0 16px;">💫 Nueva compra confirmada</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:15px;">
+    <tr><td style="padding:8px 0;color:#888;width:140px;">Producto</td><td style="padding:8px 0;font-weight:bold;">${prodNombre}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Consultante</td><td style="padding:8px 0;">${nombre}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Email</td><td style="padding:8px 0;">${datos.email || '—'}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Monto</td><td style="padding:8px 0;">${montoTxt}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Pasarela</td><td style="padding:8px 0;">${datos.pasarela || '—'}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Datos de nacimiento</td><td style="padding:8px 0;">${datos.fecha || '—'} ${datos.hora || ''} · ${datos.ciudad || '—'}, ${datos.pais || '—'}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Fecha y hora</td><td style="padding:8px 0;">${cuandoAR} (ARG)</td></tr>
+  </table>
+</div>`;
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'Espacio Libra <cartas@espaciolibra.com>',
+        to: ['cynthia@espaciolibra.com'],
+        subject: `💫 Nueva compra — ${prodNombre} (${nombre})`,
+        html,
+      }),
+    });
+  } catch (e) {
+    // Nunca romper el flujo de pago por un fallo en la notificación
+    console.warn('Error notificación interna:', e.message);
+  }
+}
+
 export default {
   async fetch(request, env) {
 
@@ -424,6 +483,13 @@ export default {
           { expirationTtl: 86400 }
         );
 
+        // Notificación interna
+        const capAmount = unit?.payments?.captures?.[0]?.amount || {};
+        await notificarCompraInterna(env, orderId, {
+          ...meta, pasarela: 'paypal',
+          monto: capAmount.value, moneda: capAmount.currency_code || 'USD',
+        });
+
         return json({ ok: true });
       } catch (e) {
         return json({ ok: false, error: e.message }, 500);
@@ -457,6 +523,12 @@ export default {
             }),
             { expirationTtl: 86400 }
           );
+
+          // Notificación interna (dedup evita duplicar con la captura)
+          await notificarCompraInterna(env, orderId, {
+            ...meta, pasarela: 'paypal',
+            monto: resource.amount?.value, moneda: resource.amount?.currency_code || 'USD',
+          });
         }
 
         return new Response(JSON.stringify({ received: true }), {
@@ -566,6 +638,14 @@ export default {
               }),
               { expirationTtl: 86400 }
             );
+
+            // Notificación interna
+            await notificarCompraInterna(env, String(paymentId), {
+              ...meta,
+              email: meta.email || payment.payer?.email || '',
+              pasarela: 'mercadopago',
+              monto: payment.transaction_amount, moneda: payment.currency_id || 'ARS',
+            });
           }
         }
 

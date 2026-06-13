@@ -257,23 +257,23 @@ export default {
 </body>
 </html>`;
 
-          const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+          const resendRes = await fetch('https://api.resend.com/emails', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${env.SENDGRID_KEY}`,
+              'Authorization': `Bearer ${env.RESEND_API_KEY}`,
             },
             body: JSON.stringify({
-              personalizations: [{ to: [{ email, name: nombre }] }],
-              from: { email: 'cartas@espaciolibra.com', name: 'Espacio Libra' },
-              reply_to: { email: 'contacto@espaciolibra.com', name: 'Cynthia · Espacio Libra' },
+              from: 'Espacio Libra <cartas@espaciolibra.com>',
+              to: [email],
+              reply_to: 'contacto@espaciolibra.com',
               subject: `✦ Tu ${prod.nombre} — Espacio Libra`,
-              content: [{ type: 'text/html', value: emailHtml }],
+              html: emailHtml,
             }),
           });
 
-          if (!sgRes.ok) {
-            const err = await sgRes.text();
+          if (!resendRes.ok) {
+            const err = await resendRes.text();
             return json({ error: 'Error al enviar email: ' + err }, 500);
           }
         }

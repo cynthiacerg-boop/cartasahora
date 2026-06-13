@@ -1737,7 +1737,7 @@ window.addEventListener('load',async ()=>{
           if(confirmado){
             gtag('event', 'conversion', {
               'send_to': 'AW-18034331388/lnx6CL6P4qEcEPyduJdD',
-              'value': 1.0,
+              'value': Number(pendienteData.precio) || 1.0,
               'currency': 'USD',
               'transaction_id': sessionId
             });

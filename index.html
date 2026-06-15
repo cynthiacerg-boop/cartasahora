@@ -1061,7 +1061,7 @@ Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta a
     } else {
       rsSection=`\nRevolución Solar ${anioRS} calculada para ${ciudadRS}. Interpretá el año basándote en la carta natal de ${nombre} y los principios evolutivos del ciclo personal.`;
     }
-    return `${base}\n${rsSection}\n\nEscribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} desde la perspectiva evolutiva. Cada sección 2-3 párrafos.\n\nReglas:\n- CRÍTICO: hablá siempre en segunda persona, "vos", directamente a ${nombre}.\n- El Ascendente de la RS marca el tono evolutivo del año\n- La Luna de la RS muestra la necesidad emocional dominante\n- Los planetas lentos son portales energéticos, no predicciones\n- Tono siempre de invitación al movimiento consciente, nunca fatalista\n- Usás castellano rioplatense, cálido, profundo\n- NUNCA menciones autores, escuelas ni metodologías\n\n**El tono del año ${anioRS}**\nEmpezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..."\n\n**Tu mundo emocional este año**\nLa Luna de la RS: qué necesita ${nombre} emocionalmente este año.\n\n**Los planetas que marcan el ritmo**\nVenus, Marte, Júpiter y Saturno de la RS activando áreas específicas.\n\n**Los aspectos clave entre tu carta natal y tu revolución solar**\nCómo el año dialoga con el mapa del alma de ${nombre}.\n\n**Los meses clave**\nQué períodos del año tienen mayor activación.\n\n**Amor y vínculos en este año**\nQué se mueve en el área de los vínculos en este ciclo.\n\n**Trabajo y propósito en este año**\nQué se activa en el área profesional y vocacional.\n\n**Cómo aprovechar esta energía**\nConsejos concretos y evolutivos para fluir con lo que el año trae.`;
+    return `${base}\n${rsSection}\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nEscribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} predictiva y concreta.\n\nReglas:\n- Hablá de qué puede pasar, qué períodos son clave, qué decisiones pide el año\n- Mencioná posibles eventos o situaciones concretas sin presentarlas como certezas\n- Tono directo, cálido, sin lenguaje esotérico\n- Castellano rioplatense\n- NUNCA menciones autores, escuelas ni metodologías\n\n**El tono del año ${anioRS}**\nEmpezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..."\nQué tipo de año es, qué energía predomina, qué puede cambiar.\n\n**Tu mundo emocional este año**\nQué necesitás emocionalmente y cómo eso puede manifestarse en decisiones y vínculos.\n\n**Los planetas que marcan el ritmo**\nVenus, Marte, Júpiter y Saturno: qué activan, qué pueden traer concreto.\n\n**Los aspectos clave natal-RS**\nQué tensiones o facilidades muestra el año respecto a tu carta natal.\n\n**Los meses de mayor activación**\nQué períodos del año concentran más movimiento y por qué.\n\n**Amor y vínculos**\nQué puede moverse en los vínculos este año: encuentros, definiciones, conflictos, cierres.\n\n**Trabajo y dinero**\nQué oportunidades o desafíos concretos pueden aparecer en lo profesional y económico.\n\n**Cómo moverse en este año**\nAcciones y decisiones que el año favorece. Concreto y útil.`;
   }
 
   // ── SINASTRÍA ──
@@ -1090,25 +1090,25 @@ ${transitosText}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
-Escribí una LECTURA DE TRÁNSITOS ACTUALES desde la perspectiva evolutiva.
+Escribí una LECTURA DE TRÁNSITOS ACTUALES predictiva y concreta.
 
-Los tránsitos son portales energéticos, no predicciones fijas. Para cada tránsito activo explicá:
-- Qué área de la carta natal está siendo tocada
-- Qué proceso evolutivo está activo
-- Dos caminos posibles: qué pasa cuando la persona fluye con esa energía y qué pasa cuando la resiste
+Para cada tránsito activo explicá:
+- Qué área de vida está siendo activada (trabajo, vínculos, dinero, salud, identidad)
+- Qué puede ocurrir concretamente en ese período
+- Qué actitud favorece o complica el proceso
 
-Priorizá los tránsitos con orbes más exactos y los planetas más lentos (Saturno, Urano, Neptuno, Plutón) pero incluí también los personales (Sol, Venus, Marte, Luna) si tienen aspectos exactos.
+Priorizá planetas lentos (Saturno, Urano, Neptuno, Plutón) y orbes exactos. Incluí personales solo si tienen aspectos exactos.
 
-Cada sección 2 párrafos. Máximo 8 secciones.
+Cada sección: 2 párrafos cortos. Máximo 6 secciones.
 
-**El momento que estás viviendo**
-Una visión general del cielo ahora y qué tipo de energía está rodeando a ${nombre}.
+**Lo que el cielo está activando ahora**
+Visión general del momento: qué tipo de período es este para ${nombre} y qué temas están en primer plano.
 
-Luego una sección por cada tránsito significativo activo, con título descriptivo.
+Luego una sección por cada tránsito significativo, con título descriptivo.
 
 Cerrá con:
-**Cómo trabajar con esta energía**
-Consejos concretos y evolutivos para fluir con lo que los planetas están pidiendo ahora.`;
+**Qué conviene hacer en este período**
+Acciones concretas y decisiones que favorece este cielo. Sin vaguedades.`;
   }
 
   // ── PREGUNTA PUNTUAL ──
@@ -1154,23 +1154,22 @@ CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. 
 Respondé la pregunta: "¿Por qué me cuesta tomar decisiones importantes?"
 
 Analizá prioritariamente:
-- Mercurio (forma de pensar y procesar información): signo, casa y aspectos
-- Luna (seguridad emocional al elegir): necesidad de certeza antes de moverse
-- Venus (criterios de valoración): qué pesa más al elegir
-- Marte (capacidad de acción): bloqueos o impulsos en la acción
-- Saturno (miedo al error y a las consecuencias): dónde aparece el freno
-- Neptuno si aplica (confusión o idealización)
-- Casa 3 (procesamiento mental), Casa 7 (dependencia de opiniones ajenas), Casa 12 (dudas inconscientes)
-- Nodo Norte: qué tipo de decisiones requiere el crecimiento del alma
-${transitosText ? '- Tránsitos activos: qué planeta está tocando ahora los puntos de decisión' : ''}
+- Mercurio: cómo procesa y evalúa antes de decidir
+- Luna: qué necesita sentir seguro antes de moverse
+- Venus y Marte: qué pesa más al elegir y dónde aparece el freno
+- Saturno: el miedo al error o a las consecuencias
+- Neptuno si aplica: confusión o dificultad para ver claro
+- Casas 3, 7 y 12: procesamiento mental, dependencia de opiniones ajenas, dudas inconscientes
+- Nodo Norte: qué tipo de decisiones pide el crecimiento
+- Tránsitos activos: qué planeta está tocando ahora los puntos de decisión y qué puede estar generando la parálisis en este momento concreto
 
-Explicá en este orden — cada uno como un párrafo fluido, no como lista:
-1. El mecanismo interno que genera la indecisión en esta carta específica
-2. El miedo subyacente que aparece al elegir
-3. El aprendizaje evolutivo detrás de esta dificultad
-4. Cómo puede tomar decisiones más alineadas con su crecimiento
+Respondé en este orden:
+1. El mecanismo interno que genera la indecisión en esta carta
+2. Qué tránsito activo puede estar intensificando esa dificultad ahora
+3. Qué le costaría concretamente si no toma una decisión en este período
+4. Cómo puede tomar decisiones más alineadas en esta etapa específica
 
-Un solo título al inicio entre dobles asteriscos. Tono humano, emocional, profundo. Sin determinismos. 4 párrafos, 300-400 palabras totales.`;
+Un solo título al inicio entre dobles asteriscos. Tono humano y directo. 4 párrafos, 280-350 palabras.`;
 
   if (preguntaId === 'amor') return `${base}${trans}
 
@@ -1179,25 +1178,23 @@ CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. 
 Respondé la pregunta: "¿Qué dice mi carta del amor?"
 
 Analizá prioritariamente:
-- Venus: signo, casa, aspectos — cómo ama y qué valora en una relación
-- Luna: necesidad emocional en el vínculo — qué necesita sentir para entregarse
-- Marte: cómo desea, cómo atrae, cómo actúa en el amor
-- Casa 5 (romance y atracción) y Casa 7 (vínculos comprometidos)
-- Casa 8: la profundidad, la intimidad, la transformación en el amor
+- Venus: signo, casa, aspectos — cómo ama y qué atrae
+- Luna: qué necesita sentir para entregarse en un vínculo
+- Marte: cómo desea y actúa en el amor
+- Casa 5 (atracción), Casa 7 (compromiso), Casa 8 (intimidad)
 - Descendente: qué tipo de persona atrae y por qué
-- Nodo Norte y Nodo Sur: patrones relacionales del pasado vs. el amor que el alma viene a aprender
-- Quirón si tiene aspectos con Venus o Luna: la herida en el amor
-- Plutón si aspeta a Venus o Luna: la intensidad y el poder en los vínculos
-${transitosText ? '- Tránsitos activos: qué está moviéndose ahora en el área amorosa' : ''}
+- Nodos: patrones relacionales que repite vs. lo que el alma viene a aprender en el amor
+- Quirón y Plutón si aspectan Venus o Luna
+- Tránsitos activos: qué está moviéndose ahora en el área amorosa
 
-Respondé en este orden — párrafos fluidos:
-1. Cómo ama esta persona y qué necesita emocionalmente
-2. Qué patrones relacionales trae del pasado
-3. Qué desafíos suele encontrar en el amor y por qué
-4. Qué tipo de vínculo favorece su evolución
-5. Qué está aprendiendo el alma a través de las relaciones
+Respondé en este orden:
+1. Cómo ama esta persona y qué necesita en un vínculo para funcionar
+2. Qué patrones relacionales tiende a repetir y de dónde vienen
+3. Qué puede estar pasando ahora en su vida amorosa según los tránsitos
+4. Qué tipo de vínculo le hace bien y qué señales indican que un vínculo no es para ella
+5. Qué está aprendiendo el alma a través del amor en esta etapa
 
-Un solo título al inicio entre dobles asteriscos. Tono cálido, íntimo, sin predicciones. 5 párrafos, 350-450 palabras totales.`;
+Un solo título al inicio entre dobles asteriscos. Tono cálido e íntimo. 5 párrafos, 320-400 palabras.`;
 
   if (preguntaId === 'fortaleza') return `${base}${trans}
 
@@ -1228,24 +1225,23 @@ CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. 
 
 Respondé la pregunta: "¿Qué necesita atención ahora en mi vida?"
 
-${transitosText ? `Esta lectura se basa en los tránsitos reales activos sobre la carta de ${nombre} al momento de la consulta.` : ''}
+Basate en los tránsitos activos reales sobre la carta de ${nombre}.
 
 Analizá:
-- Los tránsitos activos y qué casas/planetas natales están siendo tocados
-- Saturno en tránsito: dónde está pidiendo estructura, madurez o límites
-- Plutón en tránsito: qué está siendo transformado profundamente
-- Neptuno en tránsito: qué se está disolviendo o requiere claridad
-- Urano en tránsito: qué está siendo sacudido o renovado
-- Los planetas personales en tránsito con aspectos exactos: qué mensaje traen ahora
-- La casa natal más activada: qué área de vida está en primer plano
+- Qué planetas en tránsito están tocando puntos natales y qué área de vida activan
+- Saturno: dónde está exigiendo estructura o decisión concreta
+- Plutón: qué está transformando de raíz
+- Neptuno: qué está generando confusión o necesita claridad
+- Urano: qué está cambiando de forma inesperada
+- La casa natal más activada: qué área está en primer plano ahora
 
-Respondé en este orden — párrafos fluidos:
-1. Qué proceso evolutivo está activo ahora mismo en la carta de ${nombre}
-2. Qué tema está pidiendo conciencia y atención
-3. Qué resistencia puede estar apareciendo
-4. Cuál sería la actitud más alineada para atravesar este período
+Respondé en este orden:
+1. Qué área de vida está siendo más activada ahora y qué puede estar pasando concretamente
+2. Qué decisión o acción está pidiendo este momento
+3. Qué puede complicarse si se ignora esta activación
+4. Qué conviene hacer o priorizar en las próximas semanas
 
-Un solo título al inicio entre dobles asteriscos que capture el momento. Tono de acompañamiento, nunca alarmista. 4 párrafos, 300-400 palabras totales.`;
+Un solo título al inicio entre dobles asteriscos. Tono directo y acompañante, nunca alarmista. 4 párrafos, 280-350 palabras.`;
 
   if (preguntaId === 'proposito') return `${base}${trans}
 

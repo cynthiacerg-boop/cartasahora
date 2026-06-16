@@ -986,13 +986,15 @@ function buildPrompt(producto, nombre, chartData, extras) {
   const ascSign=ascData?(SIGN_MAP[ascData.sign]||ascData.sign):'?';
   const aspects=chartData?.chart_data?.aspects||[];
   // ── SELECCIÓN DE ASPECTOS RELEVANTES ──
-  // 1) orbe < 3°  ·  2) involucran Sol/Luna/Ascendente (cualquier orbe)
+  // 0) si AMBOS cuerpos son secundarios (Nodos, Lilith, Quirón): excluir salvo orbe < 1°
+  // 1) orbe < 3°  ·  2) involucran Sol/Luna (cualquier orbe) · Ascendente sin límite de orbe
   // 3) lento (Júpiter, Saturno, Urano, Neptuno, Plutón) ↔ personal con orbe < 5°. Sin duplicados.
   const ASP_LUMINARES=['Sun','Moon','Ascendant'];
   const ASP_PERSONALES=['Sun','Moon','Ascendant','Mercury','Venus','Mars'];
   const ASP_LENTOS=['Jupiter','Saturn','Uranus','Neptune','Pluto'];
   const ASP_ORDEN_PERSONAL=['Sun','Moon','Ascendant','Mercury','Venus','Mars'];
-  const _esAsc=n=>n==='Ascendant'||n==='First_House'||n==='Asc';
+  const _esAsc=n=>/^(ascendant|first_house|asc)$/i.test(n||'');
+  const _esSecundario=n=>/node|lilith|chiron/i.test(n||'');
   const _norm=n=>_esAsc(n)?'Ascendant':n;
   const _nombreEs=n=>_esAsc(n)?'Ascendente':(PLANET_ES[n]||n);
   const _vistosAsp=new Set();
@@ -1000,10 +1002,14 @@ function buildPrompt(producto, nombre, chartData, extras) {
     .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect||a.aspect_type||a.type))
     .map(a=>{const tipo=a.aspect||a.aspect_type||a.type;return {tipo,p1:_norm(a.p1_name),p2:_norm(a.p2_name),orbe:Math.abs(a.orbit||0)};})
     .filter(a=>{
+      const tocaAsc=_esAsc(a.p1)||_esAsc(a.p2);
+      const ambosSecundarios=_esSecundario(a.p1)&&_esSecundario(a.p2);
       const tocaLuminar=ASP_LUMINARES.includes(a.p1)||ASP_LUMINARES.includes(a.p2);
       const lentoPersonal=(ASP_LENTOS.includes(a.p1)&&ASP_PERSONALES.includes(a.p2))||(ASP_LENTOS.includes(a.p2)&&ASP_PERSONALES.includes(a.p1));
-      if(a.orbe<3)return true;            // 1) orbe ajustado
-      if(tocaLuminar)return true;          // 2) Sol/Luna/Asc a cualquier orbe
+      if(ambosSecundarios&&a.orbe>=1)return false; // 0) ambos secundarios: solo si orbe < 1°
+      if(tocaAsc)return true;              // 2b) Ascendente: sin límite de orbe
+      if(a.orbe<3)return true;             // 1) orbe ajustado
+      if(tocaLuminar)return true;          // 2) Sol/Luna a cualquier orbe
       if(lentoPersonal&&a.orbe<5)return true; // 3) lento↔personal con orbe < 5°
       return false;
     })

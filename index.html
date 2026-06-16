@@ -873,13 +873,51 @@ function renderPlanetas(chartData) {
   });
 }
 
+// ── SELECCIÓN DE ASPECTOS RELEVANTES (compartida por buildPrompt y renderAspectos) ──
+// 0) ambos secundarios (Nodos/Lilith/Quirón): excluir salvo orbe < 1°
+// 1) orbe < 3°  ·  2) Sol/Luna a cualquier orbe · Ascendente sin límite de orbe
+// 3) lento (Júpiter, Saturno, Urano, Neptuno, Plutón) ↔ personal con orbe < 5°. Sin duplicados.
+// Orden: por planeta personal (Sol, Luna, Asc, Mercurio, Venus, Marte); dentro, orbe asc.
+function seleccionarAspectosRelevantes(aspects) {
+  const LUM=['Sun','Moon','Ascendant'];
+  const PERS=['Sun','Moon','Ascendant','Mercury','Venus','Mars'];
+  const LENTOS=['Jupiter','Saturn','Uranus','Neptune','Pluto'];
+  const ORDEN=['Sun','Moon','Ascendant','Mercury','Venus','Mars'];
+  const esAsc=n=>/^(ascendant|first_house|asc)$/i.test(n||'');
+  const esSec=n=>/node|lilith|chiron/i.test(n||'');
+  const norm=n=>esAsc(n)?'Ascendant':n;
+  const vistos=new Set();
+  return (aspects||[])
+    .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect||a.aspect_type||a.type))
+    .map(a=>{const tipo=a.aspect||a.aspect_type||a.type;return {tipo,p1:norm(a.p1_name),p2:norm(a.p2_name),orbe:Math.abs(a.orbit||0)};})
+    .filter(a=>{
+      const tocaAsc=esAsc(a.p1)||esAsc(a.p2);
+      const ambosSecundarios=esSec(a.p1)&&esSec(a.p2);
+      const tocaLuminar=LUM.includes(a.p1)||LUM.includes(a.p2);
+      const lentoPersonal=(LENTOS.includes(a.p1)&&PERS.includes(a.p2))||(LENTOS.includes(a.p2)&&PERS.includes(a.p1));
+      if(ambosSecundarios&&a.orbe>=1)return false; // 0) ambos secundarios: solo si orbe < 1°
+      if(tocaAsc)return true;                       // 2b) Ascendente: sin límite de orbe
+      if(a.orbe<3)return true;                      // 1) orbe ajustado
+      if(tocaLuminar)return true;                   // 2) Sol/Luna a cualquier orbe
+      if(lentoPersonal&&a.orbe<5)return true;       // 3) lento↔personal con orbe < 5°
+      return false;
+    })
+    .filter(a=>{const clave=`${[a.p1,a.p2].sort().join('|')}|${a.tipo}`;if(vistos.has(clave))return false;vistos.add(clave);return true;})
+    .sort((a,b)=>{
+      const rank=x=>{let m=99;[x.p1,x.p2].forEach(p=>{const i=ORDEN.indexOf(p);if(i!==-1&&i<m)m=i;});return m;};
+      const ra=rank(a),rb=rank(b);
+      if(ra!==rb)return ra-rb;
+      return a.orbe-b.orbe;
+    });
+}
+const _nombreAspEs=n=>/^(ascendant|first_house|asc)$/i.test(n||'')?'Ascendente':(PLANET_ES[n]||n);
+
 function renderAspectos(chartData) {
   const tbody=document.getElementById('tabla-aspectos'); tbody.innerHTML='';
   const aspects=chartData?.chart_data?.aspects||[];
-  const mainTypes=['conjunction','opposition','trine','square','sextile'];
-  const filtered=aspects.filter(a=>mainTypes.includes(a.aspect||a.aspect_type||a.type)).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,10);
+  const filtered=seleccionarAspectosRelevantes(aspects);
   document.getElementById('aspectos-count').textContent=`Aspectos principales (${filtered.length})`;
-  filtered.forEach(a => { const p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'',tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,orb=a.orbit!==undefined?Math.abs(a.orbit).toFixed(2)+'°':'',cls=aspectClass(tipo); const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="aspect-name"><div class="aspect-bar ${cls}"></div>${p1} ${tipoEs} ${p2}</div></td><td><div class="aspect-right"><span class="aspect-quality ${cls}">${cls==='poderoso'?'poderoso':cls==='armonico'?'armónico':'desafiante'}</span><span class="aspect-orb">${orb}</span></div></td>`; tbody.appendChild(tr); });
+  filtered.forEach(a => { const p1=_nombreAspEs(a.p1),p2=_nombreAspEs(a.p2),tipo=a.tipo,tipoEs=ASPECT_ES[tipo]||tipo,orb=Math.abs(a.orbe).toFixed(2)+'°',cls=aspectClass(tipo); const tr=document.createElement('tr'); tr.innerHTML=`<td><div class="aspect-name"><div class="aspect-bar ${cls}"></div>${p1} ${tipoEs} ${p2}</div></td><td><div class="aspect-right"><span class="aspect-quality ${cls}">${cls==='poderoso'?'poderoso':cls==='armonico'?'armónico':'desafiante'}</span><span class="aspect-orb">${orb}</span></div></td>`; tbody.appendChild(tr); });
 }
 
 function renderInterp(texto, containerId) {
@@ -985,42 +1023,9 @@ function buildPrompt(producto, nombre, chartData, extras) {
   const ascData=subject.first_house||subject.ascendant||subject.asc||null;
   const ascSign=ascData?(SIGN_MAP[ascData.sign]||ascData.sign):'?';
   const aspects=chartData?.chart_data?.aspects||[];
-  // ── SELECCIÓN DE ASPECTOS RELEVANTES ──
-  // 0) si AMBOS cuerpos son secundarios (Nodos, Lilith, Quirón): excluir salvo orbe < 1°
-  // 1) orbe < 3°  ·  2) involucran Sol/Luna (cualquier orbe) · Ascendente sin límite de orbe
-  // 3) lento (Júpiter, Saturno, Urano, Neptuno, Plutón) ↔ personal con orbe < 5°. Sin duplicados.
-  const ASP_LUMINARES=['Sun','Moon','Ascendant'];
-  const ASP_PERSONALES=['Sun','Moon','Ascendant','Mercury','Venus','Mars'];
-  const ASP_LENTOS=['Jupiter','Saturn','Uranus','Neptune','Pluto'];
-  const ASP_ORDEN_PERSONAL=['Sun','Moon','Ascendant','Mercury','Venus','Mars'];
-  const _esAsc=n=>/^(ascendant|first_house|asc)$/i.test(n||'');
-  const _esSecundario=n=>/node|lilith|chiron/i.test(n||'');
-  const _norm=n=>_esAsc(n)?'Ascendant':n;
-  const _nombreEs=n=>_esAsc(n)?'Ascendente':(PLANET_ES[n]||n);
-  const _vistosAsp=new Set();
-  const topAspects=aspects
-    .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect||a.aspect_type||a.type))
-    .map(a=>{const tipo=a.aspect||a.aspect_type||a.type;return {tipo,p1:_norm(a.p1_name),p2:_norm(a.p2_name),orbe:Math.abs(a.orbit||0)};})
-    .filter(a=>{
-      const tocaAsc=_esAsc(a.p1)||_esAsc(a.p2);
-      const ambosSecundarios=_esSecundario(a.p1)&&_esSecundario(a.p2);
-      const tocaLuminar=ASP_LUMINARES.includes(a.p1)||ASP_LUMINARES.includes(a.p2);
-      const lentoPersonal=(ASP_LENTOS.includes(a.p1)&&ASP_PERSONALES.includes(a.p2))||(ASP_LENTOS.includes(a.p2)&&ASP_PERSONALES.includes(a.p1));
-      if(ambosSecundarios&&a.orbe>=1)return false; // 0) ambos secundarios: solo si orbe < 1°
-      if(tocaAsc)return true;              // 2b) Ascendente: sin límite de orbe
-      if(a.orbe<3)return true;             // 1) orbe ajustado
-      if(tocaLuminar)return true;          // 2) Sol/Luna a cualquier orbe
-      if(lentoPersonal&&a.orbe<5)return true; // 3) lento↔personal con orbe < 5°
-      return false;
-    })
-    .filter(a=>{const clave=`${[a.p1,a.p2].sort().join('|')}|${a.tipo}`;if(_vistosAsp.has(clave))return false;_vistosAsp.add(clave);return true;})
-    .sort((a,b)=>{
-      const rank=x=>{let m=99;[x.p1,x.p2].forEach(p=>{const i=ASP_ORDEN_PERSONAL.indexOf(p);if(i!==-1&&i<m)m=i;});return m;};
-      const ra=rank(a),rb=rank(b);
-      if(ra!==rb)return ra-rb;
-      return a.orbe-b.orbe;
-    })
-    .map(a=>`${_nombreEs(a.p1)} ${ASPECT_ES[a.tipo]||a.tipo} ${_nombreEs(a.p2)} (orbe ${a.orbe.toFixed(1)})`)
+  // Selección de aspectos relevantes (misma lógica que la tabla en pantalla → ver seleccionarAspectosRelevantes)
+  const topAspects=seleccionarAspectosRelevantes(aspects)
+    .map(a=>`${_nombreAspEs(a.p1)} ${ASPECT_ES[a.tipo]||a.tipo} ${_nombreAspEs(a.p2)} (orbe ${a.orbe.toFixed(1)})`)
     .join(', ');
 
   const base=`Carta natal de ${nombre}:

@@ -908,7 +908,8 @@ function seleccionarAspectosRelevantes(aspects) {
       const ra=rank(a),rb=rank(b);
       if(ra!==rb)return ra-rb;
       return a.orbe-b.orbe;
-    });
+    })
+    .slice(0,12); // tope: máximo 12 aspectos, aplicado DESPUÉS de filtrar y ordenar (los 12 más relevantes)
 }
 const _nombreAspEs=n=>/^(ascendant|first_house|asc)$/i.test(n||'')?'Ascendente':(PLANET_ES[n]||n);
 

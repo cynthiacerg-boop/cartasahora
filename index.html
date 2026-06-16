@@ -1035,53 +1035,63 @@ Ascendente: ${ascSign}
 Aspectos principales: ${topAspects}`;
 
   // ── CARTA COMPLETA ──
-  if (producto === 'carta-completa') return `${base}
+  if (producto === 'carta-completa') {
+    const sol=subject.sun, luna=subject.moon;
+    const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?', lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?';
+    const solHouse=HOUSE_MAP[sol?.house]||'?', lunaHouse=HOUSE_MAP[luna?.house]||'?';
+    return `${base}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
-Escribí una CARTA NATAL COMPLETA desde la perspectiva evolutiva. La carta tiene que sentirse como una lectura real hecha por una astróloga humana: fluida, profunda, sin relleno.
+LONGITUD: antes de escribir cada bloque, contá cuántos aspectos tiene ese planeta en ${topAspects} y aplicá esta regla:
+- Sin aspectos: 80-100 palabras
+- 1 aspecto: 100-120 palabras
+- 2 aspectos: 120-150 palabras
+- 3 o más aspectos: 150-180 palabras
+No hay tope total de palabras, pero no superés 4000 tokens en toda la lectura.
 
-LONGITUD ESTRICTA: exactamente 1 párrafo por bloque. Entre 80 y 120 palabras por párrafo. Total máximo: 900 palabras. Sin excepciones.
+REGLA DE ASPECTOS: cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si ya lo desarrollaste, no lo repetís.
 
-REGLA CLAVE DE ASPECTOS: cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si Sol tiene una oposición con Luna, se desarrolla en el bloque del Sol. Cuando llegues a Luna, mencionás esa oposición solo de pasada ("como ya vimos") y continuás. Nunca repitas el análisis completo de un aspecto ya desarrollado.
+LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta", "aspecto armónico", "aspecto tenso". Describí siempre el efecto en la vida real.
 
-Los aspectos disponibles para esta carta son: ${topAspects}
+TONO: cada bloque combina quién es ${nombre} ahora y hacia dónde la está llevando esa energía en esta etapa de su vida. No es solo descripción de carácter: es una lectura evolutiva con dirección.
 
-Para cada bloque: signo + casa + energía evolutiva + aspectos que involucran a ese planeta + cómo esa energía se complementa o choca con lo dicho en bloques anteriores.
+Arrancá con una apertura sin título de 2-3 oraciones que le hable directamente a ${nombre} antes de nombrar cualquier planeta. Que capture la energía central de esta carta. Que enganche. Que suene a verdad.
 
-Orden de bloques:
+Luego escribí estos bloques, cada uno con su título entre dobles asteriscos en línea propia:
 
 **Tu esencia solar**
-Sol: el punto evolutivo central. Lo que viene a aprender a ser en esta vida, no lo que ya es. La llama que se enciende cuando vive desde su expresión más auténtica. Sus aspectos y cómo modulan esa expresión. 1 párrafo, máximo 120 palabras.
+Sol en ${solSign}, casa ${solHouse}. La llama que se enciende cuando ${nombre} vive desde su expresión más auténtica. Incluí una tensión o paradoja real de este Sol. Los aspectos se traducen a cómo esa llama se potencia, se complica o se matiza en la vida cotidiana, y qué dirección está tomando esa energía ahora.
 
 **Tu mundo emocional**
-Luna: el mecanismo de seguridad emocional. Cómo procesa lo que siente, qué necesita para sentirse segura, el niño interno. Sus aspectos. 1 párrafo, máximo 120 palabras.
+Luna en ${lunaSign}, casa ${lunaHouse}. Cómo procesa lo que siente, qué necesita para sentirse segura, cómo reacciona cuando se siente vulnerable. Los aspectos se traducen a patrones emocionales concretos. Incluí hacia dónde está evolucionando esa vida emocional.
 
 **Tu presencia en el mundo**
-Ascendente: la energía nueva a integrar. Cómo la perciben, cómo se presenta, lo que viene a aprender a ser en su forma de moverse por el mundo. 1 párrafo, máximo 120 palabras.
+Ascendente en ${ascSign}. La energía que ${nombre} irradia antes de decir una palabra. Cómo la perciben, qué viene a integrar, y qué está desarrollando en su forma de moverse por el mundo en esta etapa.
 
 **Tu mente y tu voz**
-Mercurio: cómo piensa, aprende y se comunica. Sus aspectos. 1 párrafo, máximo 100 palabras.
+Mercurio en su signo y casa. Cómo piensa, aprende y se comunica. Los aspectos se traducen a cómo esa mente se expresa o se traba, y qué está aprendiendo a hacer con ella.
 
 **El amor y los vínculos**
-Venus: qué busca en el amor, cómo se relaciona. Sus aspectos. 1 párrafo, máximo 100 palabras.
+Venus en su signo y casa. Qué busca en el amor, cómo se relaciona, qué necesita para entregarse. Los aspectos se traducen a dinámicas concretas en los vínculos y hacia dónde está evolucionando en el amor.
 
 **Tu fuerza y tu acción**
-Marte: cómo actúa, defiende lo que quiere, maneja la energía. Sus aspectos. 1 párrafo, máximo 100 palabras.
+Marte en su signo y casa. Cómo actúa, defiende lo que quiere, maneja la energía. Los aspectos se traducen a cómo esa fuerza fluye o se frena, y qué está aprendiendo a hacer con ella.
 
 **Expansión y abundancia**
-Júpiter: dónde está su crecimiento natural, su filosofía de vida. Sus aspectos. 1 párrafo, máximo 100 palabras.
+Júpiter en su signo y casa. Dónde está el crecimiento natural y la filosofía de vida. Los aspectos se traducen a cómo y dónde se abre o se cierra esa expansión en esta etapa.
 
 **Estructura y desafío**
-Saturno: dónde la vida le pide madurez. Sus desafíos como vehículo de evolución. 1 párrafo, máximo 100 palabras.
+Saturno en su signo y casa. Dónde la vida le pide madurez a ${nombre}, no como castigo sino como dirección de crecimiento. Los aspectos se traducen a cómo ese desafío aparece concretamente y qué está construyendo con él.
 
 **Patrones dominantes**
-Elemento dominante (fuego/tierra/aire/agua), modalidad dominante (cardinal/fija/mutable), concentración de planetas. Qué dice eso sobre cómo esta alma procesa la vida. 1 párrafo, máximo 100 palabras.
+Elemento dominante, modalidad dominante, concentración de planetas. Qué dice eso sobre cómo esta alma procesa la vida y qué está siendo llamada a equilibrar.
 
 **El mapa de tus casas**
-Casas más activadas y su impacto concreto en la vida de ${nombre}. Casas vacías más relevantes. 1 párrafo, máximo 100 palabras.
+Las casas más activadas y qué áreas concentran más movimiento ahora. Las casas vacías más relevantes y qué significa eso para esta etapa.
 
-Cerrá con una síntesis de 2-3 oraciones que capture el viaje central de esta alma. Sin título. Que suene a verdad. La última oración invita a explorar Quirón, Lilith y los Nodos — que suene a curiosidad, no a publicidad.`;
+Cerrá sin título con 2-3 oraciones que capturen el viaje central de esta alma y hacia dónde apunta. La última oración invita a explorar más capas de la carta — que suene a curiosidad genuina, no a publicidad.`;
+  }
 
   // ── REVOLUCIÓN SOLAR ──
   if (producto === 'revolucion-solar') {

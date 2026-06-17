@@ -1041,56 +1041,61 @@ Aspectos principales: ${topAspects}`;
     const solHouse=HOUSE_MAP[sol?.house]||'?', lunaHouse=HOUSE_MAP[luna?.house]||'?';
     return `${base}
 
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. Nunca digas "este Sol", "esa Luna", "esa Marte": decí siempre "tu Sol", "tu Luna", "vos cuando...", "tenés".
 
 LONGITUD: antes de escribir cada bloque, contá cuántos aspectos tiene ese planeta en ${topAspects} y aplicá esta regla:
 - Sin aspectos: 80-100 palabras
 - 1 aspecto: 100-120 palabras
 - 2 aspectos: 120-150 palabras
-- 3 o más aspectos: 150-180 palabras
-No hay tope total de palabras, pero no superés 4000 tokens en toda la lectura.
+- 3 o más aspectos: 150-200 palabras
+Si un planeta tiene aspectos difíciles que requieren más desarrollo (ver regla de aspectos abajo), el párrafo puede superar este rango. No hay tope total de palabras, pero no superés 4000 tokens en toda la lectura.
 
-REGLA DE ASPECTOS: cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si ya lo desarrollaste, no lo repetís.
+REGLA DE ASPECTOS — cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si ya lo desarrollaste, no lo repetís, como mucho lo nombrás de pasada.
 
-LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta", "aspecto armónico", "aspecto tenso". Describí siempre el efecto en la vida real.
+Diferenciá el tratamiento según el tipo de aspecto, sin nombrar nunca su categoría técnica:
+Aspectos difíciles (lo que técnicamente sería cuadratura, oposición, o conjunción con Marte,Saturno, Urano, Neptuno o Plutón): desarrollalos con más profundidad, en prosa corrida, sin bullets ni subtítulos. Contá qué tensión, intensidad o peso genera, cómo se manifiesta concretamente en 1-2 áreas de su vida (comunicación, vínculos, trabajo, cuerpo, lo que corresponda), y de dónde puede venir esa dinámica (una historia temprana, un patrón aprendido). Esto puede extender el párrafo más allá del rango de palabras indicado arriba.
+- Aspectos fluidos (lo que técnicamente sería trígono o sextil, o conjuncion con Venus, Jupiter): mencionalos con un tono más liviano, como un don que fluye sin esfuerzo, sin necesidad de tanto desarrollo.
+No uses nunca las palabras "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta", "aspecto armónico", "aspecto tenso".
 
-TONO: cada bloque combina quién es ${nombre} ahora y hacia dónde la está llevando esa energía en esta etapa de su vida. No es solo descripción de carácter: es una lectura evolutiva con dirección.
+TONO PREDICTIVO: cada bloque debe cerrar con hacia dónde tiende esa energía a futuro — qué dirección está tomando, qué puede ir consolidándose o destrabándose con el tiempo. Sin anclar a una fecha o momento específico. Variá cómo lo decís en cada bloque: no repitas la misma fórmula ("en esta etapa estás aprendiendo a...") en más de un bloque. Buscá otras formas: "esto va a pedirte...", "con el tiempo esto tiende a...", "el camino acá parece ir hacia...", "lo que se viene es...", etc.
+
+Escribí una CARTA NATAL COMPLETA desde la perspectiva predictiva-evolutiva. Que se sienta como una lectura hecha por una astróloga humana: fluida, profunda, sin relleno.
 
 Arrancá con una apertura sin título de 2-3 oraciones que le hable directamente a ${nombre} antes de nombrar cualquier planeta. Que capture la energía central de esta carta. Que enganche. Que suene a verdad.
 
 Luego escribí estos bloques, cada uno con su título entre dobles asteriscos en línea propia:
 
 **Tu esencia solar**
-Sol en ${solSign}, casa ${solHouse}. La llama que se enciende cuando ${nombre} vive desde su expresión más auténtica. Incluí una tensión o paradoja real de este Sol. Los aspectos se traducen a cómo esa llama se potencia, se complica o se matiza en la vida cotidiana, y qué dirección está tomando esa energía ahora.
+Sol en ${solSign}, casa ${solHouse}. La llama que se enciende cuando vivís desde tu expresión más auténtica. Incluí una tensión o paradoja real de tu Sol. Aplicá la regla de aspectos.
 
 **Tu mundo emocional**
-Luna en ${lunaSign}, casa ${lunaHouse}. Cómo procesa lo que siente, qué necesita para sentirse segura, cómo reacciona cuando se siente vulnerable. Los aspectos se traducen a patrones emocionales concretos. Incluí hacia dónde está evolucionando esa vida emocional.
+Luna en ${lunaSign}, casa ${lunaHouse}. Cómo procesás lo que sentís, qué necesitás para sentirte segura, cómo reaccionás cuando te sentís vulnerable. Aplicá la regla de aspectos.
 
 **Tu presencia en el mundo**
-Ascendente en ${ascSign}. La energía que ${nombre} irradia antes de decir una palabra. Cómo la perciben, qué viene a integrar, y qué está desarrollando en su forma de moverse por el mundo en esta etapa.
+Ascendente en ${ascSign}. La energía que irradiás antes de decir una palabra. Cómo te perciben, qué venís a integrar en tu forma de moverte por el mundo. Aplicá la regla de aspectos si el Ascendente o su regente tienen aspectos relevantes en ${topAspects}.
 
 **Tu mente y tu voz**
-Mercurio en su signo y casa. Cómo piensa, aprende y se comunica. Los aspectos se traducen a cómo esa mente se expresa o se traba, y qué está aprendiendo a hacer con ella.
+Mercurio en su signo y casa. Cómo pensás, aprendés y te comunicás. Aplicá la regla de aspectos.
 
 **El amor y los vínculos**
-Venus en su signo y casa. Qué busca en el amor, cómo se relaciona, qué necesita para entregarse. Los aspectos se traducen a dinámicas concretas en los vínculos y hacia dónde está evolucionando en el amor.
+Venus en su signo y casa. Qué buscás en el amor, cómo te relacionás, qué necesitás para entregarte. Aplicá la regla de aspectos.
 
 **Tu fuerza y tu acción**
-Marte en su signo y casa. Cómo actúa, defiende lo que quiere, maneja la energía. Los aspectos se traducen a cómo esa fuerza fluye o se frena, y qué está aprendiendo a hacer con ella.
+Marte en su signo y casa. Cómo actuás, defendés lo que querés, manejás la energía. Aplicá la regla de aspectos.
 
 **Expansión y abundancia**
-Júpiter en su signo y casa. Dónde está el crecimiento natural y la filosofía de vida. Los aspectos se traducen a cómo y dónde se abre o se cierra esa expansión en esta etapa.
+Júpiter en su signo y casa. Dónde está tu crecimiento natural y tu filosofía de vida. Aplicá la regla de aspectos.
 
 **Estructura y desafío**
-Saturno en su signo y casa. Dónde la vida le pide madurez a ${nombre}, no como castigo sino como dirección de crecimiento. Los aspectos se traducen a cómo ese desafío aparece concretamente y qué está construyendo con él.
+Saturno en su signo y casa. Dónde la vida te pide madurez, no como castigo sino como dirección de crecimiento. Aplicá la regla de aspectos.
 
 **Patrones dominantes**
-Elemento dominante, modalidad dominante, concentración de planetas. Qué dice eso sobre cómo esta alma procesa la vida y qué está siendo llamada a equilibrar.
+Elemento dominante, modalidad dominante, concentración de planetas. Qué dice eso sobre cómo procesás la vida y qué estás siendo llamada a equilibrar.
 
 **El mapa de tus casas**
-Las casas más activadas y qué áreas concentran más movimiento ahora. Las casas vacías más relevantes y qué significa eso para esta etapa.
+Las casas más activadas y qué áreas concentran más movimiento para vos. Cual es el sentido que asi sea.
 
-Cerrá sin título con 2-3 oraciones que capturen el viaje central de esta alma y hacia dónde apunta. La última oración invita a explorar más capas de la carta — que suene a curiosidad genuina, no a publicidad.`;
+Cerrá sin título con 2-3 oraciones que capturen el viaje central de tu alma y hacia dónde apunta. La última oración invita a explorar más capas de la carta — que suene a curiosidad genuina, no a publicidad.`;
   }
 
   // ── REVOLUCIÓN SOLAR ──

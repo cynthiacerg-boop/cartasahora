@@ -995,26 +995,33 @@ function buildPromptBasico(nombre, chartData) {
     .map(a=>{const tipo=a.aspect||a.aspect_type||a.type,tipoEs=ASPECT_ES[tipo]||tipo,otro=a.p1_name===planetName?a.p2_name:a.p1_name,otroEs=PLANET_ES[otro]||otro;return `${tipoEs} con ${otroEs}`;});
   }
   const aspectosSol=aspectosDe('Sun'),aspectosLuna=aspectosDe('Moon');
-  const textoAspectosSol=aspectosSol.length>0?`\nEl Sol tiene estos aspectos en su carta: ${aspectosSol.join(' / ')}. Mencionalos con un tono invitador, como una puerta entornada que sugiere que hay más por descubrir, sin explicar del todo su significado.`:'';
-  const textoAspectosLuna=aspectosLuna.length>0?`\nLa Luna tiene estos aspectos: ${aspectosLuna.join(' / ')}. Mencionalos con el mismo aire: algo que resuene pero que quede abierto, como una pista de algo más profundo.`:'';
+  const textoAspectosSol=aspectosSol.length>0?`\nTu Sol tiene estos aspectos: ${aspectosSol.join(' / ')}.`:'';
+  const textoAspectosLuna=aspectosLuna.length>0?`\nTu Luna tiene estos aspectos: ${aspectosLuna.join(' / ')}.`:'';
 
   return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
 - Sol en ${solSign}, casa ${solHouse}
 - Luna en ${lunaSign}, casa ${lunaHouse}
 - Ascendente en ${ascSign}
 
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. Nunca digas "este Sol" o "esa Luna": decí "tu Sol", "tu Luna", "tenés".
+
 Escribí una LECTURA ESENCIAL GRATUITA con exactamente estas tres secciones. Cada título entre dobles asteriscos en línea propia.
 
+REGLA DE ASPECTOS (síntoma sin solución): si el Sol o la Luna tienen aspectos en ${textoAspectosSol} / ${textoAspectosLuna}, nombrá el síntoma concreto que eso genera en la vida real de ${nombre} — algo que pueda reconocer como verdadero apenas lo lea (una dificultad puntual, una reacción que se repite, una tensión que siente pero no termina de entender). NO expliques de dónde viene ni qué hacer con eso. Cerrá la mención con una frase que indique que hay una razón exacta en su carta y que vale la pena mirarla de cerca. Si el aspecto es fluido (lo que técnicamente sería trígono o sextil), mencionalo más liviano, como un don natural, sin necesidad de profundizar.
+No uses nunca las palabras "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto".
+
+TONO PREDICTIVO: cada sección cierra con una frase corta sobre hacia dónde tiende esa energía a futuro, sin fecha específica. Variá la forma de decirlo entre secciones.
+
 **Tu esencia solar**
-Hablá del Sol de ${nombre} en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que está aprendiendo a ser en esta vida, no algo que ya tiene completamente desarrollado. Describí la llama auténtica que viene a encender: cómo se expresa su identidad cuando está siendo genuino/a, qué necesita para sentirse vivo/a. Incluí una tensión o paradoja real de este Sol. 150 a 200 palabras.${textoAspectosSol} No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.
+Hablá de tu Sol en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que estás aprendiendo a ser en esta vida, no algo que ya tenés completamente desarrollado. Describí la llama auténtica que venís a encender: cómo se expresa tu identidad cuando estás siendo genuino/a, qué necesitás para sentirte vivo/a. Incluí una tensión o paradoja real de este Sol. 150 a 200 palabras.${textoAspectosSol} Aplicá la regla de aspectos. No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.
 
 **Tu mundo emocional**
-Hablá de la Luna de ${nombre} en ${lunaSign} en casa ${lunaHouse}. La Luna es el mecanismo de seguridad emocional que trae desde su historia más temprana. Describí cómo procesa lo que siente, qué necesita para sentirse seguro/a, cómo reacciona cuando se siente vulnerable. 150 a 200 palabras.${textoAspectosLuna} Quedás en la superficie luminosa, sin entrar en heridas profundas ni sombras.
+Hablá de tu Luna en ${lunaSign} en casa ${lunaHouse}. La Luna es el mecanismo de seguridad emocional que traés desde tu historia más temprana. Describí cómo procesás lo que sentís, qué necesitás para sentirte seguro/a, cómo reaccionás cuando te sentís vulnerable. 150 a 200 palabras.${textoAspectosLuna} Aplicá la regla de aspectos. Quedate en la superficie luminosa, sin entrar en heridas profundas ni sombras.
 
 **Tu presencia en el mundo**
-Hablá del Ascendente de ${nombre} en ${ascSign}. El Ascendente es una energía nueva que viene a integrar en esta vida. Describí cómo se presenta ante el mundo, la energía que irradia al entrar a un lugar, cómo la perciben quienes no la conocen. 150 a 200 palabras. No entres en el propósito evolutivo profundo.
+Hablá de tu Ascendente en ${ascSign}. El Ascendente es una energía nueva que venís a integrar en esta vida. Describí cómo te presentás ante el mundo, la energía que irradiás al entrar a un lugar, cómo te perciben quienes no te conocen. 150 a 200 palabras. No entres en el propósito evolutivo profundo.
 
-Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una pregunta que invite a ${nombre} a querer saber más sobre su carta completa, una línea en blanco, y una frase poética muy breve que funcione como gancho hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
+Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una pregunta que invite a ${nombre} a querer saber más sobre su carta completa — idealmente conectada con el síntoma que mencionaste antes, no genérica —, una línea en blanco, y una frase poética muy breve que funcione como gancho hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
 }
 
 // ── PROMPTS POR PRODUCTO ──

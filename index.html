@@ -1109,6 +1109,8 @@ Cerrá sin título con 2-3 oraciones que capturen el viaje central de tu alma y 
   if (producto === 'revolucion-solar') {
     const anioRS=extras?.anioRS||'2025';
     const ciudadRS=extras?.ciudadRS||'su ciudad de residencia';
+    const MESES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    const fechaNacimiento=`${subject.day} de ${MESES_ES[(subject.month||1)-1]||''}`;
     let rsSection='', rsAspectos='';
     const rsData=extras?.rsData;
     if(rsData&&rsData.chart_data){
@@ -1129,6 +1131,8 @@ Cerrá sin título con 2-3 oraciones que capturen el viaje central de tu alma y 
 ${rsSection}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. Nunca digas "este Sol RS", "esa Luna RS": decí siempre "tu Sol", "tu Luna", "tenés".
+
+CÁLCULO DE FECHAS — MUY IMPORTANTE: el cumpleaños de ${nombre} es el ${fechaNacimiento}. Esta Revolución Solar ${anioRS} cubre el período que va EXACTAMENTE desde el ${fechaNacimiento} de ${anioRS} hasta el día anterior a su próximo cumpleaños (${fechaNacimiento} de ${Number(anioRS) + 1}, un año después). Antes de escribir la sección de meses, calculá ese rango con cuidado. NUNCA menciones un mes que quede fuera de ese rango — por ejemplo, si el cumpleaños es en septiembre, esta revolución NO incluye enero, febrero, marzo, etc. de ${anioRS}, porque esos meses ya pasaron antes de que el año empiece. Los meses que menciones tienen que estar todos dentro del rango real: del cumpleaños hacia adelante.
 
 LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta". Describí siempre el efecto concreto en la vida real, nunca el nombre del aspecto.
 
@@ -1161,7 +1165,7 @@ Mercurio, Venus, Marte, Júpiter y Saturno: qué activan, qué pueden traer conc
 Qué tensiones o facilidades muestra el año respecto a tu carta natal. Aplicá la regla de aspectos.
 
 **Los meses de mayor activación**
-Qué períodos del año concentran más movimiento y por qué.
+Respetá estrictamente el rango de fechas calculado arriba. Qué períodos del año concentran más movimiento y por qué.
 
 **Amor y vínculos**
 Qué puede moverse en los vínculos este año: encuentros, definiciones, conflictos, cierres.

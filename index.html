@@ -1109,7 +1109,7 @@ Cerrá sin título con 2-3 oraciones que capturen el viaje central de tu alma y 
   if (producto === 'revolucion-solar') {
     const anioRS=extras?.anioRS||'2025';
     const ciudadRS=extras?.ciudadRS||'su ciudad de residencia';
-    let rsSection='';
+    let rsSection='', rsAspectos='';
     const rsData=extras?.rsData;
     if(rsData&&rsData.chart_data){
       const ss=rsData.chart_data.second_subject||{};
@@ -1120,12 +1120,57 @@ Cerrá sin título con 2-3 oraciones que capturen el viaje central de tu alma y 
       const rsMarte=`${SIGN_MAP[ss.mars?.sign]||ss.mars?.sign||'?'}, casa ${HOUSE_MAP[ss.mars?.house]||'?'}`;
       const rsJupiter=`${SIGN_MAP[ss.jupiter?.sign]||ss.jupiter?.sign||'?'}, casa ${HOUSE_MAP[ss.jupiter?.house]||'?'}`;
       const rsSaturno=`${SIGN_MAP[ss.saturn?.sign]||ss.saturn?.sign||'?'}, casa ${HOUSE_MAP[ss.saturn?.house]||'?'}`;
-      const rsAspectos=(rsData.chart_data.aspects||[]).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,5).map(a=>{const tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'';return `${p1} natal ${tipoEs} ${p2} RS (orbe ${Math.abs(a.orbit||0).toFixed(1)}°)`;}).join('\n');
+      rsAspectos=(rsData.chart_data.aspects||[]).sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,5).map(a=>{const tipo=a.aspect||a.aspect_type||a.type||'',tipoEs=ASPECT_ES[tipo]||tipo,p1=PLANET_ES[a.p1_name]||a.p1_name||'',p2=PLANET_ES[a.p2_name]||a.p2_name||'';return `${p1} natal ${tipoEs} ${p2} RS (orbe ${Math.abs(a.orbit||0).toFixed(1)}°)`;}).join('\n');
       rsSection=`\nDatos de la Revolución Solar ${anioRS} (calculada para ${ciudadRS}):\n- Ascendente RS: ${rsAsc}\n- Sol RS: ${rsSol}\n- Luna RS: ${rsLuna}\n- Venus RS: ${rsVenus}\n- Marte RS: ${rsMarte}\n- Júpiter RS: ${rsJupiter}\n- Saturno RS: ${rsSaturno}\n\nAspectos cruzados natal-RS más exactos:\n${rsAspectos}`;
     } else {
       rsSection=`\nRevolución Solar ${anioRS} calculada para ${ciudadRS}. Interpretá el año basándote en la carta natal de ${nombre} y los principios evolutivos del ciclo personal.`;
     }
-    return `${base}\n${rsSection}\n\nCRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.\n\nEscribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} predictiva y concreta.\n\nReglas:\n- Hablá de qué puede pasar, qué períodos son clave, qué decisiones pide el año\n- Mencioná posibles eventos o situaciones concretas sin presentarlas como certezas\n- Tono directo, cálido, sin lenguaje esotérico\n- Castellano rioplatense\n- NUNCA menciones autores, escuelas ni metodologías\n\n**El tono del año ${anioRS}**\nEmpezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..."\nQué tipo de año es, qué energía predomina, qué puede cambiar.\n\n**Tu mundo emocional este año**\nQué necesitás emocionalmente y cómo eso puede manifestarse en decisiones y vínculos.\n\n**Los planetas que marcan el ritmo**\nVenus, Marte, Júpiter y Saturno: qué activan, qué pueden traer concreto.\n\n**Los aspectos clave natal-RS**\nQué tensiones o facilidades muestra el año respecto a tu carta natal.\n\n**Los meses de mayor activación**\nQué períodos del año concentran más movimiento y por qué.\n\n**Amor y vínculos**\nQué puede moverse en los vínculos este año: encuentros, definiciones, conflictos, cierres.\n\n**Trabajo y dinero**\nQué oportunidades o desafíos concretos pueden aparecer en lo profesional y económico.\n\n**Cómo moverse en este año**\nAcciones y decisiones que el año favorece. Concreto y útil.`;
+    return `${base}
+${rsSection}
+
+CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. Nunca digas "este Sol RS", "esa Luna RS": decí siempre "tu Sol", "tu Luna", "tenés".
+
+LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta". Describí siempre el efecto concreto en la vida real, nunca el nombre del aspecto.
+
+REGLA DE ASPECTOS — si hay aspectos cruzados natal-RS disponibles en ${rsAspectos}, diferenciá el tratamiento sin nombrar la categoría técnica:
+- Aspectos difíciles (lo que técnicamente sería cuadratura, oposición, o conjunción con Saturno, Urano, Neptuno o Plutón): desarrollalos en prosa, contando qué tensión o exigencia trae ese cruce para este año específico, en qué área de la vida puede sentirse, y qué decisión o ajuste pide.
+- Aspectos fluidos (trígono, sextil, o conjunción con planetas personales): mencionalos como una ventana que se abre, algo que este año facilita sin mucho esfuerzo.
+
+Quirón y el Nodo Norte, si aparecen en los datos, se usan para personalizar la lectura pero nunca se nombran explícitamente.
+
+Escribí una LECTURA DE REVOLUCIÓN SOLAR ${anioRS} predictiva y concreta.
+
+Reglas:
+- Hablá de qué puede pasar, qué períodos son clave, qué decisiones pide el año
+- Mencioná posibles eventos o situaciones concretas sin presentarlas como certezas
+- Tono directo, cálido, sin lenguaje esotérico
+- Castellano rioplatense
+- NUNCA menciones autores, escuelas ni metodologías
+
+**El tono del año ${anioRS}**
+Empezá exactamente así: "Tu Ascendente de revolución solar en [signo RS], ${nombre}, marca el tono de este año..."
+Qué tipo de año es, qué energía predomina, qué puede cambiar.
+
+**Tu mundo emocional este año**
+Qué necesitás emocionalmente y cómo eso puede manifestarse en decisiones y vínculos.
+
+**Los planetas que marcan el ritmo**
+Mercurio, Venus, Marte, Júpiter y Saturno: qué activan, qué pueden traer concreto. Aplicá la regla de aspectos si corresponde.
+
+**Los aspectos clave natal-RS**
+Qué tensiones o facilidades muestra el año respecto a tu carta natal. Aplicá la regla de aspectos.
+
+**Los meses de mayor activación**
+Qué períodos del año concentran más movimiento y por qué.
+
+**Amor y vínculos**
+Qué puede moverse en los vínculos este año: encuentros, definiciones, conflictos, cierres.
+
+**Trabajo y dinero**
+Qué oportunidades o desafíos concretos pueden aparecer en lo profesional y económico.
+
+**Cómo moverse en este año**
+Acciones y decisiones que el año favorece. Concreto y útil.`;
   }
 
   // ── SINASTRÍA ──

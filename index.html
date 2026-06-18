@@ -105,10 +105,11 @@
     .pago-btns { display: flex; flex-direction: column; gap: 0; }
     .paypal-note { font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin-top: 10px; }
     .preguntas-section { margin-top: 8px; }
-    .pregunta-ejemplos { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
-    .pregunta-chip { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 6px 14px; font-size: 12px; color: rgba(255,255,255,0.5); cursor: pointer; transition: all 0.2s; }
-    .pregunta-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.8); }
-    .pregunta-chip.activo { border-color: rgba(138,77,171,0.6); color: rgba(255,255,255,0.9); background: rgba(138,77,171,0.1); }
+    .pregunta-carrusel { display: flex; gap: 10px; overflow-x: auto; -webkit-overflow-scrolling: touch; scroll-snap-type: x mandatory; padding: 4px 4px 14px; margin: 12px -4px; scrollbar-width: none; }
+    .pregunta-carrusel::-webkit-scrollbar { display: none; }
+    .pregunta-card { flex: 0 0 78%; max-width: 260px; scroll-snap-align: start; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.78); cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .pregunta-card:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.95); }
+    .pregunta-card.activo { border-color: rgba(138,77,171,0.7); color: #fff; background: rgba(138,77,171,0.14); }
     textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
     textarea:focus { border-color: rgba(130,179,102,0.5); }
     textarea::placeholder { color: rgba(255,255,255,0.2); }
@@ -278,17 +279,11 @@
     <div class="card">
       <div class="section-title">Pregunta Puntual</div>
       <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
-        Una pregunta respondida con tu carta natal y los tránsitos activos ahora. Amor, trabajo, decisiones, momentos clave.
+        Una pregunta puntual sobre amor o dinero, respondida con tu carta natal. Deslizá y elegí la que más te resuena.
       </p>
-      <div class="pregunta-ejemplos">
-        <span class="pregunta-chip" onclick="seleccionarPregunta('decidir', this)">¿Por qué me cuesta decidir?</span>
-        <span class="pregunta-chip" onclick="seleccionarPregunta('amor', this)">¿Qué dice mi carta del amor?</span>
-        <span class="pregunta-chip" onclick="seleccionarPregunta('fortaleza', this)">¿Cuál es mi mayor fortaleza?</span>
-        <span class="pregunta-chip" onclick="seleccionarPregunta('atencion', this)">¿Qué necesita atención ahora?</span>
-        <span class="pregunta-chip" onclick="seleccionarPregunta('proposito', this)">¿Mi propósito de vida?</span>
-      </div>
+      <div class="pregunta-carrusel" id="pregunta-carrusel"></div>
       <div class="preguntas-section">
-        <textarea id="pregunta-texto" placeholder="Elegí una pregunta de arriba o escribí la tuya..." readonly style="cursor:default;"></textarea>
+        <textarea id="pregunta-texto" placeholder="Tocá una pregunta de arriba para elegirla..." readonly style="cursor:default;"></textarea>
         <div class="promo-row" style="margin-top:10px;">
           <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
           <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
@@ -561,23 +556,38 @@ const PRODUCT_NOMBRES = {
   'esencial':'Lectura Esencial Gratuita'
 };
 
-// Planetas relevantes por pregunta para filtrar tránsitos
-const TRANSITOS_POR_PREGUNTA = {
-  'decidir':   ['Mercury','Moon','Saturn','Mars','Venus','Neptune'],
-  'amor':      ['Venus','Moon','Mars','Pluto','Neptune','North Node'],
-  'fortaleza': ['Sun','Jupiter','Mars','Ascendant'],
-  'atencion':  null, // null = todos los tránsitos
-  'proposito': ['Sun','Saturn','Jupiter','North Node','Pluto','Chiron']
+// ── PREGUNTAS PUNTUALES (12) ──
+// Cada entrada: texto que se muestra en la tarjeta + planetas a priorizar en el prompt.
+// Son preguntas de patrón (carta natal), no de tránsito actual → no usan tránsitos.
+// Orden mezclado a propósito: amor y dinero intercalados, sin agrupar por categoría.
+const PREGUNTAS_PUNTUALES = {
+  'amor-comprometerse': { texto: "¿Por qué siempre te terminás enganchando con gente que no quiere comprometerse?", analiza: "Venus (qué tipo de vínculo atrae), Luna (qué necesidad emocional hace que ese patrón se repita), Casa 7 o Descendente (el tipo de pareja que proyecta), Saturno si aspecta Venus (miedo al compromiso propio proyectado en el otro)." },
+  'dinero-talento-oculto': { texto: "¿Dónde tenés escondida tu mayor mina de oro para hacer plata de verdad?", analiza: "Júpiter (signo, casa — dónde está la expansión natural), Casa 2 (recursos propios), Casa 10 (vocación visible), Sol (lo que la persona es cuando es más genuina, de ahí sale el valor que puede monetizar)." },
+  'amor-idealizar': { texto: "¿Qué es lo que verdaderamente buscás en una pareja o estás idealizando de más?", analiza: "Venus (qué valora realmente vs. qué fantasea), Júpiter si aspecta Venus (tendencia a inflar expectativas), Casa 7 (el ideal de pareja proyectado), Neptuno si aspecta Venus (idealización, ver lo que no está)." },
+  'dinero-esfuerzo-sin-resultado': { texto: "¿Por qué sentís que te matás laburando pero los resultados económicos no se ven?", analiza: "Saturno en Casa 2 o 10 (esfuerzo que tarda en dar fruto), Marte mal aspectado (energía mal canalizada), Nodo Sur en casas de trabajo (patrón conocido de esfuerzo sin recompensa que hay que soltar, invisible)." },
+  'amor-soltar': { texto: "¿Por qué te cuesta tanto soltar las relaciones que ya sabés que no dan para más?", analiza: "Luna (apego emocional y miedo al vacío que deja soltar), Venus en signos fijos o con aspectos de permanencia, Casa 8 (miedo a la pérdida y al cambio), Saturno (sentido del deber o la resignación que sostiene lo que ya no funciona)." },
+  'dinero-negocio-propio': { texto: "¿Tenés perfil para armar tu propio negocio o te rinde más la seguridad de un sueldo?", analiza: "Marte (capacidad de iniciativa e independencia), Saturno (necesidad de estructura y seguridad), Casa 1 y su regente (autonomía), Júpiter (tolerancia al riesgo)." },
+  'amor-autosabotaje': { texto: "¿Sos de autosabotearte cuando alguien finalmente te demuestra amor sano?", analiza: "Quirón si toca Venus o Luna (la herida que no confía en lo bueno, invisible), Saturno en aspecto a Venus (desconfianza aprendida), Nodo Sur en casas de vínculos (la zona de confort que sabotea sin querer, invisible), Plutón si aspecta Venus (control inconsciente ante la vulnerabilidad)." },
+  'dinero-reconocimiento': { texto: "¿En qué tipo de ambientes o profesiones vas a brillar y conseguir reconocimiento?", analiza: "Sol (signo, casa — dónde brilla naturalmente), Medio Cielo y Casa 10, Júpiter (dónde hay expansión y buena suerte), Saturno en Casa 10 (el reconocimiento que se construye con el tiempo)." },
+  'amor-abandono': { texto: "¿De dónde viene ese miedo tuyo a quedarte solo/a o a que te abandonen?", analiza: "Luna (la necesidad de seguridad más temprana), Quirón en casas 4 o 7 (la herida de origen, invisible), Saturno en aspecto a la Luna (la sensación de soledad aprendida), Nodo Sur (el patrón familiar repetido, invisible)." },
+  'dinero-disciplina': { texto: "¿Por qué te cuesta tanto sostener la disciplina en tus proyectos y los dejás a medias?", analiza: "Mercurio o Marte en signos mutables o con aspectos dispersos, Saturno débil o mal aspectado (dificultad con la estructura), Júpiter en exceso sin Saturno que ordene (mucho entusiasmo inicial, poco sostén)." },
+  'amor-salvar': { texto: "¿Por qué atraés personas que terminan siendo una carga o que tenés que 'salvar'?", analiza: "Venus o Luna en aspecto difícil con Neptuno o Plutón (atracción por rescatar o fusionarse), Casa 12 si está activada en vínculos, Quirón si toca Venus (la herida que busca sanar a través de cuidar al otro, invisible)." },
+  'amor-repetir-peleas': { texto: "¿Por qué solés repetir el mismo tipo de peleas y reclamos con parejas distintas?", analiza: "Marte y Venus en aspecto difícil entre sí, Luna (el reclamo emocional de fondo), Nodo Sur en casas de vínculos (el patrón heredado o conocido que se repite, invisible), Casa 7." }
 };
 
-// Textos de cada chip para mostrar en el textarea (lectura humana)
-const PREGUNTA_TEXTOS = {
-  'decidir':   '¿Por qué me cuesta tanto tomar decisiones importantes?',
-  'amor':      '¿Qué dice mi carta natal sobre el amor y los vínculos?',
-  'fortaleza': '¿Cuál es mi mayor fortaleza según mi carta natal?',
-  'atencion':  '¿Qué área de mi vida necesita más atención ahora mismo?',
-  'proposito': '¿Cuál es mi propósito de vida según mi carta natal?'
-};
+// Mapa id -> texto para mostrar en el textarea (deriva de PREGUNTAS_PUNTUALES)
+const PREGUNTA_TEXTOS = Object.fromEntries(
+  Object.entries(PREGUNTAS_PUNTUALES).map(([id, q]) => [id, q.texto])
+);
+
+// Pintar las 12 tarjetas en el carrusel
+(function() {
+  const cont = document.getElementById('pregunta-carrusel');
+  if (!cont) return;
+  cont.innerHTML = Object.entries(PREGUNTAS_PUNTUALES).map(([id, q]) =>
+    `<button type="button" class="pregunta-card" data-id="${id}" onclick="seleccionarPregunta('${id}', this)">${q.texto}</button>`
+  ).join('');
+})();
 
 (function() {
   const container = document.getElementById('stars');
@@ -1242,9 +1252,8 @@ Acciones concretas y decisiones que favorece este cielo. Sin vaguedades.`;
   // ── PREGUNTA PUNTUAL ──
   // Cada pregunta tiene su propio prompt específico + tránsitos filtrados por relevancia
   if (producto === 'pregunta') {
-    const preguntaId = extras?.preguntaId || 'decidir';
-    const transitosText = extras?.transitosText || '';
-    return buildPromptPregunta(preguntaId, nombre, base, transitosText);
+    const preguntaId = extras?.preguntaId || 'amor-comprometerse';
+    return buildPromptPregunta(preguntaId, nombre, base);
   }
 
   // ── LECTURA PROFUNDA ──
@@ -1272,141 +1281,36 @@ Cerrá con una frase poderosa y personal basada en la carta de ${nombre}.`;
 }
 
 // ── PROMPTS ESPECÍFICOS POR PREGUNTA ──
-function buildPromptPregunta(preguntaId, nombre, base, transitosText) {
-  const trans = transitosText ? `\n\nTránsitos activos ahora relevantes para esta pregunta:\n${transitosText}` : '';
+function buildPromptPregunta(preguntaId, nombre, base) {
+  const q = PREGUNTAS_PUNTUALES[preguntaId] || PREGUNTAS_PUNTUALES['amor-comprometerse'];
 
-  if (preguntaId === 'decidir') return `${base}${trans}
-
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
-
-Respondé la pregunta: "¿Por qué me cuesta tomar decisiones importantes?"
-
-Analizá prioritariamente:
-- Mercurio: cómo procesa y evalúa antes de decidir
-- Luna: qué necesita sentir seguro antes de moverse
-- Venus y Marte: qué pesa más al elegir y dónde aparece el freno
-- Saturno: el miedo al error o a las consecuencias
-- Neptuno si aplica: confusión o dificultad para ver claro
-- Casas 3, 7 y 12: procesamiento mental, dependencia de opiniones ajenas, dudas inconscientes
-- Nodo Norte: qué tipo de decisiones pide el crecimiento
-- Tránsitos activos: qué planeta está tocando ahora los puntos de decisión y qué puede estar generando la parálisis en este momento concreto
-
-Respondé en este orden:
-1. El mecanismo interno que genera la indecisión en esta carta
-2. Qué tránsito activo puede estar intensificando esa dificultad ahora
-3. Qué le costaría concretamente si no toma una decisión en este período
-4. Cómo puede tomar decisiones más alineadas en esta etapa específica
-
-Un solo título al inicio entre dobles asteriscos. Tono humano y directo. 4 párrafos, 280-350 palabras.`;
-
-  if (preguntaId === 'amor') return `${base}${trans}
+  return `${base}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
-Respondé la pregunta: "¿Qué dice mi carta del amor?"
+Respondé la pregunta: "${q.texto}"
 
-Analizá prioritariamente:
-- Venus: signo, casa, aspectos — cómo ama y qué atrae
-- Luna: qué necesita sentir para entregarse en un vínculo
-- Marte: cómo desea y actúa en el amor
-- Casa 5 (atracción), Casa 7 (compromiso), Casa 8 (intimidad)
-- Descendente: qué tipo de persona atrae y por qué
-- Nodos: patrones relacionales que repite vs. lo que el alma viene a aprender en el amor
-- Quirón y Plutón si aspectan Venus o Luna
-- Tránsitos activos: qué está moviéndose ahora en el área amorosa
+Analizá prioritariamente: ${q.analiza}
 
-Respondé en este orden:
-1. Cómo ama esta persona y qué necesita en un vínculo para funcionar
-2. Qué patrones relacionales tiende a repetir y de dónde vienen
-3. Qué puede estar pasando ahora en su vida amorosa según los tránsitos
-4. Qué tipo de vínculo le hace bien y qué señales indican que un vínculo no es para ella
-5. Qué está aprendiendo el alma a través del amor en esta etapa
+LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta". Describí siempre el efecto concreto en la vida real.
 
-Un solo título al inicio entre dobles asteriscos. Tono cálido e íntimo. 5 párrafos, 320-400 palabras.`;
+Quirón y el Nodo Sur/Norte, si aparecen relevantes, se usan para personalizar pero nunca se nombran explícitamente.
 
-  if (preguntaId === 'fortaleza') return `${base}${trans}
+Respondé en 2 párrafos cortos, 150-200 palabras en total:
+1. Nombrá el patrón con calidez, sin culpa, y la razón de fondo que lo genera
+2. Qué es probable que siga pasando si esto no cambia, y qué señal concreta indicaría que la situación empieza a destrabarse
 
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
-
-Respondé la pregunta: "¿Cuál es mi mayor fortaleza?"
-
-Analizá prioritariamente:
-- Sol: signo, casa y aspectos — la llama auténtica que viene a encender
-- Ascendente y su regente: la energía que proyecta naturalmente
-- Júpiter: dónde está el crecimiento natural y la abundancia
-- Marte: cómo actúa y defiende lo que es suyo
-- Casa 1 (identidad y presencia), Casa 10 (vocación y legado), Casa 11 (talentos colectivos)
-- Nodo Norte: las capacidades que el alma viene a desarrollar en esta vida
-- Aspectos armónicos principales: los dones que fluyen sin esfuerzo
-
-Respondé en este orden — párrafos fluidos, sin listas genéricas:
-1. El talento más importante de esta persona según su carta
-2. Una capacidad natural que suele pasar desapercibida
-3. Cómo esa fortaleza puede ayudarla en su camino evolutivo
-4. Cómo desarrollarla conscientemente
-
-Un solo título al inicio entre dobles asteriscos que nombre la fortaleza de manera poética. Fundamentá todo en la carta natal. 4 párrafos, 300-400 palabras totales.`;
-
-  if (preguntaId === 'atencion') return `${base}${trans}
-
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
-
-Respondé la pregunta: "¿Qué necesita atención ahora en mi vida?"
-
-Basate en los tránsitos activos reales sobre la carta de ${nombre}.
-
-Analizá:
-- Qué planetas en tránsito están tocando puntos natales y qué área de vida activan
-- Saturno: dónde está exigiendo estructura o decisión concreta
-- Plutón: qué está transformando de raíz
-- Neptuno: qué está generando confusión o necesita claridad
-- Urano: qué está cambiando de forma inesperada
-- La casa natal más activada: qué área está en primer plano ahora
-
-Respondé en este orden:
-1. Qué área de vida está siendo más activada ahora y qué puede estar pasando concretamente
-2. Qué decisión o acción está pidiendo este momento
-3. Qué puede complicarse si se ignora esta activación
-4. Qué conviene hacer o priorizar en las próximas semanas
-
-Un solo título al inicio entre dobles asteriscos. Tono directo y acompañante, nunca alarmista. 4 párrafos, 280-350 palabras.`;
-
-  if (preguntaId === 'proposito') return `${base}${trans}
-
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
-
-Respondé la pregunta: "¿Cuál es mi propósito de vida?"
-
-Analizá prioritariamente:
-- Nodo Norte: signo, casa — la enseñanza espiritual de esta encarnación
-- Nodo Sur: de dónde viene el alma, qué trae dominado, qué necesita trascender
-- Sol: signo, casa — el punto evolutivo central, la llama a encender
-- Medio Cielo y Casa 10: la vocación y el legado visible en el mundo
-- Saturno: dónde la vida exige madurez como vehículo de propósito
-- Júpiter: dónde está la expansión y el sentido de vida
-- Quirón: la herida que al ser trabajada se convierte en don y misión
-- Plutón: el mayor apego y el proceso de transformación del alma
-- Ascendente y su regente: la energía a integrar para que el propósito se exprese
-
-Respondé en este orden — párrafos fluidos:
-1. Qué vino a desarrollar esta alma en esta encarnación
-2. Qué patrones conocidos necesita trascender para avanzar
-3. Qué cualidades está aprendiendo a incorporar en esta vida
-4. Cómo puede reconocer que está avanzando hacia su propósito
-5. Qué tipo de contribución puede ofrecer al mundo desde su autenticidad
-
-Un solo título al inicio entre dobles asteriscos que nombre el propósito de manera poética. No hablés de destino fijo ni misión predeterminada. Enfocate en potencial evolutivo y dirección. 5 párrafos, 400-500 palabras totales.`;
-
-  // Fallback genérico
-  return `${base}${trans}\n\nRespondé la pregunta del consultante desde la carta natal con perspectiva evolutiva. 4 párrafos, tono cálido y directo.`;
+Un solo título al inicio entre dobles asteriscos, breve y directo. Tono cálido, cercano, directo, sin solemnidad ni lenguaje de autoayuda.`;
 }
 
 // ── SELECCIONAR PREGUNTA DESDE CHIP ──
 function seleccionarPregunta(id, el) {
   preguntaSeleccionada = id;
   // Limpiar selección anterior
-  document.querySelectorAll('.pregunta-chip').forEach(c => c.classList.remove('activo'));
+  document.querySelectorAll('.pregunta-card').forEach(c => c.classList.remove('activo'));
   el.classList.add('activo');
+  // Centrar la tarjeta elegida en el carrusel
+  el.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
   // Mostrar texto en textarea
   const textarea = document.getElementById('pregunta-texto');
   if (textarea) textarea.value = PREGUNTA_TEXTOS[id] || '';
@@ -1612,18 +1516,13 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
       }catch(sin2Err){console.warn('Error carta persona 2:',sin2Err);}
     }
 
-    // Tránsitos y Pregunta Puntual: calcular tránsitos reales
-    if(producto==='transitos'||producto==='pregunta'){
+    // Tránsitos: calcular tránsitos reales (todos los planetas)
+    if(producto==='transitos'){
       try{
         mostrarMensaje(successId,'⟳ Calculando los tránsitos actuales...');
         const transitData = await calcularTransitosActuales(cartaData);
         if(transitData){
-          // Para tránsitos completos: todos los planetas (null = sin filtro)
-          // Para pregunta: filtrar por relevancia según la pregunta
-          const filtro = producto==='pregunta'
-            ? (TRANSITOS_POR_PREGUNTA[extras.preguntaId] || null)
-            : null;
-          extras.transitosText = buildTransitosText(transitData, filtro, cartaData);
+          extras.transitosText = buildTransitosText(transitData, null, cartaData);
           mostrarMensaje(successId,'⟳ Interpretando...');
         }
       }catch(tErr){console.warn('Error tránsitos:',tErr);}

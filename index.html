@@ -252,6 +252,23 @@
           <p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;">Cargando tu lectura...</p>
         </div>
       </div>
+
+      <!-- OFERTA INFORME COMPLETO -->
+      <div style="margin-top:22px;padding:20px;background:rgba(138,77,171,0.08);border:1px solid rgba(138,77,171,0.25);border-radius:12px;">
+        <p style="font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.65;margin:0 0 14px;">
+          Esto es solo una parte de tu carta natal. Tu informe completo en PDF incluye el análisis detallado de tu personalidad, vínculos, vocación y los desafíos que marca tu carta — toda la profundidad que estos 3 elementos solo empiezan a mostrar.
+        </p>
+        <div style="text-align:center;margin-bottom:16px;">
+          <span class="producto-precio">$10.000</span>
+          <span style="font-size:13px;color:rgba(255,255,255,0.5);"> vía Mercado Pago</span>
+        </div>
+        <button class="btn-primary" style="margin-top:0;"
+          onclick="gtag('event','click_comprar_informe'); pagarConMP('carta-completa', 6, 'error-informe-completo');">
+          Quiero mi informe completo
+        </button>
+        <p id="error-informe-completo" class="error-msg hidden"></p>
+      </div>
+
       <div class="lectura-acciones">
         <div class="lectura-acciones-btns">
           <button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('esencial')">✉ Guardalo en tu mail</button>
@@ -1479,9 +1496,9 @@ async function pagarConPaypal(producto, precio) {
 }
 
 // ── Pagar con MercadoPago ──
-async function pagarConMP(producto, precio) {
+async function pagarConMP(producto, precio, errorId) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
-  const errorId = `error-${producto}`;
+  errorId = errorId || `error-${producto}`;
   mostrarMensaje(errorId, '');
   const btn = document.getElementById(`btn-mp-${producto}`);
   const btnPP = document.getElementById(`btn-paypal-${producto}`);

@@ -57,6 +57,71 @@ async function notificarCompraInterna(env, pagoId, datos) {
   }
 }
 
+// ── Seguimiento automático: oferta de informe completo, 2hs después del lead ──
+const SEGUIMIENTO_DELAY_MS = 2 * 60 * 60 * 1000; // 2 horas
+
+async function procesarSeguimientos(env) {
+  // Nota: una sola página de list cubre hasta 1000 claves (suficiente por años).
+  const list = await env.LEADS_KV.list({ prefix: 'lead:' });
+  const ahora = Date.now();
+  let enviados = 0;
+  for (const k of list.keys) {
+    if (enviados >= 50) break; // tope de seguridad por corrida
+    let lead;
+    try { lead = JSON.parse(await env.LEADS_KV.get(k.name)); } catch { continue; }
+    if (!lead) continue;
+    if (lead.acepta_marketing !== true) continue;                 // solo con consentimiento
+    if (lead.seguimiento_enviado === true) continue;               // ya se le envió
+    if (!lead.timestamp || (ahora - lead.timestamp) < SEGUIMIENTO_DELAY_MS) continue; // menos de 2hs
+    const ok = await enviarSeguimientoOferta(env, lead);
+    if (ok) {
+      lead.seguimiento_enviado = true;
+      await env.LEADS_KV.put(k.name, JSON.stringify(lead), { expirationTtl: 60 * 60 * 24 * 365 * 2 });
+      enviados++;
+    }
+  }
+  console.log(`Seguimientos enviados: ${enviados}`);
+}
+
+async function enviarSeguimientoOferta(env, lead) {
+  try {
+    const nombre = (lead.nombre || '').trim();
+    const saludo = nombre ? `Hola ${nombre}` : 'Hola';
+    const link = 'https://cartasahora.espaciolibra.com/?nombre=' + encodeURIComponent(nombre);
+    const html = `
+<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
+  <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra · Astrología Evolutiva</p>
+  <p>${saludo}:</p>
+  <p>Hace un rato calculaste tu carta natal y viste solo una parte. Tu <strong>informe completo en PDF</strong> incluye el análisis detallado de tu personalidad, vínculos, vocación y los desafíos que marca tu carta — toda la profundidad que estos 3 elementos solo empiezan a mostrar.</p>
+  <p style="text-align:center;margin:28px 0;">
+    <span style="font-size:26px;color:#8A4DAB;">$10.000</span>
+    <span style="font-size:14px;color:#777;"> vía Mercado Pago</span>
+  </p>
+  <p style="text-align:center;margin:0 0 28px;">
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">Quiero mi informe completo</a>
+  </p>
+  <p style="font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;margin-top:24px;">
+    Recibís este mail porque pediste tu carta natal en Espacio Libra y aceptaste recibir novedades. Si no querés recibir más, respondé este mail con la palabra <strong>BAJA</strong>.
+  </p>
+</div>`;
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Espacio Libra <cartas@espaciolibra.com>',
+        to: [lead.email],
+        reply_to: 'cynthia@espaciolibra.com',
+        subject: 'Tu carta natal tiene más para revelarte',
+        html,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('Error seguimiento oferta:', e.message);
+    return false;
+  }
+}
+
 export default {
   async fetch(request, env) {
 
@@ -702,7 +767,7 @@ export default {
         if (!email || !email.includes('@')) return json({ error: 'Email inválido' }, 400);
         await env.LEADS_KV.put(
           `lead:${email.toLowerCase().trim()}`,
-          JSON.stringify({ email, nombre: nombre || '', acepta_marketing: !!acepta_marketing, timestamp: Date.now() }),
+          JSON.stringify({ email, nombre: nombre || '', acepta_marketing: !!acepta_marketing, timestamp: Date.now(), seguimiento_enviado: false }),
           { expirationTtl: 60 * 60 * 24 * 365 * 2 } // 2 años
         );
         return json({ ok: true });
@@ -731,5 +796,9 @@ export default {
     }
 
     return new Response('Not found', { status: 404, headers: corsHeaders });
+  },
+
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(procesarSeguimientos(env));
   },
 };

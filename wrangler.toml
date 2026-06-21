@@ -14,3 +14,6 @@ id = "5855ba84011c42c4a526e2cae18e9fde"
 [[kv_namespaces]]
 binding = "LEADS_KV"
 id = "c3f4a718ac1649f5abac888b3485fed9"
+
+[triggers]
+crons = ["*/15 * * * *"]

@@ -939,7 +939,31 @@ function seleccionarAspectosRelevantes(aspects) {
     })
     .slice(0,12); // tope: máximo 12 aspectos, aplicado DESPUÉS de filtrar y ordenar (los 12 más relevantes)
 }
-const _nombreAspEs=n=>/^(ascendant|first_house|asc)$/i.test(n||'')?'Ascendente':(PLANET_ES[n]||n);
+const _ASP_ALIAS={'Mean_Lilith':'Lilith','True_North_Lunar_Node':'North Node','True_South_Lunar_Node':'South Node','Mean_North_Node':'North Node','Mean_South_Node':'South Node'};
+const _nombreAspEs=n=>{if(/^(ascendant|first_house|asc)$/i.test(n||''))return 'Ascendente';const k=_ASP_ALIAS[n]||n;return PLANET_ES[k]||k;};
+
+// Aspectos de los puntos evolutivos (Quirón, Lilith, Nodos, Ascendente) a CUALQUIER planeta de la carta.
+// Lista dedicada a la Lectura Profunda: no pasa por el tope de seleccionarAspectosRelevantes, así no se
+// pierden vínculos como Quirón↔Marte/Mercurio con orbe medio. No afecta a los demás productos.
+function aspectosEvolutivos(aspects){
+  const esAsc=n=>/^(ascendant|first_house|asc)$/i.test(n||'');
+  const esSec=n=>/node|lilith|chiron/i.test(n||'');
+  const norm=n=>esAsc(n)?'Ascendant':n;
+  const vistos=new Set();
+  return (aspects||[])
+    .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect||a.aspect_type||a.type))
+    .map(a=>{const tipo=a.aspect||a.aspect_type||a.type;return {tipo,p1:norm(a.p1_name),p2:norm(a.p2_name),orbe:Math.abs(a.orbit||0)};})
+    .filter(a=>{
+      const tocaEvol=esSec(a.p1)||esSec(a.p2)||esAsc(a.p1)||esAsc(a.p2);
+      if(!tocaEvol)return false;                          // solo Quirón/Lilith/Nodos/Ascendente
+      if(esSec(a.p1)&&esSec(a.p2)&&a.orbe>=1)return false; // evita ruido secundario↔secundario
+      return a.orbe<6;
+    })
+    .filter(a=>{const clave=`${[a.p1,a.p2].sort().join('|')}|${a.tipo}`;if(vistos.has(clave))return false;vistos.add(clave);return true;})
+    .sort((a,b)=>a.orbe-b.orbe)
+    .map(a=>`${_nombreAspEs(a.p1)} ${ASPECT_ES[a.tipo]||a.tipo} ${_nombreAspEs(a.p2)} (orbe ${a.orbe.toFixed(1)})`)
+    .join(', ');
+}
 
 function renderAspectos(chartData) {
   const tbody=document.getElementById('tabla-aspectos'); tbody.innerHTML='';
@@ -1314,7 +1338,10 @@ Acciones concretas y decisiones que favorece este cielo. Sin vaguedades.`;
   }
 
   // ── LECTURA PROFUNDA ──
-  if (producto === 'lectura-profunda') return `${base}
+  if (producto === 'lectura-profunda') {
+    const aspEvol=aspectosEvolutivos(aspects);
+    return `${base}
+Aspectos de tus puntos evolutivos (Quirón, Lilith, Nodos, Ascendente) a los planetas de la carta: ${aspEvol||'sin aspectos relevantes'}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona. NUNCA nombres técnicamente los aspectos (nada de cuadratura, trígono, sextil, conjunción, oposición, orbe) — describí siempre el efecto real en su vida. Tampoco nombres "Quirón", "Lilith", "Nodo Norte/Sur" ni "Ascendente" en el texto final — son datos internos para que vos los interpretes, no palabras que ${nombre} tiene que leer.
 
@@ -1322,7 +1349,7 @@ Esta es la LECTURA PROFUNDA de ${nombre}: el nivel más hondo de la carta, el qu
 
 Empezá con una apertura breve (2-3 frases), cálida y humana, que explique hacia dónde apunta esta lectura: la herida que carga, la parte de sí que suele esconder, y el camino evolutivo hacia el que se dirige. Sin tecnicismos ni nombres de puntos astrológicos.
 
-A partir de Quirón, Lilith, Nodo Norte, Nodo Sur y Ascendente de ${nombre} —y de cómo cada uno aspecta a los planetas personales (Sol, Luna, Mercurio, Venus, Marte)— desarrollá:
+A partir de Quirón, Lilith, Nodo Norte, Nodo Sur y Ascendente de ${nombre} —y de cómo cada uno aspecta a los demás planetas de la carta, con foco en los personales (Sol, Luna, Mercurio, Venus, Marte)— desarrollá:
 
 **La herida que te formó**
 Qué dolor o sensibilidad temprana señala (Quirón), cómo se manifestó en su historia, y cómo esa misma herida se transforma hoy en una capacidad real para sostener o ayudar a otros. Si aspecta a varios planetas personales, desarrollá 150-180 palabras recorriendo cada vínculo; si aspecta a pocos o ninguno, alcanza un párrafo de 80-100 palabras.
@@ -1336,6 +1363,7 @@ De dónde viene —los patrones y roles que ya conoce de sobra (Nodo Sur)— y h
 Si alguno de estos puntos no tiene aspectos relevantes a planetas personales, no fuerces conexiones: un párrafo breve centrado en el tema general alcanza.
 
 Cerrá con una frase potente y personal, hablándole directamente a ${nombre} de "vos", que una los hilos —la herida, lo que esconde, el camino que está aprendiendo a recorrer— en una sola imagen de quién sos hoy y en quién te estás convirtiendo.`;
+  }
 
   return `${base}\n\nHacé una lectura general evolutiva de la carta natal en 5 párrafos profundos.`;
 }

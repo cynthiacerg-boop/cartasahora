@@ -292,30 +292,6 @@
 
     <div id="section-lecturas-desbloqueadas"></div>
 
-    <!-- PREGUNTAS PUNTUALES -->
-    <div class="card">
-      <div class="section-title">Pregunta Puntual</div>
-      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
-        Una pregunta puntual sobre amor o dinero, respondida con tu carta natal. Deslizá y elegí la que más te resuena.
-      </p>
-      <div class="pregunta-carrusel" id="pregunta-carrusel"></div>
-      <div class="preguntas-section">
-        <textarea id="pregunta-texto" placeholder="Tocá una pregunta de arriba para elegirla..." readonly style="cursor:default;"></textarea>
-        <div class="promo-row" style="margin-top:10px;">
-          <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
-          <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
-        </div>
-        <p class="error-msg hidden" id="error-pregunta"></p>
-        <p class="success-msg hidden" id="success-pregunta"></p>
-        <input type="email" id="email-pago-pregunta" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:10px;" />
-        <div class="pago-btns" style="margin-top:10px;">
-          <button id="btn-paypal-pregunta" class="btn-paypal" onclick="pagarConPaypal('pregunta', 4)">🅿 Pagar con PayPal · USD 4</button>
-          <button id="btn-mp-pregunta" class="btn-mp" onclick="pagarConMP('pregunta', 4)">💳 Pagar con MercadoPago</button>
-        </div>
-        <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
-      </div>
-    </div>
-
   </div>
 
   <!-- UPSELL / PRODUCTOS -->
@@ -497,6 +473,30 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- PREGUNTALE A TU CARTA (interno: producto 'pregunta') -->
+    <div class="card">
+      <div class="section-title">Preguntale a tu carta</div>
+      <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:16px;line-height:1.6;">
+        Una pregunta puntual sobre amor o dinero, respondida con tu carta natal. Deslizá y elegí la que más te resuena.
+      </p>
+      <div class="pregunta-carrusel" id="pregunta-carrusel"></div>
+      <div class="preguntas-section">
+        <textarea id="pregunta-texto" placeholder="Tocá una pregunta de arriba para elegirla..." readonly style="cursor:default;"></textarea>
+        <div class="promo-row" style="margin-top:10px;">
+          <input type="text" id="promo-pregunta" placeholder="Código de descuento (opcional)" />
+          <button class="btn-promo" onclick="aplicarPromo('pregunta')">Aplicar</button>
+        </div>
+        <p class="error-msg hidden" id="error-pregunta"></p>
+        <p class="success-msg hidden" id="success-pregunta"></p>
+        <input type="email" id="email-pago-pregunta" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:10px;" />
+        <div class="pago-btns" style="margin-top:10px;">
+          <button id="btn-paypal-pregunta" class="btn-paypal" onclick="pagarConPaypal('pregunta', 4)">🅿 Pagar con PayPal · USD 4</button>
+          <button id="btn-mp-pregunta" class="btn-mp" onclick="pagarConMP('pregunta', 4)">💳 Pagar con MercadoPago</button>
+        </div>
+        <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
+      </div>
     </div>
 
     <div style="text-align:center;margin-top:28px;">

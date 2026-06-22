@@ -49,6 +49,7 @@
     .r4 { inset: 35px; background: #82B366; box-shadow: 0 0 12px rgba(130,179,102,0.6); }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .loader p { font-family: 'Playfair Display', serif; font-size: 15px; letter-spacing: 0.1em; color: #82B366; opacity: 0.8; font-style: italic; }
+    .loader p.loader-pago { font-size: 18px; }
     .section-title { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.25em; color: #82B366; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
     .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(130,179,102,0.2); }
     .planets-table { width: 100%; border-collapse: collapse; }
@@ -1535,6 +1536,13 @@ async function pagarConMP(producto, precio, errorId) {
   }
 }
 
+// ── PROGRESO DEL LOADER (productos pagos) ──
+function actualizarProgreso(producto, texto){
+  const el=document.getElementById(`loader-text-${producto}`);
+  if(el) el.textContent=texto;
+  mostrarMensaje('success-'+producto, texto);
+}
+
 // ── GENERAR Y ENVIAR LECTURA ──
 async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   const errorId=`error-${producto}`,successId=`success-${producto}`;
@@ -1542,28 +1550,38 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
   const _btnMP=document.getElementById(`btn-mp-${producto}`);
   if(_btnPP){_btnPP.disabled=true;_btnPP.style.opacity='0.4';}
   if(_btnMP){_btnMP.disabled=true;_btnMP.style.opacity='0.4';}
-  mostrarMensaje(successId,'⟳ Generando tu lectura...');
+  // Camino A (código promo): si todavía no hay placeholder con loader orbital, crearlo y hacer scroll.
+  // Camino B (pago) ya lo insertó antes de llamar a esta función → se reusa, no se duplica.
+  if(!document.getElementById(`loader-text-${producto}`)){
+    const _container=document.getElementById('section-lecturas-desbloqueadas');
+    const _prodNombre=PRODUCT_NOMBRES[producto]||producto;
+    let _card=document.getElementById(`card-lectura-${producto}`);
+    if(!_card){_card=document.createElement('div');_card.className='card';_card.id=`card-lectura-${producto}`;_container.appendChild(_card);}
+    _card.innerHTML=`<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${producto}" class="loader-pago">✦ Generando tu lectura...</p></div>`;
+    setTimeout(()=>_card.scrollIntoView({behavior:'smooth',block:'start'}),100);
+  }
+  actualizarProgreso(producto,'⟳ Generando tu lectura...');
   try {
     let chartDataParaPrompt=cartaData;
 
     // Revolución Solar: calcular carta RS
     if(producto==='revolucion-solar'&&extras.anioRS){
       try{
-        mostrarMensaje(successId,'⟳ Calculando tu revolución solar...');
+        actualizarProgreso(producto,'⟳ Calculando tu revolución solar...');
         const subject=cartaData?.chart_data?.subject||{};
         const coordsRS=await getCoordenadas(extras.ciudadRS,extras.paisRS||'Argentina');
         const tzRS=await getTimezone(coordsRS.lat,coordsRS.lon);
         const nationCodeRS=PAIS_CODIGOS[(extras.paisRS||'Argentina').toLowerCase()]||(extras.paisRS||'AR').toUpperCase().slice(0,2);
         const rsRes=await fetch(`${WORKER_URL}/revolucion-solar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:{name:subject.name,year:subject.year||new Date().getFullYear(),month:subject.month,day:subject.day,hour:subject.hour,minute:subject.minute,longitude:subject.lng,latitude:subject.lat,timezone:subject.tz_str,city:subject.city,nation:subject.nation},year:parseInt(extras.anioRS),return_location:{city:extras.ciudadRS,nation:nationCodeRS,longitude:coordsRS.lon,latitude:coordsRS.lat,timezone:tzRS}})});
         const rsData=await rsRes.json();
-        if(rsData&&!rsData.error){extras.rsData=rsData;mostrarMensaje(successId,'⟳ Interpretando tu revolución solar...');}
+        if(rsData&&!rsData.error){extras.rsData=rsData;actualizarProgreso(producto,'⟳ Interpretando tu revolución solar...');}
       }catch(rsErr){console.warn('Error RS:',rsErr);}
     }
 
     // Sinastría: calcular carta de persona 2
     if(producto==='sinastria'&&extras.nombre2&&extras.fecha2){
       try{
-        mostrarMensaje(successId,'⟳ Calculando la carta de '+extras.nombre2+'...');
+        actualizarProgreso(producto,'⟳ Calculando la carta de '+extras.nombre2+'...');
         const coords2=await getCoordenadas(extras.ciudad2,extras.pais2||'Argentina');
         const tz2=await getTimezone(coords2.lat,coords2.lon);
         const nationCode2=PAIS_CODIGOS[(extras.pais2||'Argentina').toLowerCase()]||(extras.pais2||'AR').toUpperCase().slice(0,2);
@@ -1571,24 +1589,24 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
         const [hour2,minute2]=extras.hora2?extras.hora2.split(':').map(Number):[12,0];
         const carta2Res=await fetch(`${WORKER_URL}/carta`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subject:{name:extras.nombre2,year:year2,month:month2,day:day2,hour:hour2,minute:minute2,longitude:coords2.lon,latitude:coords2.lat,timezone:tz2,city:extras.ciudad2,nation:nationCode2}})});
         const carta2Data=await carta2Res.json();
-        if(carta2Data&&!carta2Data.error){extras.cartaPersona2=carta2Data;mostrarMensaje(successId,'⟳ Interpretando la sinastría...');}
+        if(carta2Data&&!carta2Data.error){extras.cartaPersona2=carta2Data;actualizarProgreso(producto,'⟳ Interpretando la sinastría...');}
       }catch(sin2Err){console.warn('Error carta persona 2:',sin2Err);}
     }
 
     // Tránsitos: calcular tránsitos reales (todos los planetas)
     if(producto==='transitos'){
       try{
-        mostrarMensaje(successId,'⟳ Calculando los tránsitos actuales...');
+        actualizarProgreso(producto,'⟳ Calculando los tránsitos actuales...');
         const transitData = await calcularTransitosActuales(cartaData);
         if(transitData){
           extras.transitosText = buildTransitosText(transitData, null, cartaData);
-          mostrarMensaje(successId,'⟳ Interpretando...');
+          actualizarProgreso(producto,'⟳ Interpretando...');
         }
       }catch(tErr){console.warn('Error tránsitos:',tErr);}
     }
 
     // Generar texto con Claude
-    mostrarMensaje(successId,'⟳ Escribiendo tu lectura...');
+    actualizarProgreso(producto,'⟳ Escribiendo tu lectura...');
     const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
     const textoGenerado = await llamarClaude(prompt);
 
@@ -1810,7 +1828,7 @@ window.addEventListener('load',async ()=>{
             _placeholderCard = document.createElement('div');
             _placeholderCard.className = 'card';
             _placeholderCard.id = `card-lectura-${_producto}`;
-            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><p style="color:#82B366;text-align:center;padding:32px 0;font-size:15px;letter-spacing:0.05em;">✦ Generando tu lectura...</p>`;
+            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${_producto}" class="loader-pago">✦ Generando tu lectura...</p></div>`;
             _container.appendChild(_placeholderCard);
           }
           setTimeout(() => _placeholderCard.scrollIntoView({behavior:'smooth', block:'start'}), 300);

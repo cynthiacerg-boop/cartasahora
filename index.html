@@ -1423,6 +1423,8 @@ async function aplicarPromo(producto) {
     promoToken[producto]=data.token;
     if(successEl){successEl.textContent='✦ Código válido — lectura gratuita desbloqueada';successEl.classList.remove('hidden');}
     if(errorEl)errorEl.classList.add('hidden');
+    const _promoRow=codigoEl.closest('.promo-row');
+    if(_promoRow)_promoRow.style.display='none';
     const _form=codigoEl.closest('.compra-form')||codigoEl.closest('.preguntas-section');
     const btnPaypal=_form?.querySelector('.btn-paypal');
     const btnMP=_form?.querySelector('.btn-mp');
@@ -1676,6 +1678,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba) {
     mostrarMensaje(errorId,'Error de conexión. Intentá de nuevo.');
     if(_btnPP){_btnPP.disabled=false;_btnPP.style.opacity='';}
     if(_btnMP){_btnMP.disabled=false;_btnMP.style.opacity='';}
+    if(esPrueba){const _pr=document.getElementById(`promo-${producto}`)?.closest('.promo-row');if(_pr)_pr.style.display='';}
   }
 }
 

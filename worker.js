@@ -248,6 +248,8 @@ export default {
     if (path === '/interpretar' && request.method === 'POST') {
       try {
         const body = await request.json();
+        // Lectura esencial gratuita → Haiku con tope bajo; pagas/promo → Sonnet con tope mayor
+        const esEsencial = (body.prompt || '').includes('LECTURA ESENCIAL GRATUITA');
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -257,8 +259,8 @@ export default {
             'anthropic-beta': 'prompt-caching-2024-07-31',
           },
           body: JSON.stringify({
-            model: 'claude-sonnet-4-6',
-            max_tokens: 6000,
+            model: esEsencial ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6',
+            max_tokens: esEsencial ? 1500 : 4000,
             system: body.system
               ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
               : undefined,
@@ -301,6 +303,7 @@ export default {
         // Si el frontend ya generó el texto, usarlo directamente
         let texto = body.texto || '';
         if (!texto) {
+          const esEsencial = (lectura || '').includes('LECTURA ESENCIAL GRATUITA');
           const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
             method: 'POST',
             headers: {
@@ -310,8 +313,8 @@ export default {
               'anthropic-beta': 'prompt-caching-2024-07-31',
             },
             body: JSON.stringify({
-              model: 'claude-sonnet-4-6',
-              max_tokens: 6000,
+              model: esEsencial ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6',
+              max_tokens: esEsencial ? 1500 : 4000,
               system: body.system
                 ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
                 : undefined,

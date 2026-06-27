@@ -255,10 +255,28 @@
         </div>
       </div>
 
+      <!-- TEMAS BLOQUEADOS -->
+      <div style="margin-top:22px;">
+        <p style="font-size:13.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px;">Tu carta tiene más capas. Estos temas están en tu informe completo:</p>
+        <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;color:rgba(255,255,255,0.4);">
+          <span>🔒 Tu mente y tu voz</span>
+          <span>🔒 El amor y tus vínculos</span>
+          <span>🔒 Tu fuerza y tu acción</span>
+          <span>🔒 Expansión y abundancia</span>
+          <span>🔒 Estructura y desafío</span>
+          <span>🔒 Patrones dominantes de tu carta</span>
+          <span>🔒 El mapa completo de tus casas</span>
+        </div>
+      </div>
+
+      <!-- PRUEBA SOCIAL -->
+      <p style="text-align:center;font-size:12.5px;color:rgba(255,255,255,0.45);margin:22px 0 10px;">✨ Más de 500 lecturas generadas</p>
+
       <!-- OFERTA INFORME COMPLETO -->
-      <div style="margin-top:22px;padding:20px;background:rgba(138,77,171,0.08);border:1px solid rgba(138,77,171,0.25);border-radius:12px;">
+      <div style="margin-top:0;padding:20px;background:rgba(138,77,171,0.08);border:1px solid rgba(138,77,171,0.25);border-radius:12px;">
+        <p style="font-size:16px;font-weight:600;color:rgba(255,255,255,0.95);margin:0 0 10px;letter-spacing:0.02em;">Tu lectura completa</p>
         <p style="font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.65;margin:0 0 14px;">
-          Esto es solo una parte de tu carta natal. Tu informe completo en PDF incluye el análisis detallado de tu personalidad, vínculos, vocación y los desafíos que marca tu carta — toda la profundidad que estos 3 elementos solo empiezan a mostrar.
+          Análisis en profundidad de 10 áreas de tu vida: tu esencia, tus emociones, tu mente, el amor, tu fuerza, tu expansión, tus desafíos y los patrones que conectan todo. Personalizado a tu fecha, hora y lugar exacto de nacimiento. Resultado inmediato.
         </p>
         <div style="text-align:center;margin-bottom:16px;">
           <span class="producto-precio">$10.000</span>
@@ -266,30 +284,11 @@
         </div>
         <button class="btn-primary" style="margin-top:0;"
           onclick="gtag('event','click_comprar_informe'); pagarConMP('carta-completa', 6, 'error-informe-completo');">
-          Quiero mi informe completo
+          QUIERO MI INFORME COMPLETO
         </button>
         <p id="error-informe-completo" class="error-msg hidden"></p>
       </div>
 
-      <div class="lectura-acciones">
-        <div class="lectura-acciones-btns">
-          <button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('esencial')">✉ Guardá esta lectura gratis en tu mail</button>
-        </div>
-        <div id="email-envio-esencial" class="hidden email-envio-form">
-          <input type="email" id="email-enviar-esencial" placeholder="tu@email.com" />
-          <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
-            <input type="checkbox" id="terms-esencial" style="margin-top:2px;flex-shrink:0;" />
-            <span style="flex:1;">Acepto los <a href="https://espaciolibra.com/terminos" target="_blank" style="color:#82B366;">términos y condiciones</a></span>
-          </label>
-          <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
-            <input type="checkbox" id="marketing-esencial" style="margin-top:2px;flex-shrink:0;" />
-            <span style="flex:1;">Quiero recibir novedades y promociones de Espacio Libra</span>
-          </label>
-          <button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('esencial')">✦ Enviar a mi email</button>
-          <p id="success-email-esencial" class="success-msg hidden"></p>
-          <p id="error-email-esencial" class="error-msg hidden"></p>
-        </div>
-      </div>
     </div>
 
     <div id="section-lecturas-desbloqueadas"></div>
@@ -498,6 +497,28 @@
           <button id="btn-mp-pregunta" class="btn-mp" onclick="pagarConMP('pregunta', 4)">💳 Pagar con MercadoPago</button>
         </div>
         <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="lectura-acciones">
+        <div class="lectura-acciones-btns">
+          <button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('esencial')">✉ Guardá esta lectura gratis en tu mail</button>
+        </div>
+        <div id="email-envio-esencial" class="hidden email-envio-form">
+          <input type="email" id="email-enviar-esencial" placeholder="tu@email.com" />
+          <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
+            <input type="checkbox" id="terms-esencial" style="margin-top:2px;flex-shrink:0;" />
+            <span style="flex:1;">Acepto los <a href="https://espaciolibra.com/terminos" target="_blank" style="color:#82B366;">términos y condiciones</a></span>
+          </label>
+          <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
+            <input type="checkbox" id="marketing-esencial" style="margin-top:2px;flex-shrink:0;" />
+            <span style="flex:1;">Quiero recibir novedades y promociones de Espacio Libra</span>
+          </label>
+          <button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('esencial')">✦ Enviar a mi email</button>
+          <p id="success-email-esencial" class="success-msg hidden"></p>
+          <p id="error-email-esencial" class="error-msg hidden"></p>
+        </div>
       </div>
     </div>
 
@@ -1063,7 +1084,7 @@ Escribí una LECTURA ESENCIAL GRATUITA con exactamente estas tres secciones. Cad
 REGLA DE ASPECTOS (síntoma sin solución): si el Sol o la Luna tienen aspectos en ${textoAspectosSol} / ${textoAspectosLuna}, nombrá el síntoma concreto que eso genera en la vida real de ${nombre} — algo que pueda reconocer como verdadero apenas lo lea (una dificultad puntual, una reacción que se repite, una tensión que siente pero no termina de entender). NO expliques de dónde viene ni qué hacer con eso. Cerrá la mención con una frase que indique que hay una razón exacta en su carta y que vale la pena mirarla de cerca. Si el aspecto es fluido (lo que técnicamente sería trígono o sextil), mencionalo más liviano, como un don natural, sin necesidad de profundizar.
 No uses nunca las palabras "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto".
 
-TONO PREDICTIVO: cada sección cierra con una frase corta sobre hacia dónde tiende esa energía a futuro, sin fecha específica. Variá la forma de decirlo entre secciones.
+TONO PREDICTIVO: cada sección cierra con 1-2 frases que conecten la tensión natal descrita con algo que la persona puede estar sintiendo ahora o que está por moverse en su vida. No predecir hechos concretos ni dar fechas. Usar frases como "esa tensión tiene una explicación exacta en tu carta", "hay algo que se está por mover ahí", "tu informe completo desarrolla esto en profundidad". Que funcione como gancho emocional, no como predicción. Que la persona lea eso y sienta que necesita saber más.
 
 **Tu esencia solar**
 Hablá de tu Sol en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que estás aprendiendo a ser en esta vida, no algo que ya tenés completamente desarrollado. Describí la llama auténtica que venís a encender: cómo se expresa tu identidad cuando estás siendo genuino/a, qué necesitás para sentirte vivo/a. Incluí una tensión o paradoja real de este Sol. 150 a 200 palabras.${textoAspectosSol} Aplicá la regla de aspectos. No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.

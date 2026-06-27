@@ -1860,7 +1860,7 @@ window.addEventListener('load',async ()=>{
 
         const verificar = async () => {
           let intentos = 0;
-          while(intentos < 10){
+          while(intentos < 20){
             try{
               const vRes = await fetch(`${WORKER_URL}/verificar-pago?session_id=${sessionId}`);
               const vData = await vRes.json();
@@ -1893,6 +1893,11 @@ window.addEventListener('load',async ()=>{
               'value': Number(pendienteData.precio) || 1.0,
               'currency': 'USD',
               'transaction_id': sessionId
+            });
+            gtag('event', 'purchase', {
+              value: Number(pendienteData.precio) || 1.0,
+              currency: 'ARS',
+              transaction_id: sessionId
             });
             localStorage.removeItem('pendiente');
             await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false);

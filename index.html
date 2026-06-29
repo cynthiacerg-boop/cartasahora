@@ -1732,6 +1732,12 @@ async function enviarPorMail(producto) {
     const data=await res.json();
     if(data.ok){
       if(successEl)successEl.textContent=`✦ ¡Enviado a ${email}! Revisá tu bandeja de entrada.`;
+      // Limpiar el formulario y bloquear el botón para evitar reenvíos
+      const _emailInput=document.getElementById(`email-enviar-${producto}`);if(_emailInput)_emailInput.value='';
+      const _terms=document.getElementById(`terms-${producto}`);if(_terms)_terms.checked=false;
+      const _marketing=document.getElementById(`marketing-${producto}`);if(_marketing)_marketing.checked=false;
+      const _btnEnviar=document.getElementById(`email-envio-${producto}`)?.querySelector('.btn-primary');
+      if(_btnEnviar){_btnEnviar.disabled=true;_btnEnviar.style.opacity='0.4';_btnEnviar.style.cursor='default';_btnEnviar.textContent='✓ Enviado';}
       // Guardar lead (fire-and-forget)
       fetch(`${WORKER_URL}/guardar-lead`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,nombre:ctx.nombre,acepta_marketing:aceptaMarketing})}).catch(()=>{});
     }

@@ -125,8 +125,26 @@
     .email-envio-form { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; width: 100%; box-sizing: border-box; overflow: hidden; }
     .hidden { display: none !important; }
     .chart-wheel-container { display: flex; justify-content: center; padding: 20px 0 10px; }
-    #chart-wheel { max-width: 560px; width: 100%; }
+    #chart-wheel { max-width: 560px; width: 100%;
+      /* Recoloreo del grafico de la API (Kerykeion define todos los colores como variables CSS) */
+      /* Aspectos */
+      --kerykeion-chart-color-opposition:#dc0000;   /* oposicion: rojo (como cuadratura) */
+      --kerykeion-chart-color-square:#dc0000;        /* cuadratura: rojo */
+      --kerykeion-chart-color-trine:#4d9de0;         /* trigono: azul claro */
+      --kerykeion-chart-color-sextile:#4d9de0;       /* sextil: azul claro */
+      --kerykeion-chart-color-quincunx:#33a02c;      /* quincuncio: verde */
+      /* Glifos de signos por elemento (icon n: n%4 => 0 fuego, 1 tierra, 2 aire, 3 agua) */
+      --kerykeion-chart-color-zodiac-icon-0:#e06a5a; --kerykeion-chart-color-zodiac-icon-4:#e06a5a; --kerykeion-chart-color-zodiac-icon-8:#e06a5a;   /* fuego: rojo suave */
+      --kerykeion-chart-color-zodiac-icon-1:#7fb37f; --kerykeion-chart-color-zodiac-icon-5:#7fb37f; --kerykeion-chart-color-zodiac-icon-9:#7fb37f;   /* tierra: verde suave */
+      --kerykeion-chart-color-zodiac-icon-2:#f0a830; --kerykeion-chart-color-zodiac-icon-6:#f0a830; --kerykeion-chart-color-zodiac-icon-10:#f0a830; /* aire: amarillo-naranja */
+      --kerykeion-chart-color-zodiac-icon-3:#5ab4e0; --kerykeion-chart-color-zodiac-icon-7:#5ab4e0; --kerykeion-chart-color-zodiac-icon-11:#5ab4e0; /* agua: azul-celeste */
+      /* Banda del zodiaco en gris para que resalten los glifos coloreados */
+      --kerykeion-chart-color-zodiac-bg-0:#cfcfcf;--kerykeion-chart-color-zodiac-bg-1:#bcbcbc;--kerykeion-chart-color-zodiac-bg-2:#cfcfcf;--kerykeion-chart-color-zodiac-bg-3:#bcbcbc;--kerykeion-chart-color-zodiac-bg-4:#cfcfcf;--kerykeion-chart-color-zodiac-bg-5:#bcbcbc;--kerykeion-chart-color-zodiac-bg-6:#cfcfcf;--kerykeion-chart-color-zodiac-bg-7:#bcbcbc;--kerykeion-chart-color-zodiac-bg-8:#cfcfcf;--kerykeion-chart-color-zodiac-bg-9:#bcbcbc;--kerykeion-chart-color-zodiac-bg-10:#cfcfcf;--kerykeion-chart-color-zodiac-bg-11:#bcbcbc;
+    }
     #chart-wheel svg { width: 100%; height: auto; display: block; }
+    /* Circulo interior donde van los planetas -> gris */
+    #chart-wheel svg circle[r='204'] { fill:#e2e2e2 !important; fill-opacity:1 !important; }
+    #chart-wheel svg circle[r='120'] { fill:#f2f2f2 !important; fill-opacity:1 !important; }
     .aspect-legend { display: flex; gap: 20px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.4); }
     .legend-line { width: 20px; height: 2px; border-radius: 1px; }

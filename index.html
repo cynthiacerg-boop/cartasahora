@@ -125,7 +125,8 @@
     .email-envio-form { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; width: 100%; box-sizing: border-box; overflow: hidden; }
     .hidden { display: none !important; }
     .chart-wheel-container { display: flex; justify-content: center; padding: 20px 0 10px; }
-    #chart-wheel { max-width: 380px; width: 100%; filter: drop-shadow(0 0 20px rgba(130,179,102,0.15)); }
+    #chart-wheel { max-width: 560px; width: 100%; }
+    #chart-wheel svg { width: 100%; height: auto; display: block; }
     .aspect-legend { display: flex; gap: 20px; justify-content: center; margin-top: 12px; flex-wrap: wrap; }
     .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: rgba(255,255,255,0.4); }
     .legend-line { width: 20px; height: 2px; border-radius: 1px; }
@@ -219,7 +220,7 @@
     <div class="card">
       <div class="section-title">Tu carta natal</div>
       <div class="chart-wheel-container">
-        <svg id="chart-wheel" viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="chart-wheel"></div>
       </div>
       <div class="aspect-legend">
         <div class="legend-item"><div class="legend-line" style="background:#82B366;"></div>Trígono</div>
@@ -689,14 +690,14 @@ function cacheKey(prefix, fecha, hora, ciudad) {
 }
 
 async function obtenerCartaNatal(fecha, hora, lat, lon, timezone, nombre, ciudad, pais) {
-  const key = cacheKey('cartaNatal', fecha, hora, ciudad);
+  const key = cacheKey('cartaNatalV2', fecha, hora, ciudad);
   const cached = localStorage.getItem(key);
   if (cached) { try { return JSON.parse(cached); } catch(e) {} }
 
   const [year, month, day] = fecha.split('-').map(Number);
   const [hour, minute] = hora ? hora.split(':').map(Number) : [12, 0];
   const nationCode = PAIS_CODIGOS[pais.toLowerCase()] || pais.toUpperCase().slice(0,2);
-  const body = {subject: {name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode}};
+  const body = {subject: {name: nombre, year, month, day, hour, minute, longitude: lon, latitude: lat, timezone, city: ciudad, nation: nationCode}, theme: 'light', language: 'ES'};
   const res = await fetch(`${WORKER_URL}/carta`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body)});
   if (!res.ok) throw new Error('Error al calcular la carta. Verificá los datos e intentá de nuevo.');
   const data = await res.json();
@@ -847,8 +848,23 @@ async function llamarClaude(prompt) {
 
 function createSVGEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
 
-function renderRueda(chartData) {
-  const svg = document.getElementById('chart-wheel');
+// Muestra el gráfico oficial que devuelve la Astrologer API (SVG ya renderizado, theme claro
+// + idioma español). Si la API no devolviera el SVG, cae a la rueda propia como respaldo.
+function renderCartaNatal(chartData) {
+  const cont = document.getElementById('chart-wheel');
+  if (!cont) return;
+  if (chartData && chartData.chart) {
+    cont.innerHTML = chartData.chart;
+    const svgEl = cont.querySelector('svg');
+    if (svgEl) { svgEl.removeAttribute('width'); svgEl.removeAttribute('height'); }
+    return;
+  }
+  cont.innerHTML = '<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg"></svg>';
+  renderRueda(chartData, cont.querySelector('svg'));
+}
+
+function renderRueda(chartData, svgEl) {
+  const svg = svgEl || document.getElementById('chart-wheel');
   svg.innerHTML = '';
   const cx = 250, cy = 250, R_OUTER = 230, R_SIGN = 210, R_SIGN_IN = 175, R_HOUSE = 160, R_PLANET = 130, R_CENTER = 35;
   const signs = ['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
@@ -1790,7 +1806,7 @@ async function calcularCarta() {
     setLoaderText('calculando posiciones planetarias...');
     const chartData=await obtenerCartaNatal(fecha,hora,coords.lat,coords.lon,timezone,nombre,ciudad,pais);
     cartaData=chartData;
-    renderRueda(chartData); renderPlanetas(chartData); renderAspectos(chartData);
+    renderCartaNatal(chartData); renderPlanetas(chartData); renderAspectos(chartData);
     ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell');
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
       const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');

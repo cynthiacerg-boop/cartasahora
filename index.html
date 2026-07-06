@@ -1874,8 +1874,22 @@ window.addEventListener('load',async ()=>{
   }
   if(params.get('lectura')==='ok'){
     // Soporta PayPal (order_id o token), MercadoPago (payment_id) y legacy Stripe (session_id)
-    const sessionId = params.get('order_id') || params.get('token') || params.get('payment_id') || params.get('session_id');
-    const pendienteData = JSON.parse(localStorage.getItem('pendiente')||'null');
+    const sessionId = params.get('order_id') || params.get('token') || params.get('payment_id') || params.get('collection_id') || params.get('session_id');
+    let pendienteData = JSON.parse(localStorage.getItem('pendiente')||'null');
+    // Respaldo: si se perdió el localStorage (el cliente volvió en otra pestaña/app o más tarde),
+    // reconstruir los datos desde los parámetros de la URL, que el retorno del pago ya trae.
+    if(!(pendienteData && pendienteData.fecha && pendienteData.ciudad)){
+      const _u = {
+        producto: params.get('producto')||'',
+        nombre:   params.get('nombre')||'',
+        fecha:    params.get('fecha')||'',
+        hora:     params.get('hora')||'',
+        ciudad:   params.get('ciudad')||'',
+        pais:     params.get('pais')||'Argentina',
+        extras: {}, precio: 0
+      };
+      if(_u.producto && _u.fecha && _u.ciudad) pendienteData = _u;
+    }
     if(pendienteData && pendienteData.fecha && pendienteData.ciudad){
       document.getElementById('nombre').value = pendienteData.nombre||'';
       document.getElementById('fecha').value = pendienteData.fecha||'';

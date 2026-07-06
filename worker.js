@@ -1,3 +1,10 @@
+// ── Escapar texto que se inserta en HTML de emails (evita inyección) ──
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
 // ── Notificación interna de compra (una sola vez por pago) ──
 const NOMBRES_PRODUCTO = {
   'pregunta':         'Pregunta Puntual',
@@ -28,12 +35,12 @@ async function notificarCompraInterna(env, pagoId, datos) {
 <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
   <h2 style="color:#8A4DAB;margin:0 0 16px;">💫 Nueva compra confirmada</h2>
   <table style="width:100%;border-collapse:collapse;font-size:15px;">
-    <tr><td style="padding:8px 0;color:#888;width:140px;">Producto</td><td style="padding:8px 0;font-weight:bold;">${prodNombre}</td></tr>
-    <tr><td style="padding:8px 0;color:#888;">Consultante</td><td style="padding:8px 0;">${nombre}</td></tr>
-    <tr><td style="padding:8px 0;color:#888;">Email</td><td style="padding:8px 0;">${datos.email || '—'}</td></tr>
-    <tr><td style="padding:8px 0;color:#888;">Monto</td><td style="padding:8px 0;">${montoTxt}</td></tr>
-    <tr><td style="padding:8px 0;color:#888;">Pasarela</td><td style="padding:8px 0;">${datos.pasarela || '—'}</td></tr>
-    <tr><td style="padding:8px 0;color:#888;">Datos de nacimiento</td><td style="padding:8px 0;">${datos.fecha || '—'} ${datos.hora || ''} · ${datos.ciudad || '—'}, ${datos.pais || '—'}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;width:140px;">Producto</td><td style="padding:8px 0;font-weight:bold;">${esc(prodNombre)}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Consultante</td><td style="padding:8px 0;">${esc(nombre)}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Email</td><td style="padding:8px 0;">${esc(datos.email || '—')}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Monto</td><td style="padding:8px 0;">${esc(montoTxt)}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Pasarela</td><td style="padding:8px 0;">${esc(datos.pasarela || '—')}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Datos de nacimiento</td><td style="padding:8px 0;">${esc(datos.fecha || '—')} ${esc(datos.hora || '')} · ${esc(datos.ciudad || '—')}, ${esc(datos.pais || '—')}</td></tr>
     <tr><td style="padding:8px 0;color:#888;">Fecha y hora</td><td style="padding:8px 0;">${cuandoAR} (ARG)</td></tr>
   </table>
 </div>`;
@@ -86,7 +93,7 @@ async function procesarSeguimientos(env) {
 async function enviarSeguimientoOferta(env, lead) {
   try {
     const nombre = (lead.nombre || '').trim();
-    const saludo = nombre ? `Hola ${nombre}` : 'Hola';
+    const saludo = nombre ? `Hola ${esc(nombre)}` : 'Hola';
     const link = 'https://cartasahora.espaciolibra.com/?nombre=' + encodeURIComponent(nombre);
     const html = `
 <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
@@ -120,6 +127,59 @@ async function enviarSeguimientoOferta(env, lead) {
     console.warn('Error seguimiento oferta:', e.message);
     return false;
   }
+}
+
+// ── Verificar que un webhook de PayPal es auténtico (firma válida) ──
+// Sin esto, cualquiera puede POSTear un evento falso "pago completado".
+// Requiere el secreto PAYPAL_WEBHOOK_ID (ID del webhook en el panel de PayPal).
+async function paypalWebhookVerificado(request, env, event) {
+  try {
+    if (!env.PAYPAL_WEBHOOK_ID) return false; // sin webhook id no se puede verificar → rechazar
+    const tokenRes = await fetch('https://api-m.paypal.com/v1/oauth2/token', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Basic ' + btoa(`${env.PAYPAL_CLIENT_ID}:${env.PAYPAL_CLIENT_SECRET}`),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: 'grant_type=client_credentials',
+    });
+    if (!tokenRes.ok) return false;
+    const { access_token } = await tokenRes.json();
+
+    const verifyRes = await fetch('https://api-m.paypal.com/v1/notifications/verify-webhook-signature', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        auth_algo:         request.headers.get('paypal-auth-algo'),
+        cert_url:          request.headers.get('paypal-cert-url'),
+        transmission_id:   request.headers.get('paypal-transmission-id'),
+        transmission_sig:  request.headers.get('paypal-transmission-sig'),
+        transmission_time: request.headers.get('paypal-transmission-time'),
+        webhook_id:        env.PAYPAL_WEBHOOK_ID,
+        webhook_event:     event,
+      }),
+    });
+    if (!verifyRes.ok) return false;
+    const v = await verifyRes.json();
+    return v.verification_status === 'SUCCESS';
+  } catch (e) {
+    console.warn('Error verificando webhook PayPal:', e.message);
+    return false;
+  }
+}
+
+// Autoriza una lectura paga verificando SERVER-SIDE: token de promo (un solo uso)
+// o un pago confirmado guardado en PAGOS_KV (pago:<id>). Nunca confía en el cliente.
+async function pagoAutorizado(env, pagoId, promoToken) {
+  if (promoToken) {
+    const tok = await env.PAGOS_KV.get(`promo-token:${promoToken}`);
+    if (tok) return true;
+  }
+  if (pagoId) {
+    const pago = await env.PAGOS_KV.get(`pago:${pagoId}`, 'json');
+    if (pago?.confirmado) return true;
+  }
+  return false;
 }
 
 export default {
@@ -250,6 +310,12 @@ export default {
         const body = await request.json();
         // Lectura esencial gratuita → Haiku con tope bajo; pagas/promo → Sonnet con tope mayor
         const esEsencial = (body.prompt || '').includes('LECTURA ESENCIAL GRATUITA');
+        // Gateo de pago: las lecturas pagas (Sonnet) exigen prueba de pago server-side.
+        // La esencial gratuita (Haiku) queda libre.
+        if (!esEsencial) {
+          const autorizado = await pagoAutorizado(env, body.pagoId, body.promoToken);
+          if (!autorizado) return json({ error: 'Pago no verificado' }, 403);
+        }
         const res = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
           headers: {
@@ -280,14 +346,18 @@ export default {
         const body = await request.json();
         const { email, nombre, producto, lectura, promoToken, fecha, hora, ciudad, pais } = body;
 
-        // Validar autorización: token de promo (un solo uso) o pago confirmado
+        // Validar autorización SERVER-SIDE: token de promo (un solo uso) o pago
+        // confirmado en PAGOS_KV. No se confía en body.pagado (lo manda el cliente).
         let esPrueba = false;
         if (promoToken) {
           const tok = await env.PAGOS_KV.get(`promo-token:${promoToken}`);
           if (tok) esPrueba = true; // válido 1h; el límite mensual se aplica al validar
         }
-        if (!esPrueba && !body.pagado) {
-          return json({ error: 'Pago no confirmado' }, 403);
+        if (!esPrueba) {
+          const pago = body.pagoId ? await env.PAGOS_KV.get(`pago:${body.pagoId}`, 'json') : null;
+          if (!pago?.confirmado) {
+            return json({ error: 'Pago no confirmado' }, 403);
+          }
         }
 
         // Tope diario de envíos por IP (anti-spam SendGrid)
@@ -343,9 +413,9 @@ export default {
             .map(linea => {
               if (!linea.trim()) return '<br>';
               if (linea.startsWith('**') && linea.endsWith('**')) {
-                return `<h2 style="color:#82B366;font-family:Georgia,serif;font-size:18px;margin:24px 0 8px;border-bottom:1px solid rgba(130,179,102,0.3);padding-bottom:6px;">${linea.replace(/\*\*/g, '')}</h2>`;
+                return `<h2 style="color:#82B366;font-family:Georgia,serif;font-size:18px;margin:24px 0 8px;border-bottom:1px solid rgba(130,179,102,0.3);padding-bottom:6px;">${esc(linea).replace(/\*\*/g, '')}</h2>`;
               }
-              return `<p style="margin:0 0 12px;line-height:1.8;color:#3a3a3a;">${linea.replace(/\*\*/g, '')}</p>`;
+              return `<p style="margin:0 0 12px;line-height:1.8;color:#3a3a3a;">${esc(linea).replace(/\*\*/g, '')}</p>`;
             })
             .join('');
 
@@ -358,11 +428,11 @@ export default {
     <div style="background:#0a0a12;padding:40px 32px;text-align:center;">
       <p style="font-family:Georgia,serif;font-size:11px;letter-spacing:0.3em;color:#82B366;text-transform:uppercase;margin:0 0 12px;">Espacio Libra</p>
       <h1 style="font-family:Georgia,serif;font-size:28px;font-weight:300;color:#f0ede8;margin:0 0 8px;">${prod.nombre}</h1>
-      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin:0;">Lectura personal para ${nombre}</p>
+      <p style="font-size:13px;color:rgba(255,255,255,0.4);margin:0;">Lectura personal para ${esc(nombre)}</p>
     </div>
     <div style="padding:32px;border-bottom:1px solid #e8e4de;">
       <p style="font-size:15px;color:#5a5a5a;line-height:1.7;margin:0;">
-        Hola <strong>${nombre}</strong>, tu lectura astrológica está lista.
+        Hola <strong>${esc(nombre)}</strong>, tu lectura astrológica está lista.
         Tomate el tiempo que necesites para leerla — está hecha especialmente para vos.
       </p>
     </div>
@@ -568,6 +638,17 @@ export default {
     if (path === '/webhook-paypal' && request.method === 'POST') {
       try {
         const event = await request.json();
+
+        // Rechazar eventos no verificados: respondemos 200 para que PayPal no reintente,
+        // pero NO procesamos ni marcamos ningún pago como confirmado.
+        const autentico = await paypalWebhookVerificado(request, env, event);
+        if (!autentico) {
+          console.warn('Webhook PayPal rechazado: firma no verificada');
+          return new Response(JSON.stringify({ received: true }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
 
         if (event.event_type === 'PAYMENT.CAPTURE.COMPLETED') {
           const resource = event.resource;
@@ -781,9 +862,9 @@ export default {
 
     // ── RUTA: Listar leads (protegida) ──
     if (path === '/listar-leads' && request.method === 'GET') {
+      // Solo por header Authorization: nunca por query param (las URLs quedan en logs/historial).
       const authHeader = request.headers.get('Authorization') || '';
-      const querySecret = url.searchParams.get('secret') || '';
-      if (authHeader !== `Bearer ${env.ADMIN_SECRET}` && querySecret !== env.ADMIN_SECRET) return json({ error: 'No autorizado' }, 401);
+      if (!env.ADMIN_SECRET || authHeader !== `Bearer ${env.ADMIN_SECRET}`) return json({ error: 'No autorizado' }, 401);
       try {
         const list = await env.LEADS_KV.list({ prefix: 'lead:' });
         const leads = await Promise.all(

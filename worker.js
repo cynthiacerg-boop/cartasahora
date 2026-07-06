@@ -353,7 +353,10 @@ export default {
           const tok = await env.PAGOS_KV.get(`promo-token:${promoToken}`);
           if (tok) esPrueba = true; // válido 1h; el límite mensual se aplica al validar
         }
-        if (!esPrueba) {
+        // La lectura esencial GRATIS (texto ya generado) se envía sin pago.
+        // Se exige body.texto para no permitir generar contenido pago gratis por esta vía.
+        const esEsencialGratis = producto === 'esencial' && !!body.texto;
+        if (!esPrueba && !esEsencialGratis) {
           const pago = body.pagoId ? await env.PAGOS_KV.get(`pago:${body.pagoId}`, 'json') : null;
           if (!pago?.confirmado) {
             return json({ error: 'Pago no confirmado' }, 403);
@@ -398,6 +401,7 @@ export default {
         // Si hay email, mandar por SendGrid
         if (email) {
           const productos = {
+            'esencial': { nombre: 'Lectura Esencial Gratuita', precio: '' },
             'carta-completa': { nombre: 'Carta Natal Completa', precio: '$6 USD' },
             'revolucion-solar': { nombre: 'Revolución Solar', precio: '$9 USD' },
             'sinastria': { nombre: 'Sinastría — Compatibilidad de Pareja', precio: '$9 USD' },

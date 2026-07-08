@@ -1916,12 +1916,12 @@ window.addEventListener('load',async ()=>{
             try{
               const vRes = await fetch(`${WORKER_URL}/verificar-pago?session_id=${sessionId}`);
               const vData = await vRes.json();
-              if(vData.confirmado) return true;
+              if(vData.confirmado) return vData;
             } catch(e){}
             await new Promise(r => setTimeout(r, 2000));
             intentos++;
           }
-          return false;
+          return null;
         };
         calcularCarta().then(async () => {
           // Mostrar placeholder con indicador de carga y hacer scroll inmediato
@@ -1940,6 +1940,17 @@ window.addEventListener('load',async ()=>{
 
           const confirmado = await verificar();
           if(confirmado){
+            // Monto y moneda reales cobrados, confirmados server-side por el webhook de MP.
+            const montoReal = Number(confirmado.monto) || Number(pendienteData.precio) || undefined;
+            const monedaReal = confirmado.moneda || 'ARS';
+            // Conversión Google Ads (Mercado Pago): solo tras confirmación 'approved' server-side,
+            // con el monto real cobrado y el payment_id de MP como transaction_id (deduplica ventas).
+            gtag('event', 'conversion', {
+              'send_to': 'AW-18034331388/dUUpCJPI0MwcEPyduJdD',
+              'value': montoReal,
+              'currency': monedaReal,
+              'transaction_id': sessionId
+            });
             gtag('event', 'conversion', {
               'send_to': 'AW-18034331388/lnx6CL6P4qEcEPyduJdD',
               'value': Number(pendienteData.precio) || 1.0,

@@ -362,7 +362,7 @@
           <p class="success-msg hidden" id="success-carta-completa"></p>
           <input type="email" id="email-pago-carta-completa" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
-            <button id="btn-paypal-carta-completa" class="btn-paypal" onclick="pagarConPaypal('carta-completa', 6)">🅿 Pagar con PayPal · USD 6</button>
+            <button id="btn-paypal-carta-completa" class="btn-paypal" onclick="pagarConPaypal('carta-completa', 6)">🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD 6</button>
             <button id="btn-mp-carta-completa" class="btn-mp" onclick="pagarConMP('carta-completa', 6)">💳 Pagar con MercadoPago</button>
           </div>
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
@@ -390,7 +390,7 @@
           <p class="success-msg hidden" id="success-lectura-profunda"></p>
           <input type="email" id="email-pago-lectura-profunda" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
-            <button id="btn-paypal-lectura-profunda" class="btn-paypal" onclick="pagarConPaypal('lectura-profunda', 13)">🅿 Pagar con PayPal · USD 13</button>
+            <button id="btn-paypal-lectura-profunda" class="btn-paypal" onclick="pagarConPaypal('lectura-profunda', 13)">🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD 13</button>
             <button id="btn-mp-lectura-profunda" class="btn-mp" onclick="pagarConMP('lectura-profunda', 13)">💳 Pagar con MercadoPago</button>
           </div>
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
@@ -431,7 +431,7 @@
           <p class="success-msg hidden" id="success-revolucion-solar"></p>
           <input type="email" id="email-pago-revolucion-solar" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
-            <button id="btn-paypal-revolucion-solar" class="btn-paypal" onclick="pagarConPaypal('revolucion-solar', 9)">🅿 Pagar con PayPal · USD 9</button>
+            <button id="btn-paypal-revolucion-solar" class="btn-paypal" onclick="pagarConPaypal('revolucion-solar', 9)">🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD 9</button>
             <button id="btn-mp-revolucion-solar" class="btn-mp" onclick="pagarConMP('revolucion-solar', 9)">💳 Pagar con MercadoPago</button>
           </div>
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
@@ -478,7 +478,7 @@
           <p class="success-msg hidden" id="success-sinastria"></p>
           <input type="email" id="email-pago-sinastria" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
-            <button id="btn-paypal-sinastria" class="btn-paypal" onclick="pagarConPaypal('sinastria', 9)">🅿 Pagar con PayPal · USD 9</button>
+            <button id="btn-paypal-sinastria" class="btn-paypal" onclick="pagarConPaypal('sinastria', 9)">🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD 9</button>
             <button id="btn-mp-sinastria" class="btn-mp" onclick="pagarConMP('sinastria', 9)">💳 Pagar con MercadoPago</button>
           </div>
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
@@ -505,7 +505,7 @@
           <p class="success-msg hidden" id="success-transitos"></p>
           <input type="email" id="email-pago-transitos" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:4px;" />
           <div class="pago-btns">
-            <button id="btn-paypal-transitos" class="btn-paypal" onclick="pagarConPaypal('transitos', 5)">🅿 Pagar con PayPal · USD 5</button>
+            <button id="btn-paypal-transitos" class="btn-paypal" onclick="pagarConPaypal('transitos', 5)">🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD 5</button>
             <button id="btn-mp-transitos" class="btn-mp" onclick="pagarConMP('transitos', 5)">💳 Pagar con MercadoPago</button>
           </div>
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
@@ -531,7 +531,7 @@
         <p class="success-msg hidden" id="success-pregunta"></p>
         <input type="email" id="email-pago-pregunta" placeholder="Tu email (opcional — para recibir la lectura)" style="margin-top:10px;" />
         <div class="pago-btns" style="margin-top:10px;">
-          <button id="btn-paypal-pregunta" class="btn-paypal" onclick="pagarConPaypal('pregunta', 4)">🅿 Pagar con PayPal · USD 4</button>
+          <button id="btn-paypal-pregunta" class="btn-paypal" onclick="pagarConPaypal('pregunta', 4)">🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD 4</button>
           <button id="btn-mp-pregunta" class="btn-mp" onclick="pagarConMP('pregunta', 4)">💳 Pagar con MercadoPago</button>
         </div>
         <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
@@ -1570,14 +1570,14 @@ async function pagarConPaypal(producto, precio) {
     const data = await res.json();
     if (!data.url) {
       mostrarMensaje(errorId, data.error || 'Error al iniciar el pago con PayPal.');
-      if (btn) { btn.disabled = false; btn.textContent = '🅿 Pagar con PayPal · USD ' + precio; }
+      if (btn) { btn.disabled = false; btn.textContent = '🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio; }
       if (btnMP) btnMP.disabled = false;
       return;
     }
     window.location.href = data.url;
   } catch(e) {
     mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
-    if (btn) { btn.disabled = false; btn.textContent = '🅿 Pagar con PayPal · USD ' + precio; }
+    if (btn) { btn.disabled = false; btn.textContent = '🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio; }
     if (btnMP) btnMP.disabled = false;
   }
 }

@@ -787,6 +787,8 @@ export default {
                 ciudad:     meta.ciudad    || '',
                 pais:       meta.pais      || '',
                 pasarela:   'mercadopago',
+                monto:      payment.transaction_amount || 0,
+                moneda:     payment.currency_id || 'ARS',
                 timestamp:  Date.now(),
               }),
               { expirationTtl: 86400 }
@@ -843,7 +845,7 @@ export default {
       if (!sessionId) return json({ confirmado: false, error: 'Falta session_id' }, 400);
       const data = await env.PAGOS_KV.get(`pago:${sessionId}`, 'json');
       if (data?.confirmado) {
-        return json({ confirmado: true });
+        return json({ confirmado: true, monto: data.monto || 0, moneda: data.moneda || '' });
       }
       return json({ confirmado: false });
     }

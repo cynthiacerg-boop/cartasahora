@@ -1,3 +1,16 @@
 files.zip
 files_temp/
 node-v24.16.0-x64.msi
+
+# Estado local de wrangler (puede contener datos/config sensibles)
+.wrangler/
+
+# Exportaciones de leads / PII de clientes — NUNCA subir al repo público
+*.csv
+leads_carta_natal.csv
+
+# Backups viejos de código (pueden contener keys de versiones anteriores)
+Worker.ant.js
+index.anterio.html.txt
+*.bak
+*.old

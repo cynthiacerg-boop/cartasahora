@@ -1384,7 +1384,7 @@ Acciones concretas y decisiones que favorece este cielo. Sin vaguedades.`;
   }
 
   // ── PREGUNTA PUNTUAL ──
-  // Cada pregunta tiene su propio prompt específico + tránsitos filtrados por relevancia
+  // Cada pregunta tiene su propio prompt específico (solo carta natal, sin tránsitos)
   if (producto === 'pregunta') {
     const preguntaId = extras?.preguntaId || 'amor-comprometerse';
     return buildPromptPregunta(preguntaId, nombre, base);
@@ -1437,9 +1437,11 @@ LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura"
 
 Quirón y el Nodo Sur/Norte, si aparecen relevantes, se usan para personalizar pero nunca se nombran explícitamente.
 
-Respondé en 2 párrafos cortos, 150-200 palabras en total:
-1. Nombrá el patrón con calidez, sin culpa, y la razón de fondo que lo genera
-2. Qué es probable que siga pasando si esto no cambia, y qué señal concreta indicaría que la situación empieza a destrabarse
+Respondé en 4 párrafos, 320-400 palabras en total, sin subtítulos (un solo título general al inicio):
+1. Nombrá el patrón con calidez, sin culpa, y la razón de fondo que lo genera, según lo que muestra tu carta.
+2. Qué es probable que siga pasando en tu vida si esto no cambia.
+3. ACCIÓN CONCRETA: cómo podés empezar a ejecutar en la vida real lo que preguntaste. Pasos o decisiones concretas y accionables — qué hacer, por dónde empezar, qué evitar —, orientados a vos en particular según tu carta. Nada de consejos genéricos ni de autoayuda.
+4. Qué señal concreta indicaría que la situación empieza a destrabarse. Cerrá con UNA sola línea breve que insinúe, con calidez y sin sonar a publicidad, que tu carta tiene respuesta para otras preguntas que te estés haciendo sobre tu amor o tu dinero, invitándote a seguir explorando.
 
 Un solo título al inicio entre dobles asteriscos, breve y directo. Tono cálido, cercano, directo, sin solemnidad ni lenguaje de autoayuda.`;
 }

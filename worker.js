@@ -185,10 +185,16 @@ async function pagoAutorizado(env, pagoId, promoToken) {
 export default {
   async fetch(request, env) {
 
-    const ALLOWED_ORIGIN = 'https://cartasahora.espaciolibra.com';
+    // Producción + localhost para testear el sitio local contra el worker real
+    const ALLOWED_ORIGINS = [
+      'https://cartasahora.espaciolibra.com',
+      'http://localhost:8099',
+      'http://127.0.0.1:8099',
+    ];
     const origin = request.headers.get('Origin') || '';
+    const allowOrigin = ALLOWED_ORIGINS.includes(origin) ? origin : '';
     const corsHeaders = {
-      'Access-Control-Allow-Origin': origin === ALLOWED_ORIGIN ? ALLOWED_ORIGIN : '',
+      'Access-Control-Allow-Origin': allowOrigin,
       'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     };
@@ -406,7 +412,7 @@ export default {
             'revolucion-solar': { nombre: 'Revolución Solar', precio: '$9 USD' },
             'sinastria': { nombre: 'Sinastría — Compatibilidad de Pareja', precio: '$9 USD' },
             'transitos': { nombre: 'Tránsitos Actuales', precio: '$5 USD' },
-            'pregunta': { nombre: 'Pregunta Puntual', precio: '$2 USD' },
+            'pregunta': { nombre: 'Pregunta Puntual', precio: '$4 USD' },
             'lectura-profunda': { nombre: 'Lectura Profunda · Análisis Completo', precio: '$13 USD' },
           };
 
@@ -700,7 +706,7 @@ export default {
         const { producto, nombre, email, fecha, hora, ciudad, pais } = body;
 
         const PRECIOS_MP = {
-          'pregunta':         { monto:  7000, titulo: 'Pregunta Puntual' },
+          'pregunta':         { monto:  6500, titulo: 'Pregunta Puntual' },
           'transitos':        { monto:  8500, titulo: 'Tránsitos Actuales' },
           'carta-completa':   { monto: 10000, titulo: 'Carta Natal Completa' },
           'proposito-vida':   { monto: 10000, titulo: 'Propósito de Vida' },

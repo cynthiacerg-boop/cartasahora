@@ -750,6 +750,15 @@ export default {
               pending: 'https://cartasahora.espaciolibra.com/?pago=pendiente',
             },
             auto_return: 'approved',
+            // Solo pagos instantáneos: sin efectivo/offline y sin estado "pending".
+            // Los pagos en efectivo no vuelven al sitio y el cliente queda sin lectura.
+            binary_mode: true,
+            payment_methods: {
+              excluded_payment_types: [
+                { id: 'ticket' }, // efectivo (Rapipago, Pago Fácil)
+                { id: 'atm' },    // pago en cajero / transferencia offline
+              ],
+            },
             notification_url: 'https://cartasahora-proxy.cynthiacerg.workers.dev/webhook-mp',
           }),
         });

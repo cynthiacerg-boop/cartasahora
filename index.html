@@ -50,7 +50,12 @@
     .r4 { inset: 35px; background: #82B366; box-shadow: 0 0 12px rgba(130,179,102,0.6); }
     @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     .loader p { font-family: 'Playfair Display', serif; font-size: 15px; letter-spacing: 0.1em; color: #82B366; opacity: 0.8; font-style: italic; }
-    .loader p.loader-pago { font-size: 18px; }
+    .loader p.loader-pago { font-size: 24px; color: #A5D96F; opacity: 1; font-weight: 600; text-shadow: 0 0 14px rgba(130,179,102,0.5); animation: pulseCarta 1.4s ease-in-out infinite; }
+    @keyframes pulseCarta { 0%, 100% { opacity: 0.5; transform: scale(1); } 50% { opacity: 1; transform: scale(1.06); } }
+    .pago-aviso { margin: 20px auto 0; max-width: 460px; background: linear-gradient(135deg, rgba(130,179,102,0.16), rgba(138,77,171,0.10)); border: 1px solid rgba(130,179,102,0.45); border-radius: 12px; padding: 14px 18px; text-align: center; }
+    .pago-aviso .aviso-ok { font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.15em; color: #A5D96F; text-transform: uppercase; margin: 0 0 6px; font-style: normal; }
+    .pago-aviso .aviso-txt { font-family: 'Montserrat', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.85); line-height: 1.6; margin: 0; font-style: normal; letter-spacing: 0; }
+    .pago-aviso strong { color: #fff; }
     .section-title { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.25em; color: #82B366; text-transform: uppercase; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
     .section-title::after { content: ''; flex: 1; height: 1px; background: rgba(130,179,102,0.2); }
     .planets-table { width: 100%; border-collapse: collapse; }
@@ -1387,7 +1392,13 @@ Acciones concretas y decisiones que favorece este cielo. Sin vaguedades.`;
   // Cada pregunta tiene su propio prompt específico (solo carta natal, sin tránsitos)
   if (producto === 'pregunta') {
     const preguntaId = extras?.preguntaId || 'amor-comprometerse';
-    return buildPromptPregunta(preguntaId, nombre, base);
+    // Lista COMPLETA de aspectos natales (sin el tope de 12) para que el modelo
+    // pueda rastrear TODO lo que se conecta con la pregunta dentro de la carta.
+    const aspectosCompletos = (aspects||[])
+      .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect||a.aspect_type||a.type))
+      .map(a=>`${_nombreAspEs(a.p1_name)} ${ASPECT_ES[a.aspect||a.aspect_type||a.type]||''} ${_nombreAspEs(a.p2_name)} (orbe ${Math.abs(a.orbit||0).toFixed(1)})`)
+      .join(', ');
+    return buildPromptPregunta(preguntaId, nombre, base, aspectosCompletos);
   }
 
   // ── LECTURA PROFUNDA ──
@@ -1422,26 +1433,31 @@ Cerrá con una frase potente y personal, hablándole directamente a ${nombre} de
 }
 
 // ── PROMPTS ESPECÍFICOS POR PREGUNTA ──
-function buildPromptPregunta(preguntaId, nombre, base) {
+function buildPromptPregunta(preguntaId, nombre, base, aspectosCompletos) {
   const q = PREGUNTAS_PUNTUALES[preguntaId] || PREGUNTAS_PUNTUALES['amor-comprometerse'];
 
   return `${base}
+Aspectos completos de tu carta: ${aspectosCompletos||'sin aspectos relevantes'}
 
 CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. NUNCA uses tercera persona.
 
 Respondé la pregunta: "${q.texto}"
 
-Analizá prioritariamente: ${q.analiza}
+RASTREO COMPLETO: antes de escribir, revisá TODA la carta —cada planeta en su signo y casa, el Ascendente, y todos los aspectos listados arriba— y detectá cada elemento que tenga relación con lo que se pregunta. No te limites a los factores de la guía de prioridad: sumá todo lo demás de la carta que apunte al mismo tema, aunque sea secundario.
+
+Guía de prioridad (empezá por acá, pero no te quedes solo con esto): ${q.analiza}
 
 LENGUAJE: prohibido usar términos técnicos astrológicos. Nada de "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecta". Describí siempre el efecto concreto en la vida real.
 
 Quirón y el Nodo Sur/Norte, si aparecen relevantes, se usan para personalizar pero nunca se nombran explícitamente.
 
-Respondé en 4 párrafos, 320-400 palabras en total, sin subtítulos (un solo título general al inicio):
-1. Nombrá el patrón con calidez, sin culpa, y la razón de fondo que lo genera, según lo que muestra tu carta.
-2. Qué es probable que siga pasando en tu vida si esto no cambia.
-3. ACCIÓN CONCRETA: cómo podés empezar a ejecutar en la vida real lo que preguntaste. Pasos o decisiones concretas y accionables — qué hacer, por dónde empezar, qué evitar —, orientados a vos en particular según tu carta. Nada de consejos genéricos ni de autoayuda.
-4. Qué señal concreta indicaría que la situación empieza a destrabarse. Cerrá con UNA sola línea breve que insinúe, con calidez y sin sonar a publicidad, que tu carta tiene respuesta para otras preguntas que te estés haciendo sobre tu amor o tu dinero, invitándote a seguir explorando.
+Respondé en 6 párrafos, 480-620 palabras en total, sin subtítulos (un solo título general al inicio):
+1. Nombrá el patrón con calidez, sin culpa: qué trae realmente esta pregunta y qué muestra tu carta como raíz de fondo.
+2. LO QUE CONFIRMA TU CARTA: mostrá cómo varios puntos distintos de la carta apuntan al mismo patrón — no un solo factor, sino todo lo que se conecta con la pregunta. Que se note que está leído desde tu carta entera.
+3. Cómo se manifiesta ese patrón en tu vida concreta: las situaciones reales que genera.
+4. Qué es probable que siga pasando en tu vida si esto no cambia.
+5. ACCIÓN CONCRETA: cómo podés empezar a ejecutar en la vida real lo que preguntaste. Pasos o decisiones concretas y accionables — qué hacer, por dónde empezar, qué evitar —, orientados a vos según tu carta. Nada de consejos genéricos ni de autoayuda.
+6. Qué señal concreta indicaría que la situación empieza a destrabarse. Cerrá con UNA sola línea breve que insinúe, con calidez y sin sonar a publicidad, que tu carta tiene respuesta para otras preguntas que te estés haciendo sobre tu amor o tu dinero, invitándote a seguir explorando.
 
 Un solo título al inicio entre dobles asteriscos, breve y directo. Tono cálido, cercano, directo, sin solemnidad ni lenguaje de autoayuda.`;
 }
@@ -1628,8 +1644,22 @@ function actualizarProgreso(producto, texto){
   mostrarMensaje('success-'+producto, texto);
 }
 
+// ── Aviso de "no te vayas" mientras se genera la lectura ──
+// Mientras _generandoLectura sea true, si intentan cerrar/volver el navegador
+// muestra una confirmación. Ojo: los navegadores modernos ignoran el texto
+// custom y muestran su propio mensaje genérico — el texto de abajo es respaldo.
+let _generandoLectura = false;
+window.addEventListener('beforeunload', function(e){
+  if(_generandoLectura){
+    e.preventDefault();
+    e.returnValue = '¿Seguro te querés ir? Se corta el proceso y se pierde la lectura que se está generando.';
+    return e.returnValue;
+  }
+});
+
 // ── GENERAR Y ENVIAR LECTURA ──
 async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId) {
+  _generandoLectura = true;
   const errorId=`error-${producto}`,successId=`success-${producto}`;
   const _btnPP=document.getElementById(`btn-paypal-${producto}`);
   const _btnMP=document.getElementById(`btn-mp-${producto}`);
@@ -1691,7 +1721,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     }
 
     // Generar texto con Claude
-    actualizarProgreso(producto,'⟳ Escribiendo tu lectura...');
+    actualizarProgreso(producto,'✦ Escribiendo tu carta...');
     const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
     const textoGenerado = await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'');
 
@@ -1734,6 +1764,9 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     if(_btnPP){_btnPP.disabled=false;_btnPP.style.opacity='';}
     if(_btnMP){_btnMP.disabled=false;_btnMP.style.opacity='';}
     if(esPrueba){const _pr=document.getElementById(`promo-${producto}`)?.closest('.promo-row');if(_pr)_pr.style.display='';}
+  }finally{
+    // La generación terminó (éxito, error o corte): ya no hace falta avisar al salir.
+    _generandoLectura = false;
   }
 }
 
@@ -1935,7 +1968,7 @@ window.addEventListener('load',async ()=>{
             _placeholderCard = document.createElement('div');
             _placeholderCard.className = 'card';
             _placeholderCard.id = `card-lectura-${_producto}`;
-            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${_producto}" class="loader-pago">✦ Generando tu lectura...</p></div>`;
+            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${_producto}" class="loader-pago">✦ Escribiendo tu carta...</p></div><div class="pago-aviso"><p class="aviso-ok">✓ Pago confirmado</p><p class="aviso-txt">Estamos escribiendo tu carta. Puede tardar hasta <strong>1 o 2 minutos</strong>.<br><strong>No cierres esta página ni vuelvas atrás</strong> — se está generando en este preciso momento.</p></div>`;
             _container.appendChild(_placeholderCard);
           }
           setTimeout(() => _placeholderCard.scrollIntoView({behavior:'smooth', block:'start'}), 300);

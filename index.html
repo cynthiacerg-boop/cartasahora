@@ -1790,6 +1790,27 @@ function guardarLead(email, aceptaMarketing){
     body:JSON.stringify({ email, nombre, acepta_marketing:!!aceptaMarketing, nacimiento, cartaNatal })}).catch(()=>{});
 }
 
+// ── CAPTURA DE LEADS (paso 2) ──
+// Guarda el lead cuando alguien escribe su email en un formulario de pago o de
+// guardado y sale del campo, aunque NO complete la compra. Delegado en captura
+// (blur no burbujea) para cubrir también los campos creados dinámicamente.
+let _ultimoLeadGuardado = '';
+document.addEventListener('blur', function(e){
+  const el = e.target;
+  if(!el || el.tagName!=='INPUT' || el.type!=='email') return;
+  const id = el.id || '';
+  if(!(id.startsWith('email-pago-') || id.startsWith('email-enviar-'))) return;
+  const email = (el.value||'').trim().toLowerCase();
+  if(!email || !email.includes('@')) return;
+  if(email === _ultimoLeadGuardado) return;            // evitar reenvíos del mismo
+  if(typeof cartaData==='undefined' || !cartaData) return; // solo si ya hay carta
+  // Consentimiento de marketing: usar el checkbox cercano si existe (si no, false)
+  const cont = el.closest('.email-envio-form') || el.closest('.compra-form') || el.closest('.preguntas-section') || el.parentElement;
+  const mkChk = cont ? cont.querySelector('input[id^="marketing-"]') : null;
+  _ultimoLeadGuardado = email;
+  guardarLead(email, mkChk ? mkChk.checked : false);
+}, true);
+
 // ── ENVIAR POR MAIL ──
 async function enviarPorMail(producto) {
   const email=document.getElementById(`email-enviar-${producto}`)?.value?.trim();

@@ -94,7 +94,11 @@ async function enviarSeguimientoOferta(env, lead) {
   try {
     const nombre = (lead.nombre || '').trim();
     const saludo = nombre ? `Hola ${esc(nombre)}` : 'Hola';
-    const link = 'https://cartasahora.espaciolibra.com/?nombre=' + encodeURIComponent(nombre);
+    // Si el lead tiene token (carta guardada), el link precarga todo y va directo
+    // a Tránsitos. Si es un lead viejo sin token, cae al comportamiento anterior.
+    const link = lead.token
+      ? 'https://cartasahora.espaciolibra.com/?lead=' + encodeURIComponent(lead.token)
+      : 'https://cartasahora.espaciolibra.com/?nombre=' + encodeURIComponent(nombre);
     const html = `
 <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
   <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra · Astrología Evolutiva</p>
@@ -894,6 +898,27 @@ export default {
         // Puntero token -> email para buscar el lead por token en el retorno del mail
         await env.LEADS_KV.put(`lead-token:${token}`, email.toLowerCase().trim(), ttl);
         return json({ ok: true, token });
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+
+    // ── RUTA: Obtener lead por token (retorno del mail ?lead=) ──
+    // El token es aleatorio e inadivinable, por eso puede devolver los datos.
+    if (path === '/lead' && request.method === 'GET') {
+      try {
+        const token = url.searchParams.get('token');
+        if (!token) return json({ error: 'Falta token' }, 400);
+        const email = await env.LEADS_KV.get(`lead-token:${token}`);
+        if (!email) return json({ error: 'no encontrado' }, 404);
+        let lead = {};
+        try { lead = JSON.parse(await env.LEADS_KV.get(`lead:${email}`)) || {}; } catch {}
+        return json({
+          nombre: lead.nombre || '',
+          email: lead.email || email,
+          nacimiento: lead.nacimiento || null,
+          cartaNatal: lead.cartaNatal || null,
+        });
       } catch (e) {
         return json({ error: e.message }, 500);
       }

@@ -1934,9 +1934,37 @@ function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
 function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;preguntaSeleccionada=null;const prov=document.getElementById('provincia');if(prov)prov.value='';window.history.replaceState({},'',window.location.pathname);}
 
+// ── RETORNO DEL MAIL (?lead=token): precargar la carta guardada e ir a Tránsitos ──
+// Reusa la carta natal ya calculada (no re-gasta /carta) y lleva directo a la
+// tarjeta de Tránsitos con el email precargado. Si el lead es viejo (sin carta)
+// o el token no existe, no hace nada y queda el formulario normal.
+async function cargarDesdeLead(token){
+  try{
+    const r = await fetch(`${WORKER_URL}/lead?token=${encodeURIComponent(token)}`);
+    if(!r.ok) return;
+    const d = await r.json();
+    if(!d || !d.cartaNatal || !d.cartaNatal.subject) return;
+    cartaData = { chart_data: d.cartaNatal };            // carta ya calculada, sin re-gastar
+    const nac = d.nacimiento || {};
+    if(d.nombre){ const el=document.getElementById('nombre'); if(el) el.value=d.nombre; }
+    if(nac.fecha){ const el=document.getElementById('fecha'); if(el) el.value=nac.fecha; }
+    if(nac.hora) setHora(nac.hora);
+    if(nac.ciudad){ const el=document.getElementById('ciudad'); if(el) el.value=nac.ciudad; }
+    if(nac.pais){ const el=document.getElementById('pais'); if(el) el.value=nac.pais; }
+    ocultar('section-form');
+    mostrar('section-upsell');
+    const emailInput=document.getElementById('email-pago-transitos');
+    if(emailInput && d.email) emailInput.value=d.email;
+    mostrarMensaje('success-transitos','✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.');
+    setTimeout(()=>{document.getElementById('form-transitos')?.scrollIntoView({behavior:'smooth',block:'center'});},350);
+    window.history.replaceState({},'',window.location.pathname); // limpiar el token de la URL
+  }catch(e){ /* fallback silencioso: queda el formulario normal */ }
+}
+
 window.addEventListener('load',async ()=>{
   const params=new URLSearchParams(window.location.search);
   if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
+  if(params.get('lead')){ await cargarDesdeLead(params.get('lead')); }
   if(params.get('upgrade')==='lectura-profunda'){
     mostrar('upgrade-banner');
     const _upgNombre=params.get('nombre')||'';const _upgFecha=params.get('fecha')||'';const _upgHora=params.get('hora')||'';const _upgCiudad=params.get('ciudad')||'';const _upgPais=params.get('pais')||'Argentina';

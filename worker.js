@@ -866,16 +866,34 @@ export default {
     }
 
     // ── RUTA: Guardar lead ──
+    // Guarda/fusiona el lead. Opcionalmente incluye los datos de nacimiento y la
+    // carta natal ya calculada (posiciones, sin el SVG) para poder recalcular
+    // tránsitos sin re-gastar. Emite un token random estable para el flujo ?lead=.
     if (path === '/guardar-lead' && request.method === 'POST') {
       try {
-        const { email, nombre, acepta_marketing } = await request.json();
+        const { email, nombre, acepta_marketing, nacimiento, cartaNatal } = await request.json();
         if (!email || !email.includes('@')) return json({ error: 'Email inválido' }, 400);
-        await env.LEADS_KV.put(
-          `lead:${email.toLowerCase().trim()}`,
-          JSON.stringify({ email, nombre: nombre || '', acepta_marketing: !!acepta_marketing, timestamp: Date.now(), seguimiento_enviado: false }),
-          { expirationTtl: 60 * 60 * 24 * 365 * 2 } // 2 años
-        );
-        return json({ ok: true });
+        const key = `lead:${email.toLowerCase().trim()}`;
+        // Fusionar con lo que ya haya guardado para no pisar datos previos
+        let prev = {};
+        try { prev = JSON.parse(await env.LEADS_KV.get(key)) || {}; } catch {}
+        const token = prev.token || crypto.randomUUID(); // estable por lead
+        const lead = {
+          ...prev,
+          email,
+          nombre: nombre || prev.nombre || '',
+          acepta_marketing: !!acepta_marketing || !!prev.acepta_marketing,
+          token,
+          nacimiento: (nacimiento && nacimiento.fecha) ? nacimiento : prev.nacimiento,
+          cartaNatal: (cartaNatal && cartaNatal.subject) ? cartaNatal : prev.cartaNatal,
+          timestamp: prev.timestamp || Date.now(),            // no reiniciar el reloj del seguimiento
+          seguimiento_enviado: prev.seguimiento_enviado || false,
+        };
+        const ttl = { expirationTtl: 60 * 60 * 24 * 365 * 2 }; // 2 años
+        await env.LEADS_KV.put(key, JSON.stringify(lead), ttl);
+        // Puntero token -> email para buscar el lead por token en el retorno del mail
+        await env.LEADS_KV.put(`lead-token:${token}`, email.toLowerCase().trim(), ttl);
+        return json({ ok: true, token });
       } catch (e) {
         return json({ error: e.message }, 500);
       }

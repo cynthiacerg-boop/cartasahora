@@ -111,7 +111,12 @@ async function enviarSeguimientoOferta(env, lead) {
   <p style="text-align:center;margin:0 0 28px;">
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">Quiero mi informe completo</a>
   </p>
-  <p style="font-size:12px;color:#999;border-top:1px solid #eee;padding-top:16px;margin-top:24px;">
+  <p style="text-align:center;border-top:1px solid #eee;padding-top:18px;margin:24px 0 0;">
+    <a href="https://cynthialibra.substack.com/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Mis notas en Substack</a> ·
+    <a href="https://www.instagram.com/cynthiacerg/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Instagram</a> ·
+    <a href="https://www.facebook.com/espaciolibra.astro" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Facebook</a>
+  </p>
+  <p style="font-size:12px;color:#999;padding-top:12px;margin-top:12px;">
     Recibís este mail porque pediste tu carta natal en Espacio Libra y aceptaste recibir novedades. Si no querés recibir más, respondé este mail con la palabra <strong>BAJA</strong>.
   </p>
 </div>`;
@@ -459,7 +464,13 @@ export default {
       <a href="https://cartasahora.espaciolibra.com?upgrade=lectura-profunda&nombre=${encodeURIComponent(nombre||'')}&fecha=${encodeURIComponent(fecha||'')}&hora=${encodeURIComponent(hora||'')}&ciudad=${encodeURIComponent(ciudad||'')}&pais=${encodeURIComponent(pais||'Argentina')}" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">✦ Quiero mi lectura profunda · USD 7</a>
       <p style="font-size:11px;color:#aaa;margin:12px 0 0;">Pago seguro vía PayPal · Entrega en menos de 5 min</p>
     </div>` : ''}
-    <div style="padding:24px 32px;text-align:center;background:#0a0a12;">
+    <div style="padding:28px 32px;text-align:center;background:#0a0a12;">
+      <p style="font-size:13px;color:rgba(255,255,255,0.65);margin:0 0 12px;font-family:Georgia,serif;">Seguime y no te pierdas nada ✦</p>
+      <p style="margin:0 0 16px;">
+        <a href="https://cynthialibra.substack.com/" style="color:#82B366;text-decoration:none;font-size:13px;margin:0 10px;">Mis notas en Substack</a>
+        <a href="https://www.instagram.com/cynthiacerg/" style="color:#82B366;text-decoration:none;font-size:13px;margin:0 10px;">Instagram</a>
+        <a href="https://www.facebook.com/espaciolibra.astro" style="color:#82B366;text-decoration:none;font-size:13px;margin:0 10px;">Facebook</a>
+      </p>
       <p style="font-size:10px;letter-spacing:0.2em;color:rgba(255,255,255,0.2);margin:0;">
         ESPACIO LIBRA · ASTROLOGÍA EVOLUTIVA · cartasahora.espaciolibra.com
       </p>

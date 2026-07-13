@@ -1811,6 +1811,27 @@ document.addEventListener('blur', function(e){
   guardarLead(email, mkChk ? mkChk.checked : false);
 }, true);
 
+// ── Check de novedades (opcional) en los formularios de pago ──
+// Permite que los leads capturados desde el pago den consentimiento y así reciban
+// el mail de seguimiento con el link ?lead=. Id distinto (marketing-pago-*) para
+// NO chocar con los checks marketing-* de las tarjetas de lectura.
+document.querySelectorAll('input[id^="email-pago-"]').forEach(function(inp){
+  const prod = inp.id.replace('email-pago-','');
+  if(document.getElementById('marketing-pago-'+prod)) return;
+  const label = document.createElement('label');
+  label.style.cssText = 'display:grid;grid-template-columns:16px 1fr;gap:8px;width:100%;box-sizing:border-box;font-size:12px;color:rgba(255,255,255,0.75);cursor:pointer;line-height:1.4;margin-top:10px;text-align:left;text-transform:none;letter-spacing:normal;font-weight:400;';
+  label.innerHTML = '<input type="checkbox" id="marketing-pago-'+prod+'" style="margin-top:2px;flex-shrink:0;" /><span style="text-transform:none;letter-spacing:normal;">Quiero recibir novedades y el clima astrológico semanal (opcional)</span>';
+  inp.insertAdjacentElement('afterend', label);
+  // Si tildan el check y ya hay email + carta, guardar el lead con consentimiento
+  label.querySelector('input').addEventListener('change', function(){
+    const email = (inp.value||'').trim();
+    if(email && email.includes('@') && typeof cartaData!=='undefined' && cartaData){
+      _ultimoLeadGuardado = email.toLowerCase();
+      guardarLead(email, this.checked);
+    }
+  });
+});
+
 // ── ENVIAR POR MAIL ──
 async function enviarPorMail(producto) {
   const email=document.getElementById(`email-enviar-${producto}`)?.value?.trim();

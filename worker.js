@@ -90,6 +90,30 @@ async function procesarSeguimientos(env) {
   console.log(`Seguimientos enviados: ${enviados}`);
 }
 
+// ── Última nota de Substack (para el pie de los mails), cacheada 3hs ──
+function _limpiarCDATA(s){ return (s||'').replace('<![CDATA[','').replace(']]>','').trim(); }
+async function obtenerUltimaNotaSubstack(env){
+  try{
+    const cached = await env.PAGOS_KV.get('substack-ultima-nota');
+    if(cached) return JSON.parse(cached);
+    const res = await fetch('https://cynthialibra.substack.com/feed', { headers: { 'User-Agent': 'EspacioLibra/1.0 (+cartasahora.espaciolibra.com)' } });
+    if(!res.ok) return null;
+    const xml = await res.text();
+    const itemMatch = xml.match(/<item[\s\S]*?<\/item>/);
+    if(!itemMatch) return null;
+    const item = itemMatch[0];
+    const tm = item.match(/<title[^>]*>([\s\S]*?)<\/title>/);
+    const lm = item.match(/<link[^>]*>([\s\S]*?)<\/link>/);
+    let titulo = tm ? _limpiarCDATA(tm[1]) : '';
+    const link = lm ? _limpiarCDATA(lm[1]) : '';
+    if(!titulo || !link) return null;
+    if(titulo.length > 85) titulo = titulo.slice(0, 82).trim() + '…'; // acortar para el pie
+    const nota = { titulo, link };
+    await env.PAGOS_KV.put('substack-ultima-nota', JSON.stringify(nota), { expirationTtl: 60 * 60 * 3 });
+    return nota;
+  }catch(e){ console.warn('Error RSS Substack:', e.message); return null; }
+}
+
 async function enviarSeguimientoOferta(env, lead) {
   try {
     const nombre = (lead.nombre || '').trim();
@@ -99,6 +123,7 @@ async function enviarSeguimientoOferta(env, lead) {
     const link = lead.token
       ? 'https://cartasahora.espaciolibra.com/?lead=' + encodeURIComponent(lead.token)
       : 'https://cartasahora.espaciolibra.com/?nombre=' + encodeURIComponent(nombre);
+    const ultimaNota = await obtenerUltimaNotaSubstack(env);
     const html = `
 <div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
   <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra · Astrología Evolutiva</p>
@@ -111,7 +136,8 @@ async function enviarSeguimientoOferta(env, lead) {
   <p style="text-align:center;margin:0 0 28px;">
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">Quiero mi informe completo</a>
   </p>
-  <p style="text-align:center;border-top:1px solid #eee;padding-top:18px;margin:24px 0 0;">
+  ${ultimaNota ? `<p style="text-align:center;border-top:1px solid #eee;padding-top:18px;margin:24px 0 0;font-size:13px;color:#777;">📖 Mi última nota: <a href="${ultimaNota.link}" style="color:#8A4DAB;text-decoration:none;">${esc(ultimaNota.titulo)}</a></p>` : ''}
+  <p style="text-align:center;${ultimaNota ? '' : 'border-top:1px solid #eee;'}padding-top:14px;margin:14px 0 0;">
     <a href="https://cynthialibra.substack.com/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Mis notas en Substack</a> ·
     <a href="https://www.instagram.com/cynthiacerg/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Instagram</a> ·
     <a href="https://www.facebook.com/espaciolibra.astro" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Facebook</a>
@@ -438,6 +464,7 @@ export default {
             })
             .join('');
 
+          const ultimaNota = await obtenerUltimaNotaSubstack(env);
           const emailHtml = `
 <!DOCTYPE html>
 <html>
@@ -465,6 +492,7 @@ export default {
       <p style="font-size:11px;color:#aaa;margin:12px 0 0;">Pago seguro vía PayPal · Entrega en menos de 5 min</p>
     </div>` : ''}
     <div style="padding:28px 32px;text-align:center;background:#0a0a12;">
+      ${ultimaNota ? `<p style="margin:0 0 18px;font-family:Georgia,serif;"><span style="font-size:12px;color:rgba(255,255,255,0.45);">📖 Mi última nota:</span> <a href="${ultimaNota.link}" style="color:#A5D96F;text-decoration:none;font-size:13px;">${esc(ultimaNota.titulo)}</a></p>` : ''}
       <p style="font-size:13px;color:rgba(255,255,255,0.65);margin:0 0 12px;font-family:Georgia,serif;">Seguime y no te pierdas nada ✦</p>
       <p style="margin:0 0 16px;">
         <a href="https://cynthialibra.substack.com/" style="color:#82B366;text-decoration:none;font-size:13px;margin:0 10px;">Mis notas en Substack</a>

@@ -74,6 +74,15 @@ async function procesarSeguimientos(env) {
   let enviados = 0;
   for (const k of list.keys) {
     if (enviados >= 50) break; // tope de seguridad por corrida
+    // Filtrar por METADATA (viene gratis en el list) para no gastar una lectura
+    // por cada lead ya-enviado en cada corrida. Solo leemos el valor completo de
+    // los candidatos reales. Los leads viejos sin metadata caen al get (compat).
+    const md = k.metadata;
+    if (md) {
+      if (md.mkt !== true) continue;                                 // sin consentimiento
+      if (md.done === true) continue;                                 // ya se le envió
+      if (!md.ts || (ahora - md.ts) < SEGUIMIENTO_DELAY_MS) continue; // menos de 2hs
+    }
     let lead;
     try { lead = JSON.parse(await env.LEADS_KV.get(k.name)); } catch { continue; }
     if (!lead) continue;
@@ -83,7 +92,10 @@ async function procesarSeguimientos(env) {
     const ok = await enviarSeguimientoOferta(env, lead);
     if (ok) {
       lead.seguimiento_enviado = true;
-      await env.LEADS_KV.put(k.name, JSON.stringify(lead), { expirationTtl: 60 * 60 * 24 * 365 * 2 });
+      await env.LEADS_KV.put(k.name, JSON.stringify(lead), {
+        expirationTtl: 60 * 60 * 24 * 365 * 2,
+        metadata: { ts: lead.timestamp, mkt: lead.acepta_marketing === true, done: true },
+      });
       enviados++;
     }
   }
@@ -933,7 +945,11 @@ export default {
           seguimiento_enviado: prev.seguimiento_enviado || false,
         };
         const ttl = { expirationTtl: 60 * 60 * 24 * 365 * 2 }; // 2 años
-        await env.LEADS_KV.put(key, JSON.stringify(lead), ttl);
+        // Metadata para que el cron de seguimiento filtre sin leer el valor.
+        await env.LEADS_KV.put(key, JSON.stringify(lead), {
+          ...ttl,
+          metadata: { ts: lead.timestamp, mkt: lead.acepta_marketing === true, done: lead.seguimiento_enviado === true },
+        });
         // Puntero token -> email para buscar el lead por token en el retorno del mail
         await env.LEADS_KV.put(`lead-token:${token}`, email.toLowerCase().trim(), ttl);
         return json({ ok: true, token });

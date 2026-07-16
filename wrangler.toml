@@ -16,4 +16,6 @@ binding = "LEADS_KV"
 id = "c3f4a718ac1649f5abac888b3485fed9"
 
 [triggers]
-crons = ["*/15 * * * *"]
+# Cada hora alcanza para un seguimiento que sale ~2hs después del lead.
+# (Antes era */15: 96 corridas/día multiplicaban las lecturas de KV.)
+crons = ["0 * * * *"]

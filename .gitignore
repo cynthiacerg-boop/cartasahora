@@ -9,6 +9,9 @@ node-v24.16.0-x64.msi
 *.csv
 leads_carta_natal.csv
 
+# Config local de Claude Code (preferencias de esta máquina, no del proyecto)
+.claude/
+
 # Backups viejos de código (pueden contener keys de versiones anteriores)
 Worker.ant.js
 index.anterio.html.txt

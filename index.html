@@ -609,7 +609,9 @@ let preguntaSeleccionada = null;
 
 const PRODUCT_NOMBRES = {
   'carta-completa':'Carta Natal Completa',
+  'proposito-vida':'Propósito de Vida',
   'revolucion-solar':'Revolución Solar',
+  'revolucion-lunar':'Revolución Lunar',
   'sinastria':'Sinastría',
   'transitos':'Tránsitos Actuales',
   'pregunta':'Pregunta Puntual',
@@ -1665,6 +1667,11 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
   const _btnMP=document.getElementById(`btn-mp-${producto}`);
   if(_btnPP){_btnPP.disabled=true;_btnPP.style.opacity='0.4';}
   if(_btnMP){_btnMP.disabled=true;_btnMP.style.opacity='0.4';}
+  // Recarga de la successUrl: si esta compra ya generó su lectura, se reusa el texto guardado
+  // en vez de volver a llamar a la API. Mismo patrón que la esencial gratuita.
+  // Solo aplica a compras (hay pagoId); las lecturas con código promo no se cachean.
+  const _cacheKey = pagoId ? `lectura_pagada_${pagoId}` : '';
+  const _textoCache = _cacheKey ? localStorage.getItem(_cacheKey) : null;
   // Camino A (código promo): si todavía no hay placeholder con loader orbital, crearlo y hacer scroll.
   // Camino B (pago) ya lo insertó antes de llamar a esta función → se reusa, no se duplica.
   if(!document.getElementById(`loader-text-${producto}`)){
@@ -1680,7 +1687,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     let chartDataParaPrompt=cartaData;
 
     // Revolución Solar: calcular carta RS
-    if(producto==='revolucion-solar'&&extras.anioRS){
+    if(!_textoCache && producto==='revolucion-solar'&&extras.anioRS){
       try{
         actualizarProgreso(producto,'⟳ Calculando tu revolución solar...');
         const subject=cartaData?.chart_data?.subject||{};
@@ -1694,7 +1701,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     }
 
     // Sinastría: calcular carta de persona 2
-    if(producto==='sinastria'&&extras.nombre2&&extras.fecha2){
+    if(!_textoCache && producto==='sinastria'&&extras.nombre2&&extras.fecha2){
       try{
         actualizarProgreso(producto,'⟳ Calculando la carta de '+extras.nombre2+'...');
         const coords2=await getCoordenadas(extras.ciudad2,extras.pais2||'Argentina');
@@ -1709,7 +1716,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     }
 
     // Tránsitos: calcular tránsitos reales (todos los planetas)
-    if(producto==='transitos'){
+    if(!_textoCache && producto==='transitos'){
       try{
         actualizarProgreso(producto,'⟳ Calculando los tránsitos actuales...');
         const transitData = await calcularTransitosActuales(cartaData);
@@ -1720,15 +1727,18 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
       }catch(tErr){console.warn('Error tránsitos:',tErr);}
     }
 
-    // Generar texto con Claude
-    actualizarProgreso(producto,'✦ Escribiendo tu carta...');
-    const prompt=buildPrompt(producto,nombre,chartDataParaPrompt,extras);
-    const textoGenerado = await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'');
+    // Generar texto con Claude, salvo que esta compra ya lo tenga cacheado de una visita previa.
+    if(!_textoCache) actualizarProgreso(producto,'✦ Escribiendo tu carta...');
+    const prompt = _textoCache ? '' : buildPrompt(producto,nombre,chartDataParaPrompt,extras);
+    const textoGenerado = _textoCache || await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'');
 
     if(!textoGenerado||!textoGenerado.trim()){
       mostrarMensaje(errorId,'No se pudo generar la lectura. Intentá de nuevo.');
       return;
     }
+    // Recién acá: solo se cachea lo que se generó bien. Si la generación se cortó a la mitad,
+    // no queda nada guardado y la recarga la vuelve a intentar.
+    if(_cacheKey && !_textoCache){ try{ localStorage.setItem(_cacheKey, textoGenerado); }catch(e){} }
 
     // Mostrar en pantalla
     const _fecha=document.getElementById('fecha')?.value||'';
@@ -2068,25 +2078,40 @@ window.addEventListener('load',async ()=>{
             // Monto y moneda reales cobrados, confirmados server-side por el webhook de MP.
             const montoReal = Number(confirmado.monto) || Number(pendienteData.precio) || undefined;
             const monedaReal = confirmado.moneda || 'ARS';
-            // Conversión Google Ads (Mercado Pago): solo tras confirmación 'approved' server-side,
-            // con el monto real cobrado y el payment_id de MP como transaction_id (deduplica ventas).
-            gtag('event', 'conversion', {
-              'send_to': 'AW-18034331388/dUUpCJPI0MwcEPyduJdD',
-              'value': montoReal,
-              'currency': monedaReal,
-              'transaction_id': sessionId
-            });
-            gtag('event', 'conversion', {
-              'send_to': 'AW-18034331388/lnx6CL6P4qEcEPyduJdD',
-              'value': Number(pendienteData.precio) || 1.0,
-              'currency': 'USD',
-              'transaction_id': sessionId
-            });
-            gtag('event', 'purchase', {
-              value: Number(pendienteData.precio) || 1.0,
-              currency: 'ARS',
-              transaction_id: sessionId
-            });
+            // La successUrl es revisitable y el pago sigue confirmado en KV 24h: sin este flag,
+            // cada recarga volvía a disparar la venta con el mismo payment_id.
+            const _flagCompra = `purchase_sent_${sessionId}`;
+            if(!localStorage.getItem(_flagCompra)){
+              // Conversión Google Ads (Mercado Pago): solo tras confirmación 'approved' server-side,
+              // con el monto real cobrado y el payment_id de MP como transaction_id (deduplica ventas).
+              gtag('event', 'conversion', {
+                'send_to': 'AW-18034331388/dUUpCJPI0MwcEPyduJdD',
+                'value': montoReal,
+                'currency': monedaReal,
+                'transaction_id': sessionId
+              });
+              // Desactivada 2026-07-17: acción 'Compra' (lnx6) eliminada de Ads, se mantiene solo dUUp.
+              // gtag('event', 'conversion', {
+              //   'send_to': 'AW-18034331388/lnx6CL6P4qEcEPyduJdD',
+              //   'value': Number(pendienteData.precio) || 1.0,
+              //   'currency': 'USD',
+              //   'transaction_id': sessionId
+              // });
+              // send_to explícito: sin él, gtag emite el purchase también al tag de Ads.
+              gtag('event', 'purchase', {
+                send_to: 'G-639MKD7LWG',
+                value: montoReal,
+                currency: monedaReal,
+                transaction_id: sessionId,
+                items: [{
+                  item_id: _producto,
+                  item_name: _prodNombre,
+                  price: montoReal,
+                  quantity: 1
+                }]
+              });
+              localStorage.setItem(_flagCompra, '1');
+            }
             localStorage.removeItem('pendiente');
             await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false, sessionId);
           } else {

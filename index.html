@@ -861,10 +861,16 @@ function buildTransitosText(transitData, filtro, cartaNatal) {
   return texto;
 }
 
+// Se pone en true si la última generación se cortó por llegar al tope de tokens.
+// El texto igual se muestra, pero no se cachea ni se da por bueno.
+let _lecturaCortada = false;
+
 async function llamarClaude(prompt, pagoId, promoTok) {
+  _lecturaCortada = false;
   const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||''})});
   if (!res.ok) throw new Error('Error al obtener la interpretación.');
   const data = await res.json();
+  if (data.stop_reason === 'max_tokens') _lecturaCortada = true;
   if (data.content && Array.isArray(data.content)) return data.content.map(b => b.text || '').join('');
   if (data.text) return data.text;
   if (typeof data === 'string') return data;
@@ -1167,7 +1173,7 @@ LONGITUD: antes de escribir cada bloque, contá cuántos aspectos tiene ese plan
 - 1 aspecto: 100-120 palabras
 - 2 aspectos: 120-150 palabras
 - 3 o más aspectos: 150-200 palabras
-Si un planeta tiene aspectos difíciles que requieren más desarrollo (ver regla de aspectos abajo), el párrafo puede superar este rango. No hay tope total de palabras, pero no superés 4000 tokens en toda la lectura.
+Si un planeta tiene aspectos difíciles que requieren más desarrollo (ver regla de aspectos abajo), el párrafo puede superar este rango. La lectura completa ronda las 1.800 a 2.200 palabras en total.
 Esta regla de longitud es exclusivamente interna para vos — nunca la menciones, nunca la repitas, nunca incluyas rangos de palabras ni instrucciones de formato en tu respuesta. Tu respuesta empieza directo con el contenido de la lectura.
 
 REGLA DE ASPECTOS — cada aspecto se menciona UNA SOLA VEZ, en el bloque del planeta más personal de los dos involucrados. Si ya lo desarrollaste, no lo repetís, como mucho lo nombrás de pasada.
@@ -1738,7 +1744,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     }
     // Recién acá: solo se cachea lo que se generó bien. Si la generación se cortó a la mitad,
     // no queda nada guardado y la recarga la vuelve a intentar.
-    if(_cacheKey && !_textoCache){ try{ localStorage.setItem(_cacheKey, textoGenerado); }catch(e){} }
+    if(_cacheKey && !_textoCache && !_lecturaCortada){ try{ localStorage.setItem(_cacheKey, textoGenerado); }catch(e){} }
 
     // Mostrar en pantalla
     const _fecha=document.getElementById('fecha')?.value||'';
@@ -1764,7 +1770,14 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
 
     renderInterp(textoGenerado,`texto-lectura-${producto}`);
     card.scrollIntoView({behavior:'smooth',block:'start'});
-    mostrarMensaje(successId,'✦ ¡Tu lectura está lista!');
+    if(_lecturaCortada){
+      // La generación llegó al tope de tokens: el texto está incompleto.
+      // Se muestra igual (es mejor que nada) pero no se cachea y se avisa.
+      console.warn('Lectura cortada por max_tokens:', producto);
+      mostrarMensaje(errorId,'Tu lectura quedó incompleta por un problema técnico. Recargá la página para volver a generarla, o escribinos a cynthia@espaciolibra.com y te la enviamos completa.');
+    } else {
+      mostrarMensaje(successId,'✦ ¡Tu lectura está lista!');
+    }
     if(_btnPP) _btnPP.style.display='none';
     if(_btnMP) _btnMP.style.display='none';
 

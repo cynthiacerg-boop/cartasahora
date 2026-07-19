@@ -64,6 +64,49 @@ async function notificarCompraInterna(env, pagoId, datos) {
   }
 }
 
+// ── Aviso interno: una lectura paga se cortó por llegar al tope de tokens ──
+// Sin esto solo queda un console.warn que nadie mira, y te enterás cuando
+// la persona escribe quejándose de que le llegó incompleta.
+async function notificarLecturaCortada(env, datos) {
+  try {
+    const prodNombre = NOMBRES_PRODUCTO[datos.producto] || datos.producto || '—';
+    const cuandoAR = new Date().toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' });
+    const html = `
+<div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;color:#222;">
+  <h2 style="color:#c0392b;margin:0 0 8px;">⚠️ Una lectura se cortó incompleta</h2>
+  <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 16px;">
+    La generación llegó al tope de tokens y el texto quedó truncado. No se envió por mail
+    ni se guardó en caché. Conviene regenerarla y mandarla a mano.
+  </p>
+  <table style="width:100%;border-collapse:collapse;font-size:15px;">
+    <tr><td style="padding:8px 0;color:#888;width:140px;">Producto</td><td style="padding:8px 0;font-weight:bold;">${esc(prodNombre)}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Consultante</td><td style="padding:8px 0;">${esc(datos.nombre || '—')}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Email</td><td style="padding:8px 0;">${esc(datos.email || '—')}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">ID de pago</td><td style="padding:8px 0;">${esc(datos.pagoId || '—')}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Tokens generados</td><td style="padding:8px 0;">${esc(datos.tokens ?? '—')}</td></tr>
+    <tr><td style="padding:8px 0;color:#888;">Fecha y hora</td><td style="padding:8px 0;">${cuandoAR} (ARG)</td></tr>
+  </table>
+</div>`;
+
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: 'Espacio Libra <cartas@espaciolibra.com>',
+        to: ['cynthia@espaciolibra.com'],
+        subject: `⚠️ Lectura cortada — ${prodNombre}`,
+        html,
+      }),
+    });
+  } catch (e) {
+    // Nunca romper la lectura por un fallo en el aviso
+    console.warn('Error aviso lectura cortada:', e.message);
+  }
+}
+
 // ── Seguimiento automático: oferta de informe completo, 2hs después del lead ──
 const SEGUIMIENTO_DELAY_MS = 2 * 60 * 60 * 1000; // 2 horas
 
@@ -230,7 +273,7 @@ async function pagoAutorizado(env, pagoId, promoToken) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
 
     // Producción + localhost para testear el sitio local contra el worker real
     const ALLOWED_ORIGINS = [
@@ -389,6 +432,24 @@ export default {
           }),
         });
         const data = await res.json();
+        // Si se llegó al tope de tokens la lectura quedó cortada: avisar por mail.
+        // Solo para las pagas — la esencial gratuita se regenera sola al recargar.
+        if (data.stop_reason === 'max_tokens' && !esEsencial) {
+          ctx.waitUntil((async () => {
+            // El front todavía no tiene el email en este punto: sale del registro de pago.
+            let pago = null;
+            if (body.pagoId) {
+              try { pago = await env.PAGOS_KV.get(`pago:${body.pagoId}`, 'json'); } catch {}
+            }
+            await notificarLecturaCortada(env, {
+              producto: body.producto || pago?.producto,
+              nombre:   body.nombre   || pago?.nombre,
+              email:    pago?.email,
+              pagoId:   body.pagoId,
+              tokens:   data.usage?.output_tokens,
+            });
+          })());
+        }
         return json(data);
       } catch (e) {
         return json({ error: e.message }, 500);
@@ -454,6 +515,11 @@ export default {
           // no se manda por mail, se avisa para que se vuelva a intentar.
           if (claudeData.stop_reason === 'max_tokens') {
             console.warn('Lectura cortada por max_tokens en /enviar-lectura:', producto);
+            ctx.waitUntil(notificarLecturaCortada(env, {
+              producto, nombre, email,
+              pagoId: body.pagoId,
+              tokens: claudeData.usage?.output_tokens,
+            }));
             return json({ error: 'La lectura quedó incompleta. Volvé a intentarlo.' }, 500);
           }
           texto = claudeData.content?.map(b => b.text || '').join('') || '';

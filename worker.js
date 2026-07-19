@@ -379,7 +379,9 @@ export default {
           },
           body: JSON.stringify({
             model: esEsencial ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6',
-            max_tokens: esEsencial ? 1500 : 4000,
+            // 8000 es un techo, no una meta: las lecturas terminan solas mucho antes.
+            // Con 4000 las cartas completas con muchos aspectos se cortaban a la mitad.
+            max_tokens: esEsencial ? 1500 : 8000,
             system: body.system
               ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
               : undefined,
@@ -440,7 +442,7 @@ export default {
             },
             body: JSON.stringify({
               model: esEsencial ? 'claude-haiku-4-5-20251001' : 'claude-sonnet-4-6',
-              max_tokens: esEsencial ? 1500 : 4000,
+              max_tokens: esEsencial ? 1500 : 8000,
               system: body.system
                 ? [{ type: 'text', text: body.system, cache_control: { type: 'ephemeral' } }]
                 : undefined,
@@ -448,6 +450,12 @@ export default {
             }),
           });
           const claudeData = await claudeRes.json();
+          // Si se llegó al tope de tokens el texto quedó cortado a la mitad:
+          // no se manda por mail, se avisa para que se vuelva a intentar.
+          if (claudeData.stop_reason === 'max_tokens') {
+            console.warn('Lectura cortada por max_tokens en /enviar-lectura:', producto);
+            return json({ error: 'La lectura quedó incompleta. Volvé a intentarlo.' }, 500);
+          }
           texto = claudeData.content?.map(b => b.text || '').join('') || '';
         }
 

@@ -895,6 +895,70 @@ function renderCartaNatal(chartData) {
   renderRueda(chartData, cont.querySelector('svg'));
 }
 
+// Convierte la rueda que está en pantalla en un PNG en base64, para mandarla
+// por mail: los clientes de correo no dibujan SVG.
+// Ojo: los colores de la rueda son variables CSS declaradas en #chart-wheel, y
+// al serializar el SVG esos estilos NO viajan — hay que hornearlos adentro o
+// sale con los colores originales de Kerykeion.
+// Si algo falla devuelve '' y el mail se manda igual, sin imagen.
+async function rasterizarRueda(maxLado = 900) {
+  try {
+    const svgOrig = document.getElementById('chart-wheel')?.querySelector('svg');
+    if (!svgOrig) return '';
+    const svg = svgOrig.cloneNode(true);
+
+    // 1) Hornear las variables CSS. Se leen de la hoja de estilos en vez de
+    //    repetir la lista acá, para que no se desincronicen si tocás los colores.
+    for (const sheet of document.styleSheets) {
+      let reglas; try { reglas = sheet.cssRules; } catch { continue; } // hoja de otro origen
+      for (const r of reglas || []) {
+        if (r.selectorText !== '#chart-wheel') continue;
+        for (const prop of r.style) {
+          if (prop.startsWith('--')) svg.style.setProperty(prop, r.style.getPropertyValue(prop));
+        }
+      }
+    }
+
+    // 2) Las dos reglas de los círculos interiores no son variables: van como <style>.
+    const st = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+    st.textContent = "circle[r='204']{fill:#e2e2e2!important;fill-opacity:1!important}"
+                   + "circle[r='120']{fill:#f2f2f2!important;fill-opacity:1!important}";
+    svg.insertBefore(st, svg.firstChild);
+
+    // 3) El canvas necesita medidas explícitas (renderCartaNatal se las saca).
+    const vb = (svg.getAttribute('viewBox') || '0 0 800 800').split(/[\s,]+/).map(Number);
+    const wVb = vb[2] || 800, hVb = vb[3] || 800;
+    const escala = Math.min(maxLado / wVb, maxLado / hVb, 2);
+    svg.setAttribute('width', wVb);
+    svg.setAttribute('height', hVb);
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+
+    const url = 'data:image/svg+xml;charset=utf-8,'
+      + encodeURIComponent(new XMLSerializer().serializeToString(svg));
+    const img = await new Promise((ok, fail) => {
+      const i = new Image();
+      i.onload = () => ok(i);
+      i.onerror = () => fail(new Error('el SVG no cargó como imagen'));
+      i.src = url;
+    });
+
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(wVb * escala);
+    canvas.height = Math.round(hVb * escala);
+    const c = canvas.getContext('2d');
+    // Fondo blanco: un PNG transparente se ve mal en los clientes con tema oscuro.
+    c.fillStyle = '#ffffff';
+    c.fillRect(0, 0, canvas.width, canvas.height);
+    c.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+    // toDataURL falla si el canvas quedó "tainted" por algún recurso externo del SVG.
+    return canvas.toDataURL('image/png').split(',')[1] || '';
+  } catch (e) {
+    console.warn('No se pudo rasterizar la rueda:', e.message);
+    return '';
+  }
+}
+
 function renderRueda(chartData, svgEl) {
   const svg = svgEl || document.getElementById('chart-wheel');
   svg.innerHTML = '';
@@ -1869,6 +1933,13 @@ async function enviarPorMail(producto) {
   if(successEl){successEl.textContent='⟳ Enviando...';successEl.classList.remove('hidden');}
   if(errorEl)errorEl.classList.add('hidden');
   try{
+    // La rueda que hay en pantalla es SIEMPRE la natal. Por eso solo se manda en
+    // los productos donde la natal ES el gráfico del producto. Revolución Solar,
+    // Sinastría y Tránsitos necesitan su propia rueda (endpoint aparte de la API):
+    // hasta que existan, mandar la natal seria mostrar un gráfico que no es el suyo.
+    // Si falla la rasterización devuelve '' y el mail sale igual, sin imagen.
+    const PRODUCTOS_CON_RUEDA = ['esencial', 'carta-completa', 'lectura-profunda'];
+    const rueda = PRODUCTOS_CON_RUEDA.includes(producto) ? await rasterizarRueda() : '';
     const res=await fetch(`${WORKER_URL}/enviar-lectura`,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -1882,7 +1953,8 @@ async function enviarPorMail(producto) {
         fecha:ctx.fecha,
         hora:ctx.hora,
         ciudad:ctx.ciudad,
-        pais:ctx.pais
+        pais:ctx.pais,
+        rueda
       })
     });
     const data=await res.json();

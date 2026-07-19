@@ -925,9 +925,30 @@ async function rasterizarRueda(maxLado = 900) {
                    + "circle[r='120']{fill:#f2f2f2!important;fill-opacity:1!important}";
     svg.insertBefore(st, svg.firstChild);
 
-    // 3) El canvas necesita medidas explícitas (renderCartaNatal se las saca).
+    // 3) Recortar a la rueda. El SVG de Kerykeion trae ademas las tablas de
+    //    posiciones, la grilla de aspectos y los datos tecnicos: a 440px de ancho
+    //    en un mail esa letra es ilegible, y encima achica la rueda a la mitad.
+    //    Se recorta moviendo el viewBox al circulo mas grande (el borde de la rueda).
     const vb = (svg.getAttribute('viewBox') || '0 0 800 800').split(/[\s,]+/).map(Number);
-    const wVb = vb[2] || 800, hVb = vb[3] || 800;
+    let [xVb, yVb, wVb, hVb] = [vb[0] || 0, vb[1] || 0, vb[2] || 800, vb[3] || 800];
+
+    let mayor = null;
+    for (const c of svgOrig.querySelectorAll('circle')) {
+      const r = parseFloat(c.getAttribute('r'));
+      if (!isNaN(r) && (!mayor || r > mayor.r)) {
+        mayor = { r, cx: parseFloat(c.getAttribute('cx')) || 0, cy: parseFloat(c.getAttribute('cy')) || 0 };
+      }
+    }
+    if (mayor && mayor.r > 0) {
+      const pad = mayor.r * 0.06;          // aire alrededor para que no quede pegada al borde
+      const lado = (mayor.r + pad) * 2;
+      xVb = mayor.cx - mayor.r - pad;
+      yVb = mayor.cy - mayor.r - pad;
+      wVb = hVb = lado;
+      svg.setAttribute('viewBox', `${xVb} ${yVb} ${wVb} ${hVb}`);
+    }
+
+    // El canvas necesita medidas explicitas (renderCartaNatal se las saca).
     const escala = Math.min(maxLado / wVb, maxLado / hVb, 2);
     svg.setAttribute('width', wVb);
     svg.setAttribute('height', hVb);

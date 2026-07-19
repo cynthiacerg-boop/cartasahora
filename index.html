@@ -865,9 +865,10 @@ function buildTransitosText(transitData, filtro, cartaNatal) {
 // El texto igual se muestra, pero no se cachea ni se da por bueno.
 let _lecturaCortada = false;
 
-async function llamarClaude(prompt, pagoId, promoTok) {
+async function llamarClaude(prompt, pagoId, promoTok, producto, nombre) {
   _lecturaCortada = false;
-  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||''})});
+  // producto y nombre van solo para que el aviso interno de lectura cortada sirva de algo.
+  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||'', producto: producto||'', nombre: nombre||''})});
   if (!res.ok) throw new Error('Error al obtener la interpretación.');
   const data = await res.json();
   if (data.stop_reason === 'max_tokens') _lecturaCortada = true;
@@ -1736,7 +1737,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     // Generar texto con Claude, salvo que esta compra ya lo tenga cacheado de una visita previa.
     if(!_textoCache) actualizarProgreso(producto,'✦ Escribiendo tu carta...');
     const prompt = _textoCache ? '' : buildPrompt(producto,nombre,chartDataParaPrompt,extras);
-    const textoGenerado = _textoCache || await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'');
+    const textoGenerado = _textoCache || await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'', producto, nombre);
 
     if(!textoGenerado||!textoGenerado.trim()){
       mostrarMensaje(errorId,'No se pudo generar la lectura. Intentá de nuevo.');

@@ -460,7 +460,15 @@ export default {
     if (path === '/enviar-lectura' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { email, nombre, producto, lectura, promoToken, fecha, hora, ciudad, pais } = body;
+        const { email, nombre, producto, lectura, promoToken, fecha, hora, ciudad, pais, rueda } = body;
+
+        // Rueda de la carta en PNG base64 (la rasteriza el navegador). Se valida
+        // acá porque viene del cliente: solo base64 y con un tope de tamaño.
+        // Resend admite 40MB, pero un PNG de la rueda no pasa de ~1MB.
+        const ruedaOk = typeof rueda === 'string'
+          && rueda.length > 0
+          && rueda.length < 3_000_000
+          && /^[A-Za-z0-9+/=]+$/.test(rueda);
 
         // Validar autorización SERVER-SIDE: token de promo (un solo uso) o pago
         // confirmado en PAGOS_KV. No se confía en body.pagado (lo manda el cliente).
@@ -568,6 +576,10 @@ export default {
         Tomate el tiempo que necesites para leerla — está hecha especialmente para vos.
       </p>
     </div>
+    ${ruedaOk ? `<div style="padding:28px 32px 4px;text-align:center;">
+      <img src="cid:rueda-carta" alt="Tu carta natal" width="440" style="width:100%;max-width:440px;height:auto;display:block;margin:0 auto;border-radius:8px;" />
+      <p style="font-size:11px;letter-spacing:0.15em;color:#aaa;text-transform:uppercase;margin:12px 0 0;font-family:Georgia,serif;">Tu carta natal</p>
+    </div>` : ''}
     <div style="padding:32px;">
       ${htmlLectura}
     </div>
@@ -605,6 +617,15 @@ export default {
               reply_to: 'contacto@espaciolibra.com',
               subject: `✦ Tu ${prod.nombre} — Espacio Libra`,
               html: emailHtml,
+              // content_id enlaza el adjunto con el <img src="cid:rueda-carta">
+              ...(ruedaOk ? {
+                attachments: [{
+                  filename: 'carta-natal.png',
+                  content: rueda,
+                  content_type: 'image/png',
+                  content_id: 'rueda-carta',
+                }],
+              } : {}),
             }),
           });
 

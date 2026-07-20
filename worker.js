@@ -336,6 +336,14 @@ export default {
       try {
         const body = await request.json();
         const { subject, year, return_location, split_chart } = body;
+        // Opciones de dibujo que acepta la API y elige el front. Lista blanca a
+        // propósito: no reenviamos el body entero.
+        const OPCIONES_GRAFICO = [
+          'show_degree_indicators', 'show_aspect_icons', 'show_zodiac_background_ring',
+          'theme', 'style', 'active_points',
+        ];
+        const opciones = {};
+        for (const k of OPCIONES_GRAFICO) if (body[k] !== undefined) opciones[k] = body[k];
         const payload = {
           subject,
           year: parseInt(year),
@@ -347,6 +355,7 @@ export default {
           // chart_grid en vez de un solo `chart`. El grafico entero es una tira
           // de 3:1 donde la rueda queda diminuta; para el mail queremos la rueda sola.
           ...(split_chart ? { split_chart: true } : {}),
+          ...opciones,
         };
         // /chart/ devuelve el SVG en el campo `chart` ademas de los datos.
         // /chart-data/ (lo que usabamos antes) devuelve solo los numeros, y por eso
@@ -469,7 +478,7 @@ export default {
     if (path === '/enviar-lectura' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { email, nombre, producto, lectura, promoToken, fecha, hora, ciudad, pais, rueda } = body;
+        const { email, nombre, producto, lectura, promoToken, fecha, hora, ciudad, pais, rueda, posiciones } = body;
 
         // Rueda de la carta en PNG base64 (la rasteriza el navegador). Se valida
         // acá porque viene del cliente: solo base64 y con un tope de tamaño.
@@ -561,6 +570,22 @@ export default {
             ? 'Tu revolución solar'
             : 'Tu carta natal';
 
+          // Tabla de posiciones como TEXTO (no dentro de la imagen): así se lee
+          // en cualquier pantalla sin agrandar. Viene del cliente, se valida.
+          const filas = Array.isArray(posiciones) ? posiciones.slice(0, 20) : [];
+          const tablaPosiciones = filas.length ? `
+    <div style="padding:8px 32px 28px;">
+      <p style="font-size:11px;letter-spacing:0.15em;color:#aaa;text-transform:uppercase;margin:0 0 12px;text-align:center;font-family:Georgia,serif;">Posiciones de tu revolución solar</p>
+      <table style="width:100%;border-collapse:collapse;font-family:Georgia,serif;font-size:14px;">
+        ${filas.map((f, i) => `<tr style="background:${i % 2 ? '#faf9f7' : '#ffffff'};">
+          <td style="padding:8px 10px;color:#5a5a5a;white-space:nowrap;">${esc(f.nombre)}</td>
+          <td style="padding:8px 10px;color:#2a2a2a;font-weight:bold;">${esc(f.grado)} ${esc(f.signo)}${f.retro ? ' <span style="color:#c0392b;font-weight:normal;">℞</span>' : ''}</td>
+          <td style="padding:8px 10px;color:#888;text-align:right;white-space:nowrap;">${f.casa ? 'Casa ' + esc(f.casa) : ''}</td>
+        </tr>`).join('')}
+      </table>
+      <p style="font-size:11px;color:#bbb;margin:12px 0 0;text-align:center;font-family:Georgia,serif;">℞ indica planeta retrógrado</p>
+    </div>` : '';
+
           const htmlLectura = texto
             .split('\n')
             .map(linea => {
@@ -594,6 +619,7 @@ export default {
       <img src="cid:rueda-carta" alt="${esc(tituloRueda)}" width="440" style="width:100%;max-width:440px;height:auto;display:block;margin:0 auto;border-radius:8px;" />
       <p style="font-size:11px;letter-spacing:0.15em;color:#aaa;text-transform:uppercase;margin:12px 0 0;font-family:Georgia,serif;">${esc(tituloRueda)}</p>
     </div>` : ''}
+    ${tablaPosiciones}
     <div style="padding:32px;">
       ${htmlLectura}
     </div>

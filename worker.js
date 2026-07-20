@@ -335,14 +335,23 @@ export default {
     if (path === '/revolucion-solar' && request.method === 'POST') {
       try {
         const body = await request.json();
-        const { subject, year, return_location } = body;
+        const { subject, year, return_location, split_chart } = body;
         const payload = {
           subject,
           year: parseInt(year),
           return_location,
-          wheel_type: 'dual'
+          // 'dual' = natal + revolución en la misma rueda
+          wheel_type: 'dual',
+          language: 'ES',
+          // split_chart separa la rueda de las tablas: devuelve chart_wheel y
+          // chart_grid en vez de un solo `chart`. El grafico entero es una tira
+          // de 3:1 donde la rueda queda diminuta; para el mail queremos la rueda sola.
+          ...(split_chart ? { split_chart: true } : {}),
         };
-        const res = await fetch('https://astrologer.p.rapidapi.com/api/v5/chart-data/solar-return', {
+        // /chart/ devuelve el SVG en el campo `chart` ademas de los datos.
+        // /chart-data/ (lo que usabamos antes) devuelve solo los numeros, y por eso
+        // la Revolucion Solar no tenia grafico para mandar por mail.
+        const res = await fetch('https://astrologer.p.rapidapi.com/api/v5/chart/solar-return', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -547,6 +556,11 @@ export default {
 
           const prod = productos[producto] || { nombre: producto, precio: '' };
 
+          // La Revolución Solar manda su propia rueda (natal + revolución), no la natal.
+          const tituloRueda = producto === 'revolucion-solar'
+            ? 'Tu revolución solar'
+            : 'Tu carta natal';
+
           const htmlLectura = texto
             .split('\n')
             .map(linea => {
@@ -577,8 +591,8 @@ export default {
       </p>
     </div>
     ${ruedaOk ? `<div style="padding:28px 32px 4px;text-align:center;">
-      <img src="cid:rueda-carta" alt="Tu carta natal" width="440" style="width:100%;max-width:440px;height:auto;display:block;margin:0 auto;border-radius:8px;" />
-      <p style="font-size:11px;letter-spacing:0.15em;color:#aaa;text-transform:uppercase;margin:12px 0 0;font-family:Georgia,serif;">Tu carta natal</p>
+      <img src="cid:rueda-carta" alt="${esc(tituloRueda)}" width="440" style="width:100%;max-width:440px;height:auto;display:block;margin:0 auto;border-radius:8px;" />
+      <p style="font-size:11px;letter-spacing:0.15em;color:#aaa;text-transform:uppercase;margin:12px 0 0;font-family:Georgia,serif;">${esc(tituloRueda)}</p>
     </div>` : ''}
     <div style="padding:32px;">
       ${htmlLectura}

@@ -2131,11 +2131,12 @@ function reiniciar(){
   window.history.replaceState({},'',window.location.pathname);
 }
 
-// ── RETORNO DEL MAIL (?lead=token): precargar la carta guardada e ir a Tránsitos ──
+// ── RETORNO DEL MAIL (?lead=token): precargar la carta guardada ──
 // Reusa la carta natal ya calculada (no re-gasta /carta) y lleva directo a la
-// tarjeta de Tránsitos con el email precargado. Si el lead es viejo (sin carta)
-// o el token no existe, no hace nada y queda el formulario normal.
-async function cargarDesdeLead(token){
+// tarjeta del producto ofrecido (?oferta=, cross-sell) o a Tránsitos por defecto,
+// con el email precargado. Si el lead es viejo (sin carta) o el token no existe,
+// no hace nada y queda el formulario normal.
+async function cargarDesdeLead(token, oferta){
   try{
     const r = await fetch(`${WORKER_URL}/lead?token=${encodeURIComponent(token)}`);
     if(!r.ok) return;
@@ -2150,10 +2151,18 @@ async function cargarDesdeLead(token){
     if(nac.pais){ const el=document.getElementById('pais'); if(el) el.value=nac.pais; }
     ocultar('section-form');
     mostrar('section-upsell');
-    const emailInput=document.getElementById('email-pago-transitos');
+    // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
+    const DESTINOS = {
+      'transitos':        { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
+      'carta-completa':   { form:'form-carta-completa',   email:'email-pago-carta-completa',   success:'success-carta-completa',   msg:'✦ Tu carta ya está lista. Desbloqueá tu informe completo con todo el detalle de tu carta.' },
+      'revolucion-solar': { form:'form-revolucion-solar', email:'email-pago-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
+      'sinastria':        { form:'form-sinastria',        email:'email-pago-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
+    };
+    const dest = DESTINOS[oferta] || DESTINOS['transitos'];
+    const emailInput=document.getElementById(dest.email);
     if(emailInput && d.email) emailInput.value=d.email;
-    mostrarMensaje('success-transitos','✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.');
-    setTimeout(()=>{document.getElementById('form-transitos')?.scrollIntoView({behavior:'smooth',block:'center'});},350);
+    mostrarMensaje(dest.success, dest.msg);
+    setTimeout(()=>{document.getElementById(dest.form)?.scrollIntoView({behavior:'smooth',block:'center'});},350);
     window.history.replaceState({},'',window.location.pathname); // limpiar el token de la URL
   }catch(e){ /* fallback silencioso: queda el formulario normal */ }
 }
@@ -2161,7 +2170,7 @@ async function cargarDesdeLead(token){
 window.addEventListener('load',async ()=>{
   const params=new URLSearchParams(window.location.search);
   if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
-  if(params.get('lead')){ await cargarDesdeLead(params.get('lead')); }
+  if(params.get('lead')){ await cargarDesdeLead(params.get('lead'), params.get('oferta')); }
   if(params.get('upgrade')==='lectura-profunda'){
     mostrar('upgrade-banner');
     const _upgNombre=params.get('nombre')||'';const _upgFecha=params.get('fecha')||'';const _upgHora=params.get('hora')||'';const _upgCiudad=params.get('ciudad')||'';const _upgPais=params.get('pais')||'Argentina';

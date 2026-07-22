@@ -110,6 +110,30 @@ async function notificarLecturaCortada(env, datos) {
 // ── Seguimiento automático: oferta de informe completo, 2hs después del lead ──
 const SEGUIMIENTO_DELAY_MS = 2 * 60 * 60 * 1000; // 2 horas
 
+// ── Cross-sell post-compra: 2 mails (día 3 y día 10) según lo que compró ──
+const POST_COMPRA_1_MS = 3 * 24 * 60 * 60 * 1000;   // día 3: primer cross-sell
+const POST_COMPRA_2_MS = 10 * 24 * 60 * 60 * 1000;  // día 10: recordatorio
+// Candidatos por prioridad según el último producto comprado. Se ofrece el
+// PRIMERO que el comprador NO tenga ya (ver calcularOferta). Si los tiene todos,
+// no se manda nada: así nunca se ofrece algo repetido ni se hace un bucle.
+const CROSS_SELL = {
+  'carta-completa':   ['revolucion-solar', 'transitos', 'sinastria'],
+  'lectura-profunda': ['revolucion-solar', 'transitos', 'sinastria'],
+  'proposito-vida':   ['revolucion-solar', 'transitos', 'sinastria'],
+  'revolucion-solar': ['transitos', 'carta-completa', 'sinastria'],
+  'revolucion-lunar': ['transitos', 'carta-completa', 'sinastria'],
+  'transitos':        ['carta-completa', 'revolucion-solar', 'sinastria'],
+  'pregunta':         ['carta-completa', 'revolucion-solar', 'transitos'],
+  'sinastria':        ['carta-completa', 'revolucion-solar', 'transitos'],
+};
+// Datos de los productos que se pueden OFRECER como cross-sell.
+const PRODUCTO_INFO = {
+  'carta-completa':   { nombre: 'Carta Natal Completa', precio: '$10.000', gancho: 'el mapa profundo de tu personalidad, tus vínculos, tu vocación y los desafíos que marca tu carta' },
+  'revolucion-solar': { nombre: 'Revolución Solar',     precio: '$15.000', gancho: 'tu año personal desde tu último cumpleaños: qué se activa, qué viene y cuáles son tus meses clave' },
+  'transitos':        { nombre: 'Tránsitos Actuales',   precio: '$8.500',  gancho: 'qué están activando los planetas en tu carta ahora mismo y por qué sentís lo que sentís' },
+  'sinastria':        { nombre: 'Sinastría · Compatibilidad', precio: '$15.000', gancho: 'la química real entre tu carta y la de otra persona: qué los une, qué los desafía, el karma compartido' },
+};
+
 async function procesarSeguimientos(env) {
   // Nota: una sola página de list cubre hasta 1000 claves (suficiente por años).
   const list = await env.LEADS_KV.list({ prefix: 'lead:' });
@@ -215,6 +239,152 @@ async function enviarSeguimientoOferta(env, lead) {
     return res.ok;
   } catch (e) {
     console.warn('Error seguimiento oferta:', e.message);
+    return false;
+  }
+}
+
+// ── Vincular una compra confirmada al lead, para el cross-sell post-compra ──
+// Registra el producto en el historial del comprador, corta el drip pre-compra
+// (que le vendía la Carta Completa) y arranca la secuencia post-compra.
+// Si el comprador no dejó email / no es lead, no hace nada.
+async function registrarCompra(env, email, producto) {
+  try {
+    const mail = (email || '').toLowerCase().trim();
+    if (!mail || !mail.includes('@') || !producto) return;
+    const key = `lead:${mail}`;
+    const raw = await env.LEADS_KV.get(key);
+    if (!raw) return; // sin lead no hay email consentido ni carta guardada
+    let lead; try { lead = JSON.parse(raw); } catch { return; }
+    const compras = Array.isArray(lead.compras) ? lead.compras.slice() : [];
+    if (!compras.includes(producto)) compras.push(producto);
+    lead.compras = compras;
+    lead.ultima_compra = producto;
+    lead.compra_ts = Date.now();
+    lead.seguimiento_enviado = true;                       // corta el drip pre-compra
+    lead.post_compra = { oferta: null, uno: false, dos: false }; // arranca la secuencia
+    await env.LEADS_KV.put(key, JSON.stringify(lead), {
+      expirationTtl: 60 * 60 * 24 * 365 * 2,
+      metadata: {
+        ts: lead.timestamp, mkt: lead.acepta_marketing === true, done: true,
+        compra_ts: lead.compra_ts, post: true,
+      },
+    });
+  } catch (e) { console.warn('registrarCompra:', e.message); }
+}
+
+// Elige qué ofrecerle: el primer candidato (según lo último que compró) que
+// NO tenga ya. Si ya los tiene todos, devuelve null → no se manda nada.
+function calcularOferta(lead) {
+  const compras = Array.isArray(lead.compras) ? lead.compras : [];
+  const base = lead.ultima_compra || compras[compras.length - 1];
+  const candidatos = CROSS_SELL[base] || [];
+  for (const c of candidatos) { if (!compras.includes(c)) return c; }
+  return null;
+}
+
+// ── Cron: manda el cross-sell post-compra (día 3 y día 10) ──
+async function procesarPostCompra(env) {
+  const list = await env.LEADS_KV.list({ prefix: 'lead:' });
+  const ahora = Date.now();
+  let enviados = 0;
+  for (const k of list.keys) {
+    if (enviados >= 50) break; // tope de seguridad por corrida
+    // Filtrado barato por metadata (evita leer el valor de leads que no aplican).
+    const md = k.metadata;
+    if (md) {
+      if (md.mkt !== true) continue;                              // sin consentimiento
+      if (!md.compra_ts) continue;                                // no compró
+      if (md.post !== true) continue;                             // secuencia ya cerrada
+      if ((ahora - md.compra_ts) < POST_COMPRA_1_MS) continue;    // menos de 3 días
+    }
+    let lead; try { lead = JSON.parse(await env.LEADS_KV.get(k.name)); } catch { continue; }
+    if (!lead || lead.acepta_marketing !== true || !lead.compra_ts) continue;
+    const pc = lead.post_compra || { oferta: null, uno: false, dos: false };
+    const dt = ahora - lead.compra_ts;
+    let cambiado = false, cerrar = false;
+
+    if (!pc.uno && dt >= POST_COMPRA_1_MS) {
+      // Día 3 — primer cross-sell
+      const oferta = calcularOferta(lead);
+      if (!oferta) { cerrar = true; }                             // ya tiene todo: cerrar sin mandar
+      else if (await enviarCrossSell(env, lead, oferta, false)) {
+        pc.oferta = oferta; pc.uno = true; cambiado = true; enviados++;
+      }
+    } else if (pc.uno && !pc.dos && dt >= POST_COMPRA_2_MS) {
+      // Día 10 — recordatorio, SOLO si todavía no compró lo ofrecido
+      const compras = Array.isArray(lead.compras) ? lead.compras : [];
+      if (pc.oferta && !compras.includes(pc.oferta)) {
+        if (await enviarCrossSell(env, lead, pc.oferta, true)) { pc.dos = true; cambiado = true; enviados++; }
+      } else { pc.dos = true; cambiado = true; }                  // ya lo compró: cerrar sin mandar
+    }
+
+    if (cerrar || pc.dos || cambiado) {
+      lead.post_compra = pc;
+      const post = !(cerrar || pc.dos); // cerrar la secuencia cuando ya no hay más para mandar
+      await env.LEADS_KV.put(k.name, JSON.stringify(lead), {
+        expirationTtl: 60 * 60 * 24 * 365 * 2,
+        metadata: { ts: lead.timestamp, mkt: true, done: true, compra_ts: lead.compra_ts, post },
+      });
+    }
+  }
+  console.log(`Cross-sell post-compra enviados: ${enviados}`);
+}
+
+// Mail de cross-sell: ofrece el producto sugerido, con la carta precargada
+// (link ?lead=token&oferta=...) para que compre sin volver a cargar datos.
+async function enviarCrossSell(env, lead, producto, esRecordatorio) {
+  try {
+    const info = PRODUCTO_INFO[producto];
+    if (!info || !lead.email) return false;
+    const nombre = (lead.nombre || '').trim();
+    const saludo = nombre ? `Hola ${esc(nombre)}` : 'Hola';
+    const link = lead.token
+      ? `https://cartasahora.espaciolibra.com/?lead=${encodeURIComponent(lead.token)}&oferta=${encodeURIComponent(producto)}`
+      : `https://cartasahora.espaciolibra.com/?nombre=${encodeURIComponent(nombre)}`;
+    const intro = esRecordatorio
+      ? `Te escribo de nuevo por si te quedó pendiente: tu <strong>${esc(info.nombre)}</strong> sigue esperándote. Es ${info.gancho}.`
+      : `Ya tenés tu lectura — y hay un paso más que te va a encantar. Tu <strong>${esc(info.nombre)}</strong> es ${info.gancho}.`;
+    const ultimaNota = await obtenerUltimaNotaSubstack(env);
+    const html = `
+<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
+  <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra · Astrología Evolutiva</p>
+  <p>${saludo}:</p>
+  <p>${intro}</p>
+  <p style="text-align:center;margin:28px 0 6px;">
+    <span style="font-size:26px;color:#8A4DAB;">${info.precio}</span>
+    <span style="font-size:14px;color:#777;"> vía Mercado Pago</span>
+  </p>
+  <p style="text-align:center;font-size:12px;color:#999;margin:0 0 22px;">Con tu carta ya calculada — no tenés que volver a cargar tus datos.</p>
+  <p style="text-align:center;margin:0 0 28px;">
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">Quiero mi ${esc(info.nombre)}</a>
+  </p>
+  ${ultimaNota ? `<p style="text-align:center;border-top:1px solid #eee;padding-top:18px;margin:24px 0 0;font-size:13px;color:#777;">📖 Mi última nota: <a href="${ultimaNota.link}" style="color:#8A4DAB;text-decoration:none;">${esc(ultimaNota.titulo)}</a></p>` : ''}
+  <p style="text-align:center;${ultimaNota ? '' : 'border-top:1px solid #eee;'}padding-top:14px;margin:14px 0 0;">
+    <a href="https://cynthialibra.substack.com/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Mis notas en Substack</a> ·
+    <a href="https://www.instagram.com/cynthiacerg/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Instagram</a> ·
+    <a href="https://www.facebook.com/espaciolibra.astro" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Facebook</a>
+  </p>
+  <p style="font-size:12px;color:#999;padding-top:12px;margin-top:12px;">
+    Recibís este mail porque compraste una lectura en Espacio Libra y aceptaste recibir novedades. Si no querés recibir más, respondé este mail con la palabra <strong>BAJA</strong>.
+  </p>
+</div>`;
+    const subject = esRecordatorio
+      ? `✦ Te quedó pendiente tu ${info.nombre}`
+      : `✦ El siguiente paso de tu carta: ${info.nombre}`;
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: 'Espacio Libra <cartas@espaciolibra.com>',
+        to: [lead.email],
+        reply_to: 'cynthia@espaciolibra.com',
+        subject,
+        html,
+      }),
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn('Error cross-sell:', e.message);
     return false;
   }
 }
@@ -827,6 +997,8 @@ export default {
           ...meta, pasarela: 'paypal',
           monto: capAmount.value, moneda: capAmount.currency_code || 'USD',
         });
+        // Cross-sell post-compra: vincular la compra al lead (si dejó email consentido)
+        await registrarCompra(env, meta.email || '', meta.producto || '');
 
         return json({ ok: true });
       } catch (e) {
@@ -878,6 +1050,8 @@ export default {
             ...meta, pasarela: 'paypal',
             monto: resource.amount?.value, moneda: resource.amount?.currency_code || 'USD',
           });
+          // Cross-sell post-compra (registrarCompra es idempotente: no duplica la compra)
+          await registrarCompra(env, meta.email || '', meta.producto || '');
         }
 
         return new Response(JSON.stringify({ received: true }), {
@@ -1006,6 +1180,8 @@ export default {
               pasarela: 'mercadopago',
               monto: payment.transaction_amount, moneda: payment.currency_id || 'ARS',
             });
+            // Cross-sell post-compra: vincular la compra al lead (si dejó email consentido)
+            await registrarCompra(env, meta.email || payment.payer?.email || '', meta.producto || '');
           }
         }
 
@@ -1138,5 +1314,6 @@ export default {
 
   async scheduled(event, env, ctx) {
     ctx.waitUntil(procesarSeguimientos(env));
+    ctx.waitUntil(procesarPostCompra(env));
   },
 };

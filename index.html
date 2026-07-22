@@ -2109,7 +2109,18 @@ function ocultar(id){document.getElementById(id)?.classList.add('hidden');}
 function mostrarMensaje(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
 function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
-function reiniciar(){ocultar('section-result');ocultar('section-upsell');mostrar('section-form');cartaData=null;preguntaSeleccionada=null;const prov=document.getElementById('provincia');if(prov)prov.value='';window.history.replaceState({},'',window.location.pathname);}
+function reiniciar(){
+  ocultar('section-result');ocultar('section-upsell');mostrar('section-form');
+  cartaData=null;preguntaSeleccionada=null;
+  // Limpiar las lecturas pagas ya inyectadas: sin esto la consulta anterior queda colgada bajo la nueva.
+  const _desbloq=document.getElementById('section-lecturas-desbloqueadas');if(_desbloq)_desbloq.innerHTML='';
+  // Devolver la lectura esencial a su estado de carga (se regenera en la próxima consulta).
+  const _basica=document.getElementById('interpretacion-basica');if(_basica)_basica.innerHTML='<div class="loader" style="padding:20px 0;"><p style="font-size:13px;color:rgba(255,255,255,0.3);text-align:center;">Cargando tu lectura...</p></div>';
+  // Restaurar los botones de compra: tras una compra exitosa quedan en display:none (líneas 1900-1901) o deshabilitados.
+  document.querySelectorAll('[id^="btn-paypal-"],[id^="btn-mp-"]').forEach(b=>{b.style.display='';b.disabled=false;b.style.opacity='';});
+  const prov=document.getElementById('provincia');if(prov)prov.value='';
+  window.history.replaceState({},'',window.location.pathname);
+}
 
 // ── RETORNO DEL MAIL (?lead=token): precargar la carta guardada e ir a Tránsitos ──
 // Reusa la carta natal ya calculada (no re-gasta /carta) y lleva directo a la

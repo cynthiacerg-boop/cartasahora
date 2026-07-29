@@ -557,6 +557,20 @@
 <script>
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
 
+// ── ENTRAR SIEMPRE ARRIBA (en el formulario) ──
+// Los botones "Obtener mi carta natal gratis" de espaciolibra.com/gratis-carta-natal
+// abren esta página sin ancla. Con la restauración de scroll por defecto del navegador,
+// una segunda visita reaparecía scrolleada abajo y el formulario quedaba fuera de vista.
+// Con 'manual' desactivamos esa restauración; los scrolls intencionales (?lead=, ?upgrade=,
+// ?lectura=ok, resultados) siguen funcionando porque llaman a scrollIntoView explícitamente.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.addEventListener('load', () => {
+  // Visita limpia (sin parámetros que pidan mover la vista y sin ancla): arrancar arriba.
+  const _p = new URLSearchParams(window.location.search);
+  const _pideScroll = _p.get('lead') || _p.get('upgrade') || _p.get('lectura');
+  if (!_pideScroll && !window.location.hash) window.scrollTo(0, 0);
+});
+
 // ── DROPDOWNS DE HORA ──
 function fillHoraDropdowns(hhId, mmId) {
   const hhSel = document.getElementById(hhId);

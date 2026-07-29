@@ -2100,6 +2100,17 @@ async function calcularCarta() {
     cartaData=chartData;
     renderCartaNatal(chartData); renderPlanetas(chartData); renderAspectos(chartData);
     ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell');
+    // ── Evento de embudo GA4: la carta gratis (Sol/Luna/Ascendente) ya está en pantalla ──
+    // Mismo patrón de gtag que click_comprar_informe. Guard "una vez por sesión" en
+    // sessionStorage: evita duplicados por refresco o por re-ver el mismo resultado, pero
+    // NO es permanente: si la persona vuelve en otra sesión y genera de nuevo, sí se cuenta
+    // (una sesión nueva, o una carta con otros datos, vuelve a disparar el evento).
+    const _cgKey = cacheKey('carta_generada', fecha, hora, ciudad);
+    let _cgSent=false; try{ _cgSent=!!sessionStorage.getItem(_cgKey); }catch(e){}
+    if(!_cgSent){
+      gtag('event','carta_generada');
+      try{ sessionStorage.setItem(_cgKey,'1'); }catch(e){}
+    }
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
       const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');
       if(precioEl)precioEl.textContent='USD 7';

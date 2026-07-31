@@ -164,6 +164,15 @@
       .card { padding: 24px 18px; }
       .producto-header { flex-direction: column; gap: 6px; }
     }
+    @media (max-width: 430px) {
+      /* La tabla de posiciones se salia de la card en el celular y body{overflow-x:hidden} cortaba
+         la columna "Casa". Compactamos padding y tipografia solo en pantallas chicas para que las
+         4 columnas entren con margen (min-content ~289px < ~299px disponibles). */
+      .planets-table th, .planets-table td { padding: 8px 5px; }
+      .planets-table .planet-degree, .planets-table .planet-house { font-size: 11px; }
+      .planets-table .planet-symbol { font-size: 14px; width: 17px; }
+      .planets-table .planet-name { gap: 5px; font-size: 12px; }
+    }
   </style>
 </head>
 <body>

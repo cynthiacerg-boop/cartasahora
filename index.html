@@ -35,6 +35,9 @@
     input, select { background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s; width: 100%; }
     input:focus, select:focus { border-color: rgba(130,179,102,0.5); }
     input::placeholder { color: rgba(255,255,255,0.2); }
+    /* iOS/WebKit: el input date nativo ignora width:100% y se desborda de la card en el celular.
+       appearance:none + min-width:0 lo obligan a comportarse como los inputs de texto. */
+    input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; color-scheme: dark; }
     select option { background: #1a1a2e; }
     .btn-primary { width: 100%; margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #82B366, #6a9652); border: none; border-radius: 10px; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(130,179,102,0.3); }
     .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
@@ -460,16 +463,22 @@
             <label>Datos de la otra persona</label>
             <input type="text" id="sinastria-nombre2" placeholder="Nombre" style="margin-bottom:8px;" />
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
-              <input type="date" id="sinastria-fecha2" />
-              <div style="display:flex;gap:6px;align-items:center;">
-                <select id="sinastria-hora2-hh" style="flex:1;" onchange="syncHora2()">
-                  <option value="">HH</option>
-                </select>
-                <span style="color:rgba(255,255,255,0.4);font-size:18px;line-height:1;">:</span>
-                <select id="sinastria-hora2-mm" style="flex:1;" onchange="syncHora2()">
-                  <option value="">MM</option>
-                </select>
-                <input type="hidden" id="sinastria-hora2" />
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+                <label>Fecha</label>
+                <input type="date" id="sinastria-fecha2" />
+              </div>
+              <div style="display:flex;flex-direction:column;gap:4px;min-width:0;">
+                <label>Hora</label>
+                <div style="display:flex;gap:6px;align-items:center;">
+                  <select id="sinastria-hora2-hh" style="flex:1;" onchange="syncHora2()">
+                    <option value="">HH</option>
+                  </select>
+                  <span style="color:rgba(255,255,255,0.4);font-size:18px;line-height:1;">:</span>
+                  <select id="sinastria-hora2-mm" style="flex:1;" onchange="syncHora2()">
+                    <option value="">MM</option>
+                  </select>
+                  <input type="hidden" id="sinastria-hora2" />
+                </div>
               </div>
             </div>
             <input type="text" id="sinastria-ciudad2" placeholder="Ciudad de nacimiento" style="margin-bottom:8px;" />

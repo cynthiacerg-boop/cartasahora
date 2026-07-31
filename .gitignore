@@ -17,3 +17,6 @@ Worker.ant.js
 index.anterio.html.txt
 *.bak
 *.old
+
+# Nota interna de infraestructura (no publicar)
+NOTAS-INFRAESTRUCTURA.md

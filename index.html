@@ -2373,19 +2373,32 @@ function initEclipsePopup(){
   try{ if(sessionStorage.getItem('eclipse_popup_cerrado')) return; }catch(e){}
   if(document.getElementById('eclipse-popup')) return;
 
+  // En mobile la tarjeta flotante tapaba el formulario y peleaba con el teclado. Por eso en
+  // pantallas chicas va FIJA ARRIBA, como barra fina: el formulario queda debajo, sin tapar.
+  const esMobile = window.matchMedia('(max-width:600px)').matches;
   const wrap=document.createElement('div');
   wrap.id='eclipse-popup';
-  wrap.style.cssText='position:fixed;bottom:20px;right:20px;max-width:340px;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border:1px solid rgba(138,77,171,0.5);border-radius:16px;padding:22px 22px 20px;box-shadow:0 12px 40px rgba(0,0,0,0.55);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(24px);transition:opacity .4s,transform .4s;pointer-events:none;';
-  wrap.innerHTML=`
-    <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(255,255,255,0.55);font-size:22px;line-height:1;cursor:pointer;padding:4px;">×</button>
-    <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#82B366;margin-bottom:8px;">🌑 Eclipse Solar Total · 12 de agosto</div>
-    <div style="font-family:'Playfair Display',serif;font-size:19px;line-height:1.35;margin-bottom:10px;">Descubrí en qué área de tu vida cae</div>
-    <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.55;margin-bottom:14px;">Un portal breve y potente. Mirá qué se remueve en tu carta natal y qué te pide reclamar.</p>
-    <button id="eclipse-popup-cta" style="width:100%;padding:13px;background:#8A4DAB;color:#fff;border:none;border-radius:10px;font-size:13px;letter-spacing:0.05em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
-    <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-top:9px;text-align:center;">Pagás con Mercado Pago ($8.500) o PayPal (USD 5)</p>`;
+  if(esMobile){
+    wrap.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border-bottom:1px solid rgba(138,77,171,0.55);padding:12px 44px 12px 16px;box-shadow:0 4px 22px rgba(0,0,0,0.45);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(-100%);transition:opacity .35s,transform .35s;pointer-events:none;';
+    wrap.innerHTML=`
+      <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:4px;right:6px;background:none;border:none;color:rgba(255,255,255,0.6);font-size:26px;line-height:1;cursor:pointer;padding:6px 10px;">×</button>
+      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#82B366;margin-bottom:4px;">🌑 Eclipse Solar Total · 12 de agosto</div>
+      <div style="font-family:'Playfair Display',serif;font-size:15px;line-height:1.3;margin-bottom:10px;">Descubrí en qué área de tu vida cae</div>
+      <button id="eclipse-popup-cta" style="width:100%;padding:12px;background:#8A4DAB;color:#fff;border:none;border-radius:9px;font-size:13px;letter-spacing:0.04em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.4;margin-top:7px;text-align:center;">Mercado Pago $8.500 · PayPal USD 5</div>`;
+  } else {
+    wrap.style.cssText='position:fixed;bottom:20px;right:20px;max-width:340px;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border:1px solid rgba(138,77,171,0.5);border-radius:16px;padding:22px 22px 20px;box-shadow:0 12px 40px rgba(0,0,0,0.55);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(24px);transition:opacity .4s,transform .4s;pointer-events:none;';
+    wrap.innerHTML=`
+      <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(255,255,255,0.55);font-size:22px;line-height:1;cursor:pointer;padding:4px;">×</button>
+      <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#82B366;margin-bottom:8px;">🌑 Eclipse Solar Total · 12 de agosto</div>
+      <div style="font-family:'Playfair Display',serif;font-size:19px;line-height:1.35;margin-bottom:10px;">Descubrí en qué área de tu vida cae</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.55;margin-bottom:14px;">Un portal breve y potente. Mirá qué se remueve en tu carta natal y qué te pide reclamar.</p>
+      <button id="eclipse-popup-cta" style="width:100%;padding:13px;background:#8A4DAB;color:#fff;border:none;border-radius:10px;font-size:13px;letter-spacing:0.05em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
+      <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-top:9px;text-align:center;">Pagás con Mercado Pago ($8.500) o PayPal (USD 5)</p>`;
+  }
   document.body.appendChild(wrap);
 
-  const cerrar=()=>{wrap.style.opacity='0';wrap.style.transform='translateY(24px)';wrap.style.pointerEvents='none';setTimeout(()=>wrap.remove(),400);try{sessionStorage.setItem('eclipse_popup_cerrado','1');}catch(e){}};
+  const cerrar=()=>{wrap.style.opacity='0';wrap.style.transform=esMobile?'translateY(-100%)':'translateY(24px)';wrap.style.pointerEvents='none';if(esMobile)document.body.style.paddingTop='';setTimeout(()=>wrap.remove(),400);try{sessionStorage.setItem('eclipse_popup_cerrado','1');}catch(e){}};
   wrap.querySelector('#eclipse-popup-x').onclick=cerrar;
   wrap.querySelector('#eclipse-popup-cta').onclick=()=>{
     _ofertaEclipse=true;
@@ -2414,7 +2427,10 @@ function initEclipsePopup(){
 
   // Aparición: a los 4 s o al primer scroll, lo que ocurra antes.
   let revelado=false;
-  const revelar=()=>{if(revelado)return;revelado=true;window.removeEventListener('scroll',revelar);wrap.style.pointerEvents='auto';requestAnimationFrame(()=>{wrap.style.opacity='1';wrap.style.transform='translateY(0)';});};
+  const revelar=()=>{if(revelado)return;revelado=true;window.removeEventListener('scroll',revelar);wrap.style.pointerEvents='auto';
+    // En mobile la barra fija de arriba empuja el contenido hacia abajo (no lo tapa).
+    if(esMobile){ try{ document.body.style.paddingTop=(wrap.offsetHeight)+'px'; }catch(e){} }
+    requestAnimationFrame(()=>{wrap.style.opacity='1';wrap.style.transform='translateY(0)';});};
   setTimeout(revelar,4000);
   window.addEventListener('scroll',revelar,{passive:true});
 }

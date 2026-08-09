@@ -897,10 +897,12 @@ function buildTransitosText(transitData, filtro, cartaNatal) {
 // El texto igual se muestra, pero no se cachea ni se da por bueno.
 let _lecturaCortada = false;
 
-async function llamarClaude(prompt, pagoId, promoTok, producto, nombre) {
+async function llamarClaude(prompt, pagoId, promoTok, producto, nombre, modelo) {
   _lecturaCortada = false;
   // producto y nombre van solo para que el aviso interno de lectura cortada sirva de algo.
-  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||'', producto: producto||'', nombre: nombre||''})});
+  // modelo: hint opcional (ej. 'haiku' para la tarjeta del eclipse). El worker debe
+  // respetarlo; si no lo soporta, cae al modelo por defecto del producto.
+  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||'', producto: producto||'', nombre: nombre||'', modelo: modelo||''})});
   if (!res.ok) throw new Error('Error al obtener la interpretación.');
   const data = await res.json();
   if (data.stop_reason === 'max_tokens') _lecturaCortada = true;
@@ -1285,6 +1287,106 @@ Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una p
 }
 
 // ── PROMPTS POR PRODUCTO ──
+// ═══════════════════════════════════════════════════════════════════════════
+// ECLIPSE SOLAR TOTAL 12/8/2026 — módulo puntual (tarjeta temporal).
+// Standalone: NO toca el flujo general de Tránsitos Actuales. Solo se activa
+// cuando la compra de 'transitos' viene con extras.oferta === 'eclipse'.
+// Vence el 20/8/2026 (ver ECLIPSE_FECHA_FIN y el pop-up).
+// ═══════════════════════════════════════════════════════════════════════════
+const ECLIPSE_ABS_POS = 140.033;                                  // Leo 20°02' = 4*30 + 20.033
+const ECLIPSE_FECHA_FIN = new Date('2026-08-20T00:00:00-03:00');  // deja de mostrarse/ofrecerse
+
+// Área temática por casa (Placidus). Es el eje central del prompt del eclipse.
+const AREA_CASA = {
+  1:  'tu identidad, tu cuerpo y la forma en que te mostrás al mundo',
+  2:  'tu dinero, tus recursos propios y tu autovaloración',
+  3:  'tu forma de comunicarte, tu entorno cercano y el aprendizaje cotidiano',
+  4:  'tu hogar, tu familia y tus raíces emocionales',
+  5:  'tu creatividad, el placer, los hijos y lo que te hace brillar',
+  6:  'tu trabajo diario, tu salud y tus rutinas',
+  7:  'tus vínculos, la pareja y los acuerdos con otros',
+  8:  'la intimidad profunda, lo compartido y las transformaciones',
+  9:  'tu sentido de vida, los viajes, el estudio y tus creencias',
+  10: 'tu vocación, tu lugar público y tu proyección profesional',
+  11: 'tus amistades, los grupos, la comunidad y tus proyectos a futuro',
+  12: 'tu mundo interno, lo invisible, el descanso y lo que estás cerrando'
+};
+
+// Extrae los 12 abs_pos de las cúspides natales (misma fuente que renderRueda).
+function eclipseCuspides(chartData){
+  const signs=['Ari','Tau','Gem','Can','Leo','Vir','Lib','Sco','Sag','Cap','Aqu','Pis'];
+  const KEYS=['first_house','second_house','third_house','fourth_house','fifth_house','sixth_house','seventh_house','eighth_house','ninth_house','tenth_house','eleventh_house','twelfth_house'];
+  const src=chartData?.chart_data?.houses||chartData?.chart_data?.subject||{};
+  const abs=h=>{if(!h)return null;if(h.abs_pos!==undefined)return h.abs_pos;if(h.position!==undefined&&h.sign){const i=signs.indexOf(h.sign);if(i>=0)return i*30+h.position;}return null;};
+  return KEYS.map(k=>{for(const kk of [k,k.replace(/_/g,'')]){const val=abs(src[kk]);if(val!==null)return val;}return null;});
+}
+
+// ¿En qué casa (1-12) cae un punto fijo, dadas las 12 cúspides? null si faltan cúspides.
+function eclipseCasaDelPunto(absPos, cusps){
+  if(!cusps||cusps.filter(c=>c!==null).length<12) return null;
+  const p=((absPos%360)+360)%360;
+  for(let h=0;h<12;h++){
+    const a=((cusps[h]%360)+360)%360;
+    const b=((cusps[(h+1)%12]%360)+360)%360;
+    const span=((b-a)+360)%360;
+    const rel=((p-a)+360)%360;
+    if(rel<span) return h+1;
+  }
+  return null;
+}
+
+// Aspectos del punto fijo (eclipse) a los planetas natales Sol→Neptuno (9). Dato técnico interno.
+// Orbe 8° para conjunción/oposición/cuadratura; 6° para trígono/sextil (aprobado).
+// Plutón NO va acá: se trata aparte, por tránsito (ver PLUTON_TRANSITO_ABS y eclipseDatosParaPrompt).
+function eclipseAspectos(absPos, subject){
+  const PLANETAS=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune'];
+  const TIPOS=[
+    {nombre:'conjuncion', ang:0,   orbe:8, familia:'conjuncion'},
+    {nombre:'oposicion',  ang:180, orbe:8, familia:'tenso'},
+    {nombre:'cuadratura', ang:90,  orbe:8, familia:'tenso'},
+    {nombre:'trigono',    ang:120, orbe:6, familia:'armonico'},
+    {nombre:'sextil',     ang:60,  orbe:6, familia:'armonico'}
+  ];
+  const out=[];
+  PLANETAS.forEach(k=>{
+    const p=subject?.[k]; if(!p||p.abs_pos===undefined) return;
+    const sep=Math.abs(((absPos-p.abs_pos)+540)%360-180); // separación angular 0-180
+    let mejor=null;
+    TIPOS.forEach(t=>{const d=Math.abs(sep-t.ang); if(d<=t.orbe&&(!mejor||d<mejor.orbeExacto)) mejor={aspecto:t.nombre,familia:t.familia,orbeExacto:d};});
+    if(mejor) out.push({planeta:PLANET_KEY_NAME[k],aspecto:mejor.aspecto,familia:mejor.familia,orbe:+mejor.orbeExacto.toFixed(1)});
+  });
+  return out.sort((a,b)=>a.orbe-b.orbe);
+}
+
+// Plutón en esta tarjeta NO se toma por aspecto al eclipse, sino por TRÁNSITO: en 2026 Plutón
+// transita Acuario (grados iniciales), signo opuesto a Leo. Activa la casa natal que CONTIENE
+// Acuario (opción por signo, no por grado exacto) — normalmente la casa opuesta a la del eclipse —
+// sumando una capa de transformación lenta y profunda en esa área.
+const PLUTON_TRANSITO_ABS = 300; // 0° Acuario (referencia de signo; Plutón va por Acuario temprano)
+
+// Arma el paquete de datos que alimenta el prompt del eclipse (Fase 4).
+function eclipseDatosParaPrompt(chartData){
+  const subject=chartData?.chart_data?.subject||{};
+  const cusps=eclipseCuspides(chartData);
+  const casa=eclipseCasaDelPunto(ECLIPSE_ABS_POS, cusps);
+  const casaPluton=eclipseCasaDelPunto(PLUTON_TRANSITO_ABS, cusps); // casa natal que contiene Acuario
+  const areaPluton=casaPluton ? (AREA_CASA[casaPluton]||'') : '';
+  const aspectos=eclipseAspectos(ECLIPSE_ABS_POS, subject);
+  const aspectosLista = aspectos.length
+    ? aspectos.map(a=>{
+        const fam = a.familia==='conjuncion' ? 'conjunción (máxima intensidad)'
+                  : a.familia==='tenso' ? (a.aspecto==='oposicion'?'oposición (tensión)':'cuadratura (fricción)')
+                  : (a.aspecto==='trigono'?'trígono (apoyo fluido)':'sextil (apoyo fluido)');
+        return `${PLANET_ES[a.planeta]||a.planeta}: ${fam}, orbe ${a.orbe}°`;
+      }).join(' · ')
+    : 'sin aspectos mayores dentro de orbe';
+  return {
+    casa, casaPluton, areaPluton,
+    area: casa ? (AREA_CASA[casa]||'un área central de tu vida') : 'un área central de tu vida',
+    aspectosLista, aspectos
+  };
+}
+
 function buildPrompt(producto, nombre, chartData, extras) {
   const subject=chartData?.chart_data?.subject||{};
   const planetsText=PLANET_KEYS.map(key=>{const p=subject[key];if(!p)return null;const pName=PLANET_KEY_NAME[key];return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;}).filter(Boolean).join(', ');
@@ -1500,6 +1602,32 @@ Qué puede consolidarse en esta relación a futuro, qué puede romperse, y qué 
 
   // ── TRÁNSITOS ACTUALES ──
   // Usa tránsitos reales calculados desde RapidAPI — todos los planetas, todos los aspectos
+  // ── ECLIPSE SOLAR TOTAL 12/8 (tarjeta puntual: producto 'transitos' + oferta 'eclipse') ──
+  if (producto === 'transitos' && extras?.oferta === 'eclipse') {
+    const d = extras.eclipseDatos || eclipseDatosParaPrompt(chartData);
+    const casaFrase = d.casa ? `la Casa ${d.casa}` : 'una zona central de tu carta';
+    const plutonFrase = d.casaPluton ? `tu Casa ${d.casaPluton}` : 'tu casa opuesta';
+    const lineaPluton = `- Al mismo tiempo, una transformación lenta y de fondo está moviendo ${plutonFrase}${d.areaPluton?` (${d.areaPluton})`:''} — el área opuesta, que se remueve en paralelo al eclipse. (dato técnico interno — NO nombres ningún planeta ni digas "tránsito"; usalo para dar la segunda capa)`;
+    return `Sos una voz astrológica evolutiva, cercana y directa. Le hablás a la persona de "vos" (español rioplatense), nunca de "usted" ni "tú". No sos fatalista, no predecís eventos como si fueran certezas, y nunca nombrás escuelas o metodologías de astrología.
+
+DATOS DE ENTRADA:
+- El Eclipse Solar Total del 12/8/2026 cae en Leo 20°02', en ${casaFrase} natal de esta persona (${d.area}).
+- Aspectos que forma con los planetas natales (Sol a Neptuno, calculados con orbe estándar): ${d.aspectosLista}
+  (esto es dato técnico interno — NO se menciona textual en la respuesta, ni el nombre del planeta ni el tipo de aspecto exacto)
+${lineaPluton}
+
+TAREA:
+Escribí una interpretación personal de 150-220 palabras sobre cómo este eclipse remueve específicamente en la vida de ${nombre}. Estructura:
+
+1. Abrí con una pregunta directa que interpele, ligada puntualmente al área de ${casaFrase}.
+2. Explicá qué se remueve en esa área de vida — usá el área temática de la casa como eje central.
+3. Traducí los aspectos técnicos a lenguaje evolutivo: si hay aspectos tensos (cuadratura, oposición) hablá de "fricción", "tensión que pide resolución", "algo que choca y te empuja a decidir" — nunca nombres el planeta ni el aspecto exacto. Si hay aspectos armónicos (trígono, sextil), hablá de "un apoyo que fluye", "algo que te sostiene sin esfuerzo". Si hay conjunción, es el punto de mayor intensidad: "acá se concentra el corazón del cambio". Integrá esto tejido en el mismo párrafo del punto 2, no como lista aparte.
+4. Tocá apenas la segunda área co-activada (la de fondo): una transformación honda que se mueve en paralelo en el área opuesta de tu vida. Una o dos frases, tejida en el texto, sin sección aparte y sin nombrar ningún planeta.
+5. Cerrá con una invitación empoderadora y concreta — "reclamá/animate/date permiso" — sin mencionar consultas 1:1 ni agendar nada.
+
+Evitá: nombrar planetas o aspectos técnicos explícitamente, clichés esotéricos, lenguaje new age vacío, certezas predictivas ("vas a", "esto significa que sí o sí"). Preferí: "portal", "ciclo", "soberanía", "reclamar tu lugar", "brillar no es egoísmo, es servicio" — ese registro.`;
+  }
+
   if (producto === 'transitos') {
     const transitosText = extras?.transitosText || '';
     return `${base}
@@ -1666,6 +1794,11 @@ async function aplicarPromo(producto) {
 }
 
 // ── PROCESAR COMPRA ──
+// Flag de la tarjeta del eclipse: activo si la página se abrió/derivó con ?oferta=eclipse
+// o si se hizo click en el CTA del pop-up. Viaja hasta la generación vía pendiente.extras.
+let _ofertaEclipse = new URLSearchParams(window.location.search).get('oferta')==='eclipse';
+function _extrasEclipse(producto){ return (_ofertaEclipse && producto==='transitos') ? {oferta:'eclipse'} : {}; }
+
 async function procesarCompra(producto, precio) {
   if(producto==='lectura-profunda' && new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
   const errorId=`error-${producto}`;
@@ -1699,6 +1832,8 @@ async function procesarCompra(producto, precio) {
     extras.anioRS=anioRS;extras.ciudadRS=ciudadRS;extras.paisRS=paisRS;
   }
 
+  if(_ofertaEclipse && producto==='transitos') extras.oferta='eclipse';
+
   if(esPrueba){
     await generarYEnviarLectura(producto, nombre, extras, true);
     return;
@@ -1731,7 +1866,7 @@ async function pagarConPaypal(producto, precio) {
 
   const payload = _buildPayload(producto);
   localStorage.setItem('pendiente', JSON.stringify({
-    producto, nombre: payload.nombre, extras: {}, precio,
+    producto, nombre: payload.nombre, extras: _extrasEclipse(producto), precio,
     fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
   }));
 
@@ -1768,7 +1903,7 @@ async function pagarConMP(producto, precio, errorId) {
 
   const payload = _buildPayload(producto);
   localStorage.setItem('pendiente', JSON.stringify({
-    producto, nombre: payload.nombre, extras: {}, precio,
+    producto, nombre: payload.nombre, extras: _extrasEclipse(producto), precio,
     fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
   }));
 
@@ -1871,20 +2006,31 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
 
     // Tránsitos: calcular tránsitos reales (todos los planetas)
     if(!_textoCache && producto==='transitos'){
-      try{
-        actualizarProgreso(producto,'⟳ Calculando los tránsitos actuales...');
-        const transitData = await calcularTransitosActuales(cartaData);
-        if(transitData){
-          extras.transitosText = buildTransitosText(transitData, null, cartaData);
+      if(extras?.oferta==='eclipse'){
+        // Tarjeta del eclipse: no usa tránsitos reales, usa el módulo puntual (Fase 2).
+        try{
+          actualizarProgreso(producto,'⟳ Ubicando el eclipse en tu carta...');
+          extras.eclipseDatos = eclipseDatosParaPrompt(cartaData);
           actualizarProgreso(producto,'⟳ Interpretando...');
-        }
-      }catch(tErr){console.warn('Error tránsitos:',tErr);}
+        }catch(eErr){console.warn('Error datos eclipse:',eErr);}
+      } else {
+        try{
+          actualizarProgreso(producto,'⟳ Calculando los tránsitos actuales...');
+          const transitData = await calcularTransitosActuales(cartaData);
+          if(transitData){
+            extras.transitosText = buildTransitosText(transitData, null, cartaData);
+            actualizarProgreso(producto,'⟳ Interpretando...');
+          }
+        }catch(tErr){console.warn('Error tránsitos:',tErr);}
+      }
     }
 
     // Generar texto con Claude, salvo que esta compra ya lo tenga cacheado de una visita previa.
     if(!_textoCache) actualizarProgreso(producto,'✦ Escribiendo tu carta...');
     const prompt = _textoCache ? '' : buildPrompt(producto,nombre,chartDataParaPrompt,extras);
-    const textoGenerado = _textoCache || await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'', producto, nombre);
+    // La tarjeta del eclipse pide una lectura corta (150-220 palabras): usar Haiku.
+    const _modeloHint = (producto==='transitos' && extras?.oferta==='eclipse') ? 'haiku' : '';
+    const textoGenerado = _textoCache || await llamarClaude(prompt, pagoId, esPrueba?(promoToken[producto]||''):'', producto, nombre, _modeloHint);
 
     if(!textoGenerado||!textoGenerado.trim()){
       mostrarMensaje(errorId,'No se pudo generar la lectura. Intentá de nuevo.');
@@ -2139,6 +2285,15 @@ async function calcularCarta() {
       if(btnMpUpg)btnMpUpg.style.display='none';
       setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
     }
+    // Tarjeta del eclipse: si la persona vino por el eclipse, apenas su carta está lista la
+    // llevamos derecho a la oferta de Tránsitos (salvo que sea el retorno de un pago ya hecho).
+    if(_ofertaEclipse && new URLSearchParams(window.location.search).get('lectura')!=='ok'){
+      document.getElementById('eclipse-hint')?.remove();
+      setTimeout(()=>{
+        document.getElementById('form-transitos')?.closest('.producto-card')?.scrollIntoView({behavior:'smooth',block:'center'});
+        mostrarMensaje('success-transitos','🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Solar Total del 12/8: descubrí en qué área de tu vida cae y qué se remueve para vos.');
+      },700);
+    }
     setLoaderText('escribiendo tu lectura esencial...');
     const prompt=buildPromptBasico(nombre,chartData);
     try{
@@ -2197,6 +2352,7 @@ async function cargarDesdeLead(token, oferta){
     // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
     const DESTINOS = {
       'transitos':        { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
+      'eclipse':          { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Solar Total del 12/8.' },
       'carta-completa':   { form:'form-carta-completa',   email:'email-pago-carta-completa',   success:'success-carta-completa',   msg:'✦ Tu carta ya está lista. Desbloqueá tu informe completo con todo el detalle de tu carta.' },
       'revolucion-solar': { form:'form-revolucion-solar', email:'email-pago-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
       'sinastria':        { form:'form-sinastria',        email:'email-pago-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
@@ -2210,8 +2366,63 @@ async function cargarDesdeLead(token, oferta){
   }catch(e){ /* fallback silencioso: queda el formulario normal */ }
 }
 
+// ── POP-UP TARJETA ECLIPSE (temporal, vence 20/8/2026) ──
+// Flotante abajo-derecha, con X. Aparece a los 4 s o al primer scroll. Nunca bloquea.
+function initEclipsePopup(){
+  if(new Date() >= ECLIPSE_FECHA_FIN) return;                          // expiración hardcodeada
+  try{ if(sessionStorage.getItem('eclipse_popup_cerrado')) return; }catch(e){}
+  if(document.getElementById('eclipse-popup')) return;
+
+  const wrap=document.createElement('div');
+  wrap.id='eclipse-popup';
+  wrap.style.cssText='position:fixed;bottom:20px;right:20px;max-width:340px;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border:1px solid rgba(138,77,171,0.5);border-radius:16px;padding:22px 22px 20px;box-shadow:0 12px 40px rgba(0,0,0,0.55);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(24px);transition:opacity .4s,transform .4s;pointer-events:none;';
+  wrap.innerHTML=`
+    <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(255,255,255,0.55);font-size:22px;line-height:1;cursor:pointer;padding:4px;">×</button>
+    <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#82B366;margin-bottom:8px;">🌑 Eclipse Solar Total · 12 de agosto</div>
+    <div style="font-family:'Playfair Display',serif;font-size:19px;line-height:1.35;margin-bottom:10px;">Descubrí en qué área de tu vida cae</div>
+    <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.55;margin-bottom:14px;">Un portal breve y potente. Mirá qué se remueve en tu carta natal y qué te pide reclamar.</p>
+    <button id="eclipse-popup-cta" style="width:100%;padding:13px;background:#8A4DAB;color:#fff;border:none;border-radius:10px;font-size:13px;letter-spacing:0.05em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
+    <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-top:9px;text-align:center;">Pagás con Mercado Pago ($8.500) o PayPal (USD 5)</p>`;
+  document.body.appendChild(wrap);
+
+  const cerrar=()=>{wrap.style.opacity='0';wrap.style.transform='translateY(24px)';wrap.style.pointerEvents='none';setTimeout(()=>wrap.remove(),400);try{sessionStorage.setItem('eclipse_popup_cerrado','1');}catch(e){}};
+  wrap.querySelector('#eclipse-popup-x').onclick=cerrar;
+  wrap.querySelector('#eclipse-popup-cta').onclick=()=>{
+    _ofertaEclipse=true;
+    try{const u=new URL(window.location);u.searchParams.set('oferta','eclipse');window.history.replaceState({},'',u);}catch(e){}
+    cerrar();
+    if(cartaData){
+      mostrar('section-upsell');
+      mostrarMensaje('success-transitos','🌑 Lectura del Eclipse Solar Total del 12/8 — descubrí en qué área de tu vida cae y qué se remueve para vos.');
+      const card=document.getElementById('form-transitos')?.closest('.producto-card');
+      setTimeout(()=>card?.scrollIntoView({behavior:'smooth',block:'center'}),120);
+    } else {
+      // Todavía no calculó la carta: se la pedimos primero (sin carta no hay lectura) y
+      // le dejamos claro que el eclipse se desbloquea apenas la genere.
+      let hint=document.getElementById('eclipse-hint');
+      if(!hint){
+        hint=document.createElement('div');
+        hint.id='eclipse-hint';
+        hint.style.cssText='max-width:520px;margin:0 auto 18px;padding:14px 18px;border:1px solid rgba(138,77,171,0.5);border-radius:12px;background:rgba(138,77,171,0.10);color:#f0ede8;font-size:13px;line-height:1.55;';
+        hint.innerHTML='🌑 <strong>Un paso antes:</strong> calculá tu carta natal gratis acá abajo (nombre, fecha y ciudad). Apenas esté lista, desbloqueás tu <strong>lectura del Eclipse del 12/8</strong> — la pagás con Mercado Pago ($8.500) o PayPal (USD 5).';
+        const form=document.getElementById('section-form');
+        if(form) form.insertBefore(hint, form.firstChild);
+      }
+      setTimeout(()=>document.getElementById('section-form')?.scrollIntoView({behavior:'smooth',block:'start'}),120);
+    }
+  };
+
+  // Aparición: a los 4 s o al primer scroll, lo que ocurra antes.
+  let revelado=false;
+  const revelar=()=>{if(revelado)return;revelado=true;window.removeEventListener('scroll',revelar);wrap.style.pointerEvents='auto';requestAnimationFrame(()=>{wrap.style.opacity='1';wrap.style.transform='translateY(0)';});};
+  setTimeout(revelar,4000);
+  window.addEventListener('scroll',revelar,{passive:true});
+}
+
 window.addEventListener('load',async ()=>{
   const params=new URLSearchParams(window.location.search);
+  // Pop-up del eclipse: no molestar en el retorno de pago.
+  if(params.get('lectura')!=='ok') initEclipsePopup();
   if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
   if(params.get('lead')){ await cargarDesdeLead(params.get('lead'), params.get('oferta')); }
   if(params.get('upgrade')==='lectura-profunda'){

@@ -2435,14 +2435,20 @@ function initEclipsePopup(){
     }
   };
 
-  // Aparición: a los 4 s o al primer scroll, lo que ocurra antes.
+  // Aparición.
   let revelado=false;
   const revelar=()=>{if(revelado)return;revelado=true;window.removeEventListener('scroll',revelar);wrap.style.pointerEvents='auto';
     // En mobile la barra fija de arriba empuja el contenido hacia abajo (no lo tapa).
     if(esMobile){ try{ document.body.style.paddingTop=(wrap.offsetHeight)+'px'; }catch(e){} }
     requestAnimationFrame(()=>{wrap.style.opacity='1';wrap.style.transform='translateY(0)';});};
-  setTimeout(revelar,4000);
-  window.addEventListener('scroll',revelar,{passive:true});
+  if(_ofertaEclipse){
+    // Vino por el eclipse (mail / link ?oferta=eclipse): mostrarla enseguida, sin esperar scroll.
+    setTimeout(revelar, 500);
+  } else {
+    // Visita orgánica: a los 3 s o al primer scroll, lo que ocurra antes (menos invasivo).
+    setTimeout(revelar, 3000);
+    window.addEventListener('scroll',revelar,{passive:true});
+  }
 }
 
 window.addEventListener('load',async ()=>{

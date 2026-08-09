@@ -1387,6 +1387,13 @@ function eclipseDatosParaPrompt(chartData){
   };
 }
 
+// Nombre a MOSTRAR del producto (título de tarjeta, mail, PDF). La tarjeta del eclipse se
+// muestra como "Lectura del Eclipse Solar" aunque el producto de cobro siga siendo 'transitos'.
+function nombreProductoMostrar(producto, extras){
+  if(producto==='transitos' && extras?.oferta==='eclipse') return 'Lectura del Eclipse Solar · 12 de agosto';
+  return PRODUCT_NOMBRES[producto]||producto;
+}
+
 function buildPrompt(producto, nombre, chartData, extras) {
   const subject=chartData?.chart_data?.subject||{};
   const planetsText=PLANET_KEYS.map(key=>{const p=subject[key];if(!p)return null;const pName=PLANET_KEY_NAME[key];return `${PLANET_ES[pName]||pName} en ${SIGN_MAP[p.sign]||p.sign} casa ${HOUSE_MAP[p.house]||'?'}${p.retrograde?' (Rx)':''}`;}).filter(Boolean).join(', ');
@@ -1617,15 +1624,16 @@ DATOS DE ENTRADA:
 ${lineaPluton}
 
 TAREA:
-Escribí una interpretación personal de 150-220 palabras sobre cómo este eclipse remueve específicamente en la vida de ${nombre}. Estructura:
+Escribí una interpretación personal y GENEROSA de 400-550 palabras sobre cómo este eclipse remueve específicamente en la vida de ${nombre}. Que se sienta amplia, desarrollada y valiosa —como una lectura que vale la pena—, sin relleno, sin repetir ideas ni dar vueltas sobre lo mismo. Varios párrafos, cada uno con contenido real. Estructura:
 
-1. Abrí con una pregunta directa que interpele, ligada puntualmente al área de ${casaFrase}.
-2. Explicá qué se remueve en esa área de vida — usá el área temática de la casa como eje central.
-3. Traducí los aspectos técnicos a lenguaje evolutivo: si hay aspectos tensos (cuadratura, oposición) hablá de "fricción", "tensión que pide resolución", "algo que choca y te empuja a decidir" — nunca nombres el planeta ni el aspecto exacto. Si hay aspectos armónicos (trígono, sextil), hablá de "un apoyo que fluye", "algo que te sostiene sin esfuerzo". Si hay conjunción, es el punto de mayor intensidad: "acá se concentra el corazón del cambio". Integrá esto tejido en el mismo párrafo del punto 2, no como lista aparte.
-4. Tocá apenas la segunda área co-activada (la de fondo): una transformación honda que se mueve en paralelo en el área opuesta de tu vida. Una o dos frases, tejida en el texto, sin sección aparte y sin nombrar ningún planeta.
-5. Cerrá con una invitación empoderadora y concreta — "reclamá/animate/date permiso" — sin mencionar consultas 1:1 ni agendar nada.
+1. Abrí con una pregunta directa que interpele, ligada puntualmente al área de ${casaFrase}. Seguí con 2-3 oraciones que ubiquen a ${nombre} en el clima de este eclipse y enganchen.
+2. Desarrollá con profundidad qué se remueve en esa área de vida — usá el área temática de la casa como eje central, bajándolo a lo concreto y cotidiano: cómo puede sentirse en el día a día, qué situaciones puede destapar, qué pregunta de fondo despierta. Nada abstracto ni genérico.
+3. Traducí los aspectos técnicos a lenguaje evolutivo, dándole espacio a cada matiz (no como lista): si hay aspectos tensos (cuadratura, oposición) hablá de "fricción", "tensión que pide resolución", "algo que choca y te empuja a decidir" — nunca nombres el planeta ni el aspecto exacto. Si hay aspectos armónicos (trígono, sextil), hablá de "un apoyo que fluye", "algo que te sostiene sin esfuerzo". Si hay conjunción, es el punto de mayor intensidad: "acá se concentra el corazón del cambio". Tejelo en el cuerpo del texto, desarrollando cada uno con una o dos oraciones propias.
+4. Dale un párrafo propio a la segunda área co-activada (la de fondo): una transformación honda y lenta que se mueve en paralelo en el área opuesta de tu vida. Mostrá con textura cómo dialoga con el tema principal —qué le aporta, qué tensión o profundidad agrega—, sin nombrar ningún planeta ni decir "tránsito".
+5. Sumá un párrafo sobre cómo habitar este portal: qué actitud o gesto concreto ayuda, qué conviene soltar y qué conviene reclamar en este ciclo.
+6. Cerrá con una invitación empoderadora y concreta — "reclamá/animate/date permiso" — sin mencionar consultas 1:1 ni agendar nada.
 
-Evitá: nombrar planetas o aspectos técnicos explícitamente, clichés esotéricos, lenguaje new age vacío, certezas predictivas ("vas a", "esto significa que sí o sí"). Preferí: "portal", "ciclo", "soberanía", "reclamar tu lugar", "brillar no es egoísmo, es servicio" — ese registro.`;
+Evitá: nombrar planetas o aspectos técnicos explícitamente, clichés esotéricos, lenguaje new age vacío, certezas predictivas ("vas a", "esto significa que sí o sí"), y estirar con relleno. Preferí: "portal", "ciclo", "soberanía", "reclamar tu lugar", "brillar no es egoísmo, es servicio" — ese registro.`;
   }
 
   if (producto === 'transitos') {
@@ -1965,7 +1973,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
   // Camino B (pago) ya lo insertó antes de llamar a esta función → se reusa, no se duplica.
   if(!document.getElementById(`loader-text-${producto}`)){
     const _container=document.getElementById('section-lecturas-desbloqueadas');
-    const _prodNombre=PRODUCT_NOMBRES[producto]||producto;
+    const _prodNombre=nombreProductoMostrar(producto, extras);
     let _card=document.getElementById(`card-lectura-${producto}`);
     if(!_card){_card=document.createElement('div');_card.className='card';_card.id=`card-lectura-${producto}`;_container.appendChild(_card);}
     _card.innerHTML=`<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${producto}" class="loader-pago">✦ Generando tu lectura...</p></div>`;
@@ -2045,7 +2053,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     const _hora=document.getElementById('hora')?.value||'';
     const _ciudad=document.getElementById('ciudad')?.value?.trim()||'';
     const _pais=document.getElementById('pais')?.value?.trim()||'Argentina';
-    const productoNombre=PRODUCT_NOMBRES[producto]||producto;
+    const productoNombre=nombreProductoMostrar(producto, extras);
 
     _lecturaContexto[producto]={
       nombre,productoNombre,prompt,texto:textoGenerado,
@@ -2508,13 +2516,14 @@ window.addEventListener('load',async ()=>{
           // Mostrar placeholder con indicador de carga y hacer scroll inmediato
           const _producto = pendienteData.producto;
           const _container = document.getElementById('section-lecturas-desbloqueadas');
-          const _prodNombre = PRODUCT_NOMBRES[_producto] || _producto;
+          const _prodNombre = PRODUCT_NOMBRES[_producto] || _producto;                 // nombre para analytics
+          const _prodDisplay = nombreProductoMostrar(_producto, pendienteData.extras);  // título a mostrar (eclipse)
           let _placeholderCard = document.getElementById(`card-lectura-${_producto}`);
           if (!_placeholderCard) {
             _placeholderCard = document.createElement('div');
             _placeholderCard.className = 'card';
             _placeholderCard.id = `card-lectura-${_producto}`;
-            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${_producto}" class="loader-pago">✦ Escribiendo tu carta...</p></div><div class="pago-aviso"><p class="aviso-ok">✓ Pago confirmado</p><p class="aviso-txt">Estamos escribiendo tu carta. Puede tardar hasta <strong>1 o 2 minutos</strong>.<br><strong>No cierres esta página ni vuelvas atrás</strong> — se está generando en este preciso momento.</p></div>`;
+            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodDisplay}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${_producto}" class="loader-pago">✦ Escribiendo tu carta...</p></div><div class="pago-aviso"><p class="aviso-ok">✓ Pago confirmado</p><p class="aviso-txt">Estamos escribiendo tu carta. Puede tardar hasta <strong>1 o 2 minutos</strong>.<br><strong>No cierres esta página ni vuelvas atrás</strong> — se está generando en este preciso momento.</p></div>`;
             _container.appendChild(_placeholderCard);
           }
           setTimeout(() => _placeholderCard.scrollIntoView({behavior:'smooth', block:'start'}), 300);
@@ -2561,7 +2570,7 @@ window.addEventListener('load',async ()=>{
             localStorage.removeItem('pendiente');
             await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false, sessionId);
           } else {
-            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodNombre}</div><p style="color:rgba(255,100,100,0.8);text-align:center;padding:24px 0;">No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com</p>`;
+            _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodDisplay}</div><p style="color:rgba(255,100,100,0.8);text-align:center;padding:24px 0;">No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com</p>`;
             mostrarMensaje('error-msg','No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com');
           }
         });

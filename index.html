@@ -575,6 +575,37 @@
 <script>
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
 
+// ── CLICK-IDS DE GOOGLE ADS (gclid/gbraid/wbraid) ──
+// Google atribuye la conversión leyendo la cookie _gcl_aw que gtag pone al
+// aterrizar con ?gclid=... Esa cookie se pierde cuando el retorno del pago cae
+// en otro navegador/app (mobile) o cuando ITP la caduca, y ahí Ads no cuenta la
+// compra aunque GA4 sí. Para no depender solo de la cookie: guardamos el click-id
+// al llegar del anuncio y lo reenviamos al worker, que lo pega al back_url de
+// retorno; así gtag lo vuelve a ver en la successUrl y reconstruye la atribución.
+function _guardarClickIds(){
+  try{
+    const p = new URLSearchParams(window.location.search);
+    ['gclid','gbraid','wbraid'].forEach(k=>{
+      const v = p.get(k);
+      if(v) localStorage.setItem('ads_'+k, JSON.stringify({ v, t: Date.now() }));
+    });
+  }catch(e){}
+}
+function _getClickIds(){
+  const out = {};
+  try{
+    ['gclid','gbraid','wbraid'].forEach(k=>{
+      const raw = localStorage.getItem('ads_'+k);
+      if(!raw) return;
+      const { v, t } = JSON.parse(raw);
+      // Ventana de 90 días: vida útil de la conversión en Google Ads.
+      if(v && (Date.now()-t) < 90*24*60*60*1000) out[k] = v;
+    });
+  }catch(e){}
+  return out;
+}
+_guardarClickIds();
+
 // ── ENTRAR SIEMPRE ARRIBA (en el formulario) ──
 // Los botones "Obtener mi carta natal gratis" de espaciolibra.com/gratis-carta-natal
 // abren esta página sin ancla. Con la restauración de scroll por defecto del navegador,
@@ -1860,6 +1891,7 @@ function _buildPayload(producto) {
     hora:   document.getElementById('hora')?.value || '',
     ciudad: document.getElementById('ciudad')?.value?.trim() || '',
     pais:   document.getElementById('pais')?.value?.trim() || 'Argentina',
+    ..._getClickIds(),
   };
 }
 

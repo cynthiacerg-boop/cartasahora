@@ -1304,28 +1304,29 @@ Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una p
 
 // ── PROMPTS POR PRODUCTO ──
 // ═══════════════════════════════════════════════════════════════════════════
-// ECLIPSE SOLAR TOTAL 12/8/2026 — módulo puntual (tarjeta temporal).
+// ECLIPSE LUNAR PARCIAL EN PISCIS 28/8/2026 — módulo puntual (tarjeta temporal).
 // Standalone: NO toca el flujo general de Tránsitos Actuales. Solo se activa
 // cuando la compra de 'transitos' viene con extras.oferta === 'eclipse'.
-// Vence el 20/8/2026 (ver ECLIPSE_FECHA_FIN y el pop-up).
+// Vence el 12/9/2026 (ver ECLIPSE_FECHA_FIN y el pop-up) — 2 semanas post-pico.
 // ═══════════════════════════════════════════════════════════════════════════
-const ECLIPSE_ABS_POS = 140.033;                                  // Leo 20°02' = 4*30 + 20.033
-const ECLIPSE_FECHA_FIN = new Date('2026-08-20T00:00:00-03:00');  // deja de mostrarse/ofrecerse
+const ECLIPSE_ABS_POS = 334.9;                                    // Piscis 4°54' = 11*30 + 4.9
+const ECLIPSE_FECHA_FIN = new Date('2026-09-12T00:00:00-03:00');  // deja de mostrarse/ofrecerse
 
 // Área temática por casa (Placidus). Es el eje central del prompt del eclipse.
+// Lenguaje de vida real, consistente con el marco evolutivo (alimenta {areaDescripcion}).
 const AREA_CASA = {
-  1:  'tu identidad, tu cuerpo y la forma en que te mostrás al mundo',
-  2:  'tu dinero, tus recursos propios y tu autovaloración',
-  3:  'tu forma de comunicarte, tu entorno cercano y el aprendizaje cotidiano',
-  4:  'tu hogar, tu familia y tus raíces emocionales',
-  5:  'tu creatividad, el placer, los hijos y lo que te hace brillar',
-  6:  'tu trabajo diario, tu salud y tus rutinas',
-  7:  'tus vínculos, la pareja y los acuerdos con otros',
-  8:  'la intimidad profunda, lo compartido y las transformaciones',
-  9:  'tu sentido de vida, los viajes, el estudio y tus creencias',
-  10: 'tu vocación, tu lugar público y tu proyección profesional',
-  11: 'tus amistades, los grupos, la comunidad y tus proyectos a futuro',
-  12: 'tu mundo interno, lo invisible, el descanso y lo que estás cerrando'
+  1:  'cómo te mostrás al mundo, tu identidad, la energía con la que arrancás las cosas',
+  2:  'tu relación con el dinero, tus recursos propios, cuánto te valorás a vos misma',
+  3:  'cómo te comunicás, tus vínculos cercanos, lo que aprendés en el día a día',
+  4:  'tu hogar, tu familia, tus raíces, tu mundo emocional más íntimo',
+  5:  'tu creatividad, el placer, el romance, cómo te expresás sin filtro',
+  6:  'tu rutina, tu trabajo diario, tu cuerpo y tu salud',
+  7:  'tus vínculos de pareja o sociedad, lo que construís con otra persona',
+  8:  'lo que compartís profundamente con otros, lo que estás soltando o transformando',
+  9:  'hacia dónde querés expandirte, tus creencias, tu sentido de vida',
+  10: 'tu vocación, cómo te proyectás públicamente, tu rumbo profesional',
+  11: 'tus vínculos de comunidad, tus proyectos compartidos, hacia dónde vas con otros',
+  12: 'tu mundo interno, lo que cerrás en silencio, tu descanso'
 };
 
 // Extrae los 12 abs_pos de las cúspides natales (misma fuente que renderRueda).
@@ -1351,62 +1352,24 @@ function eclipseCasaDelPunto(absPos, cusps){
   return null;
 }
 
-// Aspectos del punto fijo (eclipse) a los planetas natales Sol→Neptuno (9). Dato técnico interno.
-// Orbe 8° para conjunción/oposición/cuadratura; 6° para trígono/sextil (aprobado).
-// Plutón NO va acá: se trata aparte, por tránsito (ver PLUTON_TRANSITO_ABS y eclipseDatosParaPrompt).
-function eclipseAspectos(absPos, subject){
-  const PLANETAS=['sun','moon','mercury','venus','mars','jupiter','saturn','uranus','neptune'];
-  const TIPOS=[
-    {nombre:'conjuncion', ang:0,   orbe:8, familia:'conjuncion'},
-    {nombre:'oposicion',  ang:180, orbe:8, familia:'tenso'},
-    {nombre:'cuadratura', ang:90,  orbe:8, familia:'tenso'},
-    {nombre:'trigono',    ang:120, orbe:6, familia:'armonico'},
-    {nombre:'sextil',     ang:60,  orbe:6, familia:'armonico'}
-  ];
-  const out=[];
-  PLANETAS.forEach(k=>{
-    const p=subject?.[k]; if(!p||p.abs_pos===undefined) return;
-    const sep=Math.abs(((absPos-p.abs_pos)+540)%360-180); // separación angular 0-180
-    let mejor=null;
-    TIPOS.forEach(t=>{const d=Math.abs(sep-t.ang); if(d<=t.orbe&&(!mejor||d<mejor.orbeExacto)) mejor={aspecto:t.nombre,familia:t.familia,orbeExacto:d};});
-    if(mejor) out.push({planeta:PLANET_KEY_NAME[k],aspecto:mejor.aspecto,familia:mejor.familia,orbe:+mejor.orbeExacto.toFixed(1)});
-  });
-  return out.sort((a,b)=>a.orbe-b.orbe);
-}
+// Eclipse LUNAR: el prompt es puramente evolutivo (cierre/culminación) y se apoya solo en el
+// área temática de la casa donde cae el eclipse. Sin capa de aspectos ni de Plutón (el opuesto
+// de Piscis es Virgo, no Acuario donde va Plutón, así que aquella segunda capa ya no aplica).
 
-// Plutón en esta tarjeta NO se toma por aspecto al eclipse, sino por TRÁNSITO: en 2026 Plutón
-// transita Acuario (grados iniciales), signo opuesto a Leo. Activa la casa natal que CONTIENE
-// Acuario (opción por signo, no por grado exacto) — normalmente la casa opuesta a la del eclipse —
-// sumando una capa de transformación lenta y profunda en esa área.
-const PLUTON_TRANSITO_ABS = 300; // 0° Acuario (referencia de signo; Plutón va por Acuario temprano)
-
-// Arma el paquete de datos que alimenta el prompt del eclipse (Fase 4).
+// Arma el paquete de datos que alimenta el prompt del eclipse.
 function eclipseDatosParaPrompt(chartData){
-  const subject=chartData?.chart_data?.subject||{};
   const cusps=eclipseCuspides(chartData);
   const casa=eclipseCasaDelPunto(ECLIPSE_ABS_POS, cusps);
-  const casaPluton=eclipseCasaDelPunto(PLUTON_TRANSITO_ABS, cusps); // casa natal que contiene Acuario
-  const areaPluton=casaPluton ? (AREA_CASA[casaPluton]||'') : '';
-  const aspectos=eclipseAspectos(ECLIPSE_ABS_POS, subject);
-  const aspectosLista = aspectos.length
-    ? aspectos.map(a=>{
-        const fam = a.familia==='conjuncion' ? 'conjunción (máxima intensidad)'
-                  : a.familia==='tenso' ? (a.aspecto==='oposicion'?'oposición (tensión)':'cuadratura (fricción)')
-                  : (a.aspecto==='trigono'?'trígono (apoyo fluido)':'sextil (apoyo fluido)');
-        return `${PLANET_ES[a.planeta]||a.planeta}: ${fam}, orbe ${a.orbe}°`;
-      }).join(' · ')
-    : 'sin aspectos mayores dentro de orbe';
   return {
-    casa, casaPluton, areaPluton,
-    area: casa ? (AREA_CASA[casa]||'un área central de tu vida') : 'un área central de tu vida',
-    aspectosLista, aspectos
+    casa,
+    area: casa ? (AREA_CASA[casa]||'un área central de tu vida') : 'un área central de tu vida'
   };
 }
 
 // Nombre a MOSTRAR del producto (título de tarjeta, mail, PDF). La tarjeta del eclipse se
-// muestra como "Lectura del Eclipse Solar" aunque el producto de cobro siga siendo 'transitos'.
+// muestra como "Lectura del Eclipse Lunar" aunque el producto de cobro siga siendo 'transitos'.
 function nombreProductoMostrar(producto, extras){
-  if(producto==='transitos' && extras?.oferta==='eclipse') return 'Lectura del Eclipse Solar · 12 de agosto';
+  if(producto==='transitos' && extras?.oferta==='eclipse') return 'Lectura del Eclipse Lunar · 28 de agosto';
   return PRODUCT_NOMBRES[producto]||producto;
 }
 
@@ -1625,32 +1588,24 @@ Qué puede consolidarse en esta relación a futuro, qué puede romperse, y qué 
 
   // ── TRÁNSITOS ACTUALES ──
   // Usa tránsitos reales calculados desde RapidAPI — todos los planetas, todos los aspectos
-  // ── ECLIPSE SOLAR TOTAL 12/8 (tarjeta puntual: producto 'transitos' + oferta 'eclipse') ──
+  // ── ECLIPSE LUNAR PARCIAL EN PISCIS 28/8 (tarjeta puntual: producto 'transitos' + oferta 'eclipse') ──
   if (producto === 'transitos' && extras?.oferta === 'eclipse') {
     const d = extras.eclipseDatos || eclipseDatosParaPrompt(chartData);
-    const casaFrase = d.casa ? `la Casa ${d.casa}` : 'una zona central de tu carta';
-    const plutonFrase = d.casaPluton ? `tu Casa ${d.casaPluton}` : 'tu casa opuesta';
-    const lineaPluton = `- Al mismo tiempo, una transformación lenta y de fondo está moviendo ${plutonFrase}${d.areaPluton?` (${d.areaPluton})`:''} — el área opuesta, que se remueve en paralelo al eclipse. (dato técnico interno — NO nombres ningún planeta ni digas "tránsito"; usalo para dar la segunda capa)`;
-    return `Sos una voz astrológica evolutiva Y predictiva: combinás la mirada profunda del alma (qué se remueve, qué pide crecer) con una lectura concreta de lo que este eclipse puede activar en los próximos meses. Le hablás a la persona de "vos" (español rioplatense), nunca de "usted" ni "tú". No sos fatalista —no anunciás eventos como certezas cerradas—, pero sí te animás a nombrar tendencias, aperturas y momentos concretos, siempre como posibilidades para habitar con conciencia. Nunca nombrás escuelas o metodologías de astrología.
+    const areaDescripcion = d.area;
+    return `Estás escribiendo para Espacio Libra. Tono evolutivo, cercano, en segunda persona (vos, Rioplatense). Podés nombrar "el eclipse de estos días" — es un evento real que la persona reconoce. NUNCA nombres el signo, el número de casa, planetas, grados ni ningún término técnico astrológico.
 
-DATOS DE ENTRADA:
-- El Eclipse Solar Total del 12/8/2026 cae en Leo 20°02', en ${casaFrase} natal de esta persona (${d.area}).
-- Aspectos que forma con los planetas natales (Sol a Neptuno, calculados con orbe estándar): ${d.aspectosLista}
-  (esto es dato técnico interno — NO se menciona textual en la respuesta, ni el nombre del planeta ni el tipo de aspecto exacto)
-${lineaPluton}
+CONTEXTO INTERNO (usar para orientar el contenido, no repetir literal): el eclipse lunar de estos días cae en un punto de tu carta vinculado con ${areaDescripcion}.
 
-TAREA:
-Escribí una interpretación personal y GENEROSA de 550-750 palabras que mezcle lo evolutivo con lo predictivo sobre cómo este eclipse remueve —y qué puede activar— específicamente en la vida de ${nombre}. Que se sienta amplia, desarrollada y valiosa —como una lectura que vale la pena—, sin relleno, sin repetir ideas ni dar vueltas sobre lo mismo. Varios párrafos, cada uno con contenido real. Estructura:
+Un eclipse lunar es cierre, no apertura: algo que estaba gestándose en silencio se vuelve visible, algo que ya cumplió su ciclo pide soltarse.
 
-1. Abrí con una pregunta directa que interpele, ligada puntualmente al área de ${casaFrase}. Seguí con 2-3 oraciones que ubiquen a ${nombre} en el clima de este eclipse y enganchen.
-2. (Evolutivo) Desarrollá con profundidad qué se remueve en esa área de vida — usá el área temática de la casa como eje central, bajándolo a lo concreto y cotidiano: cómo puede sentirse en el día a día, qué situaciones puede destapar, qué pregunta de fondo despierta. Nada abstracto ni genérico.
-3. Traducí los aspectos técnicos a lenguaje evolutivo, dándole espacio a cada matiz (no como lista): si hay aspectos tensos (cuadratura, oposición) hablá de "fricción", "tensión que pide resolución", "algo que choca y te empuja a decidir" — nunca nombres el planeta ni el aspecto exacto. Si hay aspectos armónicos (trígono, sextil), hablá de "un apoyo que fluye", "algo que te sostiene sin esfuerzo". Si hay conjunción, es el punto de mayor intensidad: "acá se concentra el corazón del cambio". Tejelo en el cuerpo del texto, desarrollando cada uno con una o dos oraciones propias.
-4. Dale un párrafo propio a la segunda área co-activada (la de fondo): una transformación honda y lenta que se mueve en paralelo en el área opuesta de tu vida. Mostrá con textura cómo dialoga con el tema principal —qué le aporta, qué tensión o profundidad agrega—, sin nombrar ningún planeta ni decir "tránsito".
-5. (Predictivo — el diferencial) Dale un párrafo a lo que este eclipse puede activar de acá en adelante: un eclipse siembra algo cuyo efecto se despliega en los meses que siguen. Contá qué tiende a moverse en el área de ${casaFrase} durante este ciclo —qué tipo de situaciones, decisiones, encuentros, oportunidades o cierres pueden aparecer— y ubicalo en el tiempo: el eclipse abre un proceso que madura en los próximos ~6 meses, con la señal más fuerte alrededor de estas semanas. Hablá en clave de posibilidad ("puede", "es probable que se abra", "suele traer", "no sería raro que"), nunca de certeza ("vas a", "seguro que"). Dale al menos un par de posibilidades concretas y jugadas, no vaguedades.
-6. Sumá un párrafo sobre cómo habitar este portal: qué actitud o gesto concreto ayuda, qué conviene soltar y qué conviene reclamar en este ciclo.
-7. Cerrá con una invitación empoderadora y concreta — "reclamá/animate/date permiso" — sin mencionar consultas 1:1 ni agendar nada.
+ESTRUCTURA (550-750 palabras):
+1. Apertura: nombrá que estamos en el eclipse y qué tipo de momento trae (cierre, culminación, algo que se hace visible) — así ${nombre} entiende por qué está leyendo esto justo en estos días.
+2. Desarrollo: conectá ese cierre con ${areaDescripcion} específicamente — ejemplos concretos de cómo puede sentirse ahí, no abstracciones genéricas.
+3. Sin fatalismo: un cierre no es una pérdida, es espacio que se libera.
+4. Cierre empoderador: qué puede hacer ${nombre} con lo que se revela, sin urgencia ni alarma. Nunca sugerir consulta 1:1.
 
-Evitá: nombrar planetas o aspectos técnicos explícitamente, clichés esotéricos, lenguaje new age vacío, certezas cerradas ("vas a", "esto sí o sí"), y estirar con relleno. Preferí: "portal", "ciclo", "soberanía", "reclamar tu lugar", "brillar no es egoísmo, es servicio" — ese registro.`;
+Podés usar: "eclipse", "estos días", "este cierre", "esta culminación".
+Nunca uses: "hoy" (la lectura se lee durante varios días), nombres de signos, "casa [número]", "tránsito", "aspecto", nombres de planetas.`;
   }
 
   if (producto === 'transitos') {
@@ -2317,7 +2272,7 @@ async function calcularCarta() {
       document.getElementById('eclipse-hint')?.remove();
       setTimeout(()=>{
         document.getElementById('form-transitos')?.closest('.producto-card')?.scrollIntoView({behavior:'smooth',block:'center'});
-        mostrarMensaje('success-transitos','🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Solar Total del 12/8: descubrí en qué área de tu vida cae y qué se remueve para vos.');
+        mostrarMensaje('success-transitos','🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Lunar en Piscis del 28/8: descubrí en qué área de tu vida cae y qué se cierra para vos.');
       },700);
     }
     setLoaderText('escribiendo tu lectura esencial...');
@@ -2383,7 +2338,7 @@ async function cargarDesdeLead(token, oferta){
     // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
     const DESTINOS = {
       'transitos':        { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
-      'eclipse':          { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Solar Total del 12/8.' },
+      'eclipse':          { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Lunar en Piscis del 28/8.' },
       'carta-completa':   { form:'form-carta-completa',   email:'email-pago-carta-completa',   success:'success-carta-completa',   msg:'✦ Tu carta ya está lista. Desbloqueá tu informe completo con todo el detalle de tu carta.' },
       'revolucion-solar': { form:'form-revolucion-solar', email:'email-pago-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
       'sinastria':        { form:'form-sinastria',        email:'email-pago-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
@@ -2413,8 +2368,8 @@ function initEclipsePopup(){
     wrap.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border-bottom:1px solid rgba(138,77,171,0.55);padding:12px 44px 12px 16px;box-shadow:0 4px 22px rgba(0,0,0,0.45);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(-100%);transition:opacity .35s,transform .35s;pointer-events:none;';
     wrap.innerHTML=`
       <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:4px;right:6px;background:none;border:none;color:rgba(255,255,255,0.6);font-size:26px;line-height:1;cursor:pointer;padding:6px 10px;">×</button>
-      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#82B366;margin-bottom:4px;">🌑 Eclipse Solar Total · 12 de agosto</div>
-      <div style="font-family:'Playfair Display',serif;font-size:15px;line-height:1.3;margin-bottom:6px;">Descubrí en qué área de tu vida cae</div>
+      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#82B366;margin-bottom:4px;">🌑 Eclipse Lunar en Piscis · 28 de agosto</div>
+      <div style="font-family:'Playfair Display',serif;font-size:15px;line-height:1.3;margin-bottom:6px;">Descubrí qué se cierra en tu vida</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.45;margin-bottom:10px;">Primero calculá tu carta natal <strong>gratis</strong> acá abajo; después desbloqueás tu lectura del eclipse.</div>
       <button id="eclipse-popup-cta" style="width:100%;padding:12px;background:#8A4DAB;color:#fff;border:none;border-radius:9px;font-size:13px;letter-spacing:0.04em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
       <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.4;margin-top:7px;text-align:center;">Mercado Pago $8.500 · PayPal USD 5</div>`;
@@ -2422,9 +2377,9 @@ function initEclipsePopup(){
     wrap.style.cssText='position:fixed;bottom:20px;right:20px;max-width:340px;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border:1px solid rgba(138,77,171,0.5);border-radius:16px;padding:22px 22px 20px;box-shadow:0 12px 40px rgba(0,0,0,0.55);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(24px);transition:opacity .4s,transform .4s;pointer-events:none;';
     wrap.innerHTML=`
       <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(255,255,255,0.55);font-size:22px;line-height:1;cursor:pointer;padding:4px;">×</button>
-      <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#82B366;margin-bottom:8px;">🌑 Eclipse Solar Total · 12 de agosto</div>
-      <div style="font-family:'Playfair Display',serif;font-size:19px;line-height:1.35;margin-bottom:10px;">Descubrí en qué área de tu vida cae</div>
-      <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.55;margin-bottom:14px;">Un portal breve y potente. Primero calculá tu carta natal <strong>gratis</strong> acá abajo; después desbloqueás tu lectura del eclipse: qué se remueve y qué te pide reclamar.</p>
+      <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#82B366;margin-bottom:8px;">🌑 Eclipse Lunar en Piscis · 28 de agosto</div>
+      <div style="font-family:'Playfair Display',serif;font-size:19px;line-height:1.35;margin-bottom:10px;">Descubrí qué se cierra en tu vida</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.55;margin-bottom:14px;">Un cierre breve y potente. Primero calculá tu carta natal <strong>gratis</strong> acá abajo; después desbloqueás tu lectura del eclipse: qué se cierra y qué se hace visible para vos.</p>
       <button id="eclipse-popup-cta" style="width:100%;padding:13px;background:#8A4DAB;color:#fff;border:none;border-radius:10px;font-size:13px;letter-spacing:0.05em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
       <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-top:9px;text-align:center;">Pagás con Mercado Pago ($8.500) o PayPal (USD 5)</p>`;
   }
@@ -2438,7 +2393,7 @@ function initEclipsePopup(){
     cerrar();
     if(cartaData){
       mostrar('section-upsell');
-      mostrarMensaje('success-transitos','🌑 Lectura del Eclipse Solar Total del 12/8 — descubrí en qué área de tu vida cae y qué se remueve para vos.');
+      mostrarMensaje('success-transitos','🌑 Lectura del Eclipse Lunar en Piscis del 28/8 — descubrí en qué área de tu vida cae y qué se cierra para vos.');
       const card=document.getElementById('form-transitos')?.closest('.producto-card');
       setTimeout(()=>card?.scrollIntoView({behavior:'smooth',block:'center'}),120);
     } else {
@@ -2449,7 +2404,7 @@ function initEclipsePopup(){
         hint=document.createElement('div');
         hint.id='eclipse-hint';
         hint.style.cssText='max-width:520px;margin:0 auto 18px;padding:14px 18px;border:1px solid rgba(138,77,171,0.5);border-radius:12px;background:rgba(138,77,171,0.10);color:#f0ede8;font-size:13px;line-height:1.55;';
-        hint.innerHTML='🌑 <strong>Un paso antes:</strong> calculá tu carta natal gratis acá abajo (nombre, fecha y ciudad). Apenas esté lista, desbloqueás tu <strong>lectura del Eclipse del 12/8</strong> — la pagás con Mercado Pago ($8.500) o PayPal (USD 5).';
+        hint.innerHTML='🌑 <strong>Un paso antes:</strong> calculá tu carta natal gratis acá abajo (nombre, fecha y ciudad). Apenas esté lista, desbloqueás tu <strong>lectura del Eclipse Lunar del 28/8</strong> — la pagás con Mercado Pago ($8.500) o PayPal (USD 5).';
         const form=document.getElementById('section-form');
         if(form) form.insertBefore(hint, form.firstChild);
       }

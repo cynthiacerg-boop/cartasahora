@@ -1265,86 +1265,91 @@ function buildPromptBasico(nombre, chartData) {
   const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?',lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?';
   const solHouse=HOUSE_MAP[sol?.house]||'?',lunaHouse=HOUSE_MAP[luna?.house]||'?';
   const ascSign=asc?(SIGN_MAP[asc?.sign]||asc?.sign):'?';
-  const aspects=chartData?.chart_data?.aspects||[];
-  const tiposRelevantes=['trine','square','conjunction','opposition','sextile'];
-  function aspectosDe(planetName) {
-    return aspects.filter(a=>{const tipo=a.aspect||a.aspect_type||a.type;return(a.p1_name===planetName||a.p2_name===planetName)&&tiposRelevantes.includes(tipo);})
-    .sort((a,b)=>Math.abs(a.orbit||0)-Math.abs(b.orbit||0)).slice(0,2)
-    .map(a=>{const tipo=a.aspect||a.aspect_type||a.type,tipoEs=ASPECT_ES[tipo]||tipo,otro=a.p1_name===planetName?a.p2_name:a.p1_name,otroEs=PLANET_ES[otro]||otro;return `${tipoEs} con ${otroEs}`;});
-  }
-  const aspectosSol=aspectosDe('Sun'),aspectosLuna=aspectosDe('Moon');
-  const textoAspectosSol=aspectosSol.length>0?`\nTu Sol tiene estos aspectos: ${aspectosSol.join(' / ')}.`:'';
-  const textoAspectosLuna=aspectosLuna.length>0?`\nTu Luna tiene estos aspectos: ${aspectosLuna.join(' / ')}.`:'';
-
-  // ── Gancho de cierre CONDICIONAL por punto (Sol / Luna / Ascendente) ──
-  // Detecta cuadratura U OPOSICIÓN con Venus/Marte/Mercurio/Júpiter/Saturno y la
-  // traduce a experiencia de vida (sin nombrar planeta ni término técnico). Usa el
-  // array COMPLETO de aspectos (no el truncado de textoAspectos*), así también cubre
-  // al Ascendente, que antes no llegaba al prompt. Máx 2 fragmentos, los de orbe más ajustado.
-  const MAPA_TENSION = {
-    Venus:'cómo amás y qué te atrae',
-    Mars:'cómo actuás y luchás por lo tuyo',
-    Mercury:'cómo pensás y te comunicás',
-    Jupiter:'dónde buscás expansión y sentido',
-    Saturn:'qué estructuras y miedos estás madurando'
-  };
-  const ES_PUNTO = {
-    Sun:n=>n==='Sun',
-    Moon:n=>n==='Moon',
-    Asc:n=>/^(ascendant|first_house|asc)$/i.test(n||'')
-  };
-  const GANCHO_GENERICO = {
-    Sun:'Hay una razón exacta en tu carta — y tiene que ver con cómo amás y con qué tan cómodo/a te sentís luchando por lo tuyo. Eso todavía no lo viste.',
-    Moon:'Eso que notás es síntoma de algo más profundo: qué estructuras y qué miedos estás aprendiendo a sostener con el tiempo. Tu carta completa lo desarrolla.',
-    Asc:'Estás en proceso de hacerla tuya — y cómo lo lográs tiene que ver con cómo pensás y te comunicás con el mundo. Eso todavía no lo viste.'
-  };
-  function ganchoInstr(punto){
-    const test=ES_PUNTO[punto];
-    const frags=aspects.filter(a=>{
-      const tipo=a.aspect||a.aspect_type||a.type;
-      if(tipo!=='square'&&tipo!=='opposition')return false;
-      return (test(a.p1_name)&&MAPA_TENSION[a.p2_name])||(test(a.p2_name)&&MAPA_TENSION[a.p1_name]);
-    }).sort((a,b)=>Math.abs(a.orbit||a.orb||0)-Math.abs(b.orbit||b.orb||0))
-      .map(a=>MAPA_TENSION[test(a.p1_name)?a.p2_name:a.p1_name])
-      .filter((v,i,arr)=>arr.indexOf(v)===i).slice(0,2);
-    if(frags.length>0){
-      return `GANCHO DE CIERRE (obligatorio): 1 o 2 oraciones en "vos", tono evolutivo y predictivo (conectá con algo que puede estar sintiendo ahora o que está por moverse en su vida, sin predecir hechos ni fechas), alrededor de ESTO: ${frags.map(f=>`"${f}"`).join(' y ')}. Traducilo a experiencia de vida concreta, sin nombrar planetas ni usar jerga, y dejá la sensación de que la explicación completa está en su carta.`;
-    }
-    return `GANCHO DE CIERRE (obligatorio, usá EXACTAMENTE esta frase, sin modificarla): "${GANCHO_GENERICO[punto]}"`;
-  }
-  const ganchoSol=ganchoInstr('Sun'),ganchoLuna=ganchoInstr('Moon'),ganchoAsc=ganchoInstr('Asc');
+  // La gratuita interpreta SOLO Sol, Luna y Ascendente. No usa aspectos ni otros
+  // planetas: eso es material de los productos pagos. Es una lectura NATAL, sin
+  // procesos actuales. Ver spec "Lectura Esencial" — puerta de entrada, no resumen.
 
   return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
 - Sol en ${solSign}, casa ${solHouse}
 - Luna en ${lunaSign}, casa ${lunaHouse}
 - Ascendente en ${ascSign}
 
-CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. Nunca digas "este Sol" o "esa Luna": decí "tu Sol", "tu Luna", "tenés".
+Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas tres secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
 
-Escribí una LECTURA ESENCIAL GRATUITA con exactamente estas tres secciones. Cada título entre dobles asteriscos en línea propia.
+FUNCIÓN DE ESTA LECTURA: es una puerta de entrada, no un informe completo. Tiene que generar identificación ("esto habla de mí") y curiosidad por el resto de la carta, sin resolver toda la interpretación. Presentás únicamente las tres bases: Sol, Luna y Ascendente.
 
-EXTENSIÓN: la lectura completa debe rondar 350 a 400 palabras EN TOTAL. Cada sección es UN SOLO párrafo de interpretación (90 a 120 palabras) seguido de su gancho de cierre. No agregues un segundo párrafo de profundización: la tensión se desarrolla en el gancho, no en prosa larga.
+CRÍTICO — hablá siempre en segunda persona, de "vos" directamente a ${nombre}. Nunca digas "este Sol" o "esa Luna": decí "tu Sol", "tu Luna", "tenés".
 
-REGLA DE ASPECTOS (síntoma sin solución): si el Sol o la Luna tienen aspectos en ${textoAspectosSol} / ${textoAspectosLuna}, nombrá dentro del párrafo el síntoma concreto que eso genera en la vida real de ${nombre} — algo que pueda reconocer como verdadero apenas lo lea (una dificultad puntual, una reacción que se repite, una tensión que siente pero no termina de entender). NO expliques de dónde viene ni qué hacer con eso. Si el aspecto es fluido (lo que técnicamente sería trígono o sextil), mencionalo más liviano, como un don natural, sin necesidad de profundizar.
-No uses nunca las palabras "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto", ni nombres de planetas crudos: todo traducido a experiencia de vida.
+REGLAS QUE NO PODÉS ROMPER:
+1) Es una lectura NATAL. NO describas procesos actuales ni momentos presentes. Prohibido usar frases como "ahora estás atravesando", "en este momento", "actualmente", "estás en un punto donde", "justamente ahora", "estás en proceso de", "esta etapa te está llevando a". Los procesos temporales pertenecen a otros productos (Tránsitos, Revolución Solar). Hablá de tendencias natales, no de lo que le está pasando hoy.
+2) Interpretá SOLO Sol, Luna y Ascendente. NO desarrolles Mercurio, Venus, Marte, Júpiter, Saturno, Urano, Neptuno, Plutón, Quirón, Lilith, Nodos, ni aspectos entre planetas, ni patrones dominantes, ni casas más allá de la del Sol y la Luna. Podés dar a entender livianamente que estas tres piezas son partes distintas de la personalidad, pero NO hagas la síntesis profunda de cómo se relacionan o se tensionan entre sí: eso es de la Carta Natal Completa.
+3) Voseo rioplatense consistente en TODA la lectura: vos, sos, tenés, sentís, necesitás, buscás, podés, pensás, expresás. NUNCA tú/eres/tienes/sientes/puedes. Evitá también las formas indirectas de tuteo: en vez de "a ti" usá "a vos", en vez de "contigo" usá "con vos", en vez de "para ti" usá "para vos", en vez de "tú misma/tú mismo" usá "vos misma/vos mismo". Ninguna forma de tuteo, ni directa ni reflexiva.
+4) Nada de determinismo ni sentencias psicológicas categóricas. Evitá "siempre", "nunca", "tu destino es", "viniste a", "esto significa que sos". Preferí "podés tender a", "hay una necesidad de", "puede aparecer", "esta posición habla de", "uno de tus aprendizajes puede estar en".
+5) Nada de jerga técnica: no uses "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto".
+6) Interpretá la COMBINACIÓN real signo + casa, no el signo genérico. Que no sea un párrafo que le sirva a cualquier persona del mismo signo. No inventes datos que no estén acá.
+7) PRUDENCIA INTERPRETATIVA — DESCRIBIR POSIBILIDADES, NO DEFINIR A LA PERSONA: toda afirmación tiene que poder sostenerse directamente desde el planeta + signo + casa de ese bloque. Diferenciá siempre entre el simbolismo astrológico DISPONIBLE y la manera particular en que esa persona PUEDE estar expresándolo: no conviertas automáticamente una cualidad simbólica del signo o de la casa en una conducta o un rasgo confirmado de la persona. Por ejemplo, en vez de "tenés capacidad para acercarte a lo tabú y a lo que otros evitan mirar", escribí "puede haber interés o sensibilidad hacia experiencias profundas, íntimas o transformadoras"; en vez de "no sos alguien que se cierra de entrada", escribí "podés tender a acercarte inicialmente a las experiencias con apertura, curiosidad o deseo de explorar"; en vez de "tenés una forma generosa y optimista de vincularte", escribí "tu forma inicial de vincularte puede expresar apertura, entusiasmo o una búsqueda de posibilidades". No diagnostiques mecanismos de defensa, heridas, traumas, desconfianza, capacidad sanadora, espiritualidad ni dones extraordinarios como hechos. PERO la lectura tiene que seguir sintiéndose personal y concreta: NO la llenes de "quizás" ni "puede ser". Alterná con naturalidad formulaciones como "hay una necesidad de...", "esta posición pone énfasis en...", "esta combinación habla de...", "podés tender a...", "puede expresarse como...", "aparece una búsqueda de...", "uno de los aprendizajes puede estar relacionado con...". Prudencia NO es texto genérico: mantené profundidad y personalización.
+8) NEUTRALIDAD DE GÉNERO: no marques género cuando no haga falta. NO uses construcciones con barra como "genuino/a", "selectivo/a", "vista/o", "guerrero/a", ni masculino genérico, ni duplicaciones. Evitá también participios y adjetivos que obliguen a marcar masculino/femenino cuando puedan reformularse naturalmente: por ejemplo, en vez de "cómo te ves reflejado/a en el mundo" escribí "cómo te percibís en relación con el mundo". Reformulá de forma natural para que el texto funcione sin marcar género (por ejemplo "cuando te mostrás tal como sos", "alguien que se anima").
+9) LENGUAJE HUMANO: evitá lo excesivamente místico o grandilocuente ("territorio del alma", "dimensiones invisibles", "cualidad sanadora", "entregarte a algo mayor") salvo que haya una razón concreta y necesaria. Mantené el enfoque evolutivo, pero con lenguaje claro, humano y cotidiano.
+10) ORTOGRAFÍA: revisá ortografía y gramática antes de entregar. Español argentino natural, sin errores de tildes ni palabras mal escritas.
 
-TONO PREDICTIVO (aplica a los ganchos de cierre): cada gancho conecta lo descrito con algo que la persona puede estar sintiendo ahora o que está por moverse en su vida. No predecir hechos concretos ni dar fechas. Que funcione como gancho emocional, no como predicción: que lea eso y sienta que necesita saber más. El contenido puntual de cada gancho está en la instrucción de su sección, más abajo; seguila tal cual.
+EXTENSIÓN: cada sección es UN SOLO párrafo de 80 a 120 palabras. Total interpretativo 300 a 400 palabras. Priorizá calidad y personalización por encima de llegar a un número exacto: no rellenes.
+
+FORMATO DE SALIDA (obligatorio): empezá directamente con "**Tu esencia solar**". NO agregues ningún encabezado general ni título arriba de todo. NO uses "#", "##" ni "###". NO uses líneas separadoras "---". Usá EXCLUSIVAMENTE estos tres títulos, escritos exactamente así, cada uno entre dobles asteriscos en su propia línea y sin espacios internos: "**Tu esencia solar**", "**Tu mundo emocional**", "**Tu presencia en el mundo**". Después de la tercera sección, agregá el párrafo de cierre como texto normal, sin título adicional. No agregues ningún otro elemento de Markdown.
 
 **Tu esencia solar**
-Hablá de tu Sol en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que estás aprendiendo a ser en esta vida, no algo que ya tenés completamente desarrollado. Describí en UN SOLO párrafo la llama auténtica que venís a encender: cómo se expresa tu identidad cuando estás siendo genuino/a, qué necesitás para sentirte vivo/a.${textoAspectosSol} Aplicá la regla de aspectos. No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.
-${ganchoSol}
+Interpretá tu Sol en ${solSign} en casa ${solHouse} como la combinación signo + casa. Explicá de manera sencilla qué busca desarrollar esa identidad, en qué área de la vida (la casa) necesita expresarse y qué cualidad central aparece en tu forma de ser cuando te mostrás tal como sos. No desarrolles otros planetas ni tensiones.
 
 **Tu mundo emocional**
-Hablá de tu Luna en ${lunaSign} en casa ${lunaHouse}. La Luna es el mecanismo de seguridad emocional que traés desde tu historia más temprana. Describí en UN SOLO párrafo cómo procesás lo que sentís, qué necesitás para sentirte seguro/a, cómo reaccionás cuando te sentís vulnerable.${textoAspectosLuna} Aplicá la regla de aspectos. Quedate en la superficie luminosa, sin entrar en heridas profundas ni sombras.
-${ganchoLuna}
+Interpretá tu Luna en ${lunaSign} en casa ${lunaHouse} como la combinación signo + casa. Explicá tus necesidades emocionales, tu forma espontánea de reaccionar y qué necesitás para sentirte emocionalmente en contacto con vos. Planteá tendencias y posibilidades, no diagnósticos: se dice "frente a emociones intensas podés tender a reaccionar rápido o a necesitar espacio para recuperar tu autonomía", nunca "cuando sos vulnerable atacás o te alejás".
 
 **Tu presencia en el mundo**
-Hablá de tu Ascendente en ${ascSign}. El Ascendente es una energía nueva que venís a integrar en esta vida. Describí en UN SOLO párrafo cómo te presentás ante el mundo, la energía que irradiás al entrar a un lugar, cómo te perciben quienes no te conocen. No entres en el propósito evolutivo profundo.
-${ganchoAsc}
+Interpretá tu Ascendente en ${ascSign}. Describí las cualidades de esa forma de acercarte a la vida, cómo te relacionás inicialmente con el entorno y qué recursos naturales trae ese Ascendente. NO afirmes que todavía no lo integraste ni que te falta desarrollarlo: describilo como una forma real y disponible de presentarte ante el mundo.
 
-Cerrá la lectura, sin título y sin separador, con EXACTAMENTE este párrafo (sin modificarlo):
-"Esto es solo una parte de vos: tu esencia, tu mundo emocional y tu forma de presentarte. Pero todavía no viste cómo amás, cómo actuás cuando algo te importa, cómo pensás y te comunicás, ni qué estructuras estás aprendiendo a sostener. Tu carta completa conecta los 10 planetas y tu ascendente — el mapa entero de cómo todas esas piezas dialogan entre sí."
-Después, en una línea aparte, agregá UNA sola frase poética muy breve que funcione como gancho final hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
+Cerrá la lectura, sin título y sin separador, con un puente breve (2 a 4 oraciones) hacia la Carta Natal Completa. La idea: ya viste tres piezas fundamentales —tu esencia, tu mundo emocional y tu forma de presentarte—, pero todavía falta comprender cómo pensás, cómo amás, qué te moviliza, dónde están tus posibilidades de expansión y qué desafíos te estructuran. Podés mencionar que además queda por descubrir cómo dialogan entre sí las distintas partes de tu carta, pero NO expliques acá cómo se relacionan tu Sol, tu Luna y tu Ascendente ni les asignes una síntesis conjunta (no les pongas adjetivos que los integren tipo "tu Sol profundo, tu Luna intensa y tu Ascendente valiente conviven"): esa integración es justamente lo que se reserva para la Carta Natal Completa. Que genere curiosidad, no miedo ni sensación de información retenida a la fuerza. Podés cerrar con una frase del tipo "Ahí es donde tu carta deja de ser una suma de signos y empieza a contar tu historia" (reformulala con tus palabras, no la copies literal).`;
+}
+
+// ── POSTPROCESO DETERMINÍSTICO — SOLO Lectura Esencial gratuita ──
+// Se aplica sobre el texto de la esencial (interpBasica) en su chokepoint, antes
+// de renderInterp y de cachear. NO toca renderInterp, ni las lecturas pagas, ni
+// SYSTEM_EVOLUTIVO, ni la caché de datos natales. Reglas 100% seguras (sin falsos
+// positivos): NO corrige género, tono, gramática semántica, longitud ni contenido.
+function limpiarEsencial(texto){
+  if(!texto || typeof texto!=='string') return texto;
+
+  // 1) Artefactos Markdown como LÍNEA INDEPENDIENTE. No toca los títulos **...**
+  //    (que no empiezan con # ni son ---), solo encabezados y separadores sueltos.
+  texto = texto.split('\n').filter(l=>{
+    const t=l.trim();
+    if(/^#{1,6}\s+/.test(t)) return false;   // # / ## / ### como encabezado de línea
+    if(/^-{3,}$/.test(t))    return false;   // --- como separador de línea
+    return true;
+  }).join('\n').replace(/\n{3,}/g,'\n\n').trim();
+
+  // 2) Voseo — diccionario CERRADO y explícito tuteo → voseo (palabra/frase completa).
+  //    Nada de reglas por terminación. Excluidas a propósito las formas que también
+  //    son sustantivos u otra palabra válida: muestras, marcas, formas, cuentas,
+  //    esperas, copas, casas, miras, paras… (por eso NO están en la lista).
+  const VOSEO = [
+    ['eres','sos'], ['tienes','tenés'], ['puedes','podés'], ['sientes','sentís'],
+    ['piensas','pensás'], ['quieres','querés'], ['vienes','venís'], ['dices','decís'],
+    ['haces','hacés'], ['sabes','sabés'], ['debes','debés'], ['conoces','conocés'],
+    ['entiendes','entendés'], ['prefieres','preferís'], ['sigues','seguís'],
+    ['comunicas','comunicás'], ['expresas','expresás'], ['buscas','buscás'],
+    ['necesitas','necesitás'], ['reaccionas','reaccionás'], ['imaginas','imaginás'],
+    ['deseas','deseás'], ['encuentras','encontrás'], ['recuerdas','recordás'],
+    ['demuestras','demostrás'],
+    // Formas indirectas inequívocas ("ti" es siempre 2ª persona; "contigo" unívoco).
+    // NO se toca el posesivo "tu" (igual en voseo), solo el sujeto acentuado "tú".
+    ['contigo','con vos'], ['a ti','a vos'], ['para ti','para vos'], ['por ti','por vos'],
+    ['de ti','de vos'], ['en ti','en vos'], ['hacia ti','hacia vos'], ['tú','vos']
+  ];
+  const L='A-Za-zÁÉÍÓÚáéíóúÑñ';                 // clase de letra (incluye acentos) para los límites
+  for(const [mal,bien] of VOSEO){
+    const core=mal.replace(/ /g,'\\s+');       // permite 1+ espacios en las frases
+    const re=new RegExp('(?<!['+L+'])('+core+')(?!['+L+'])','gi');
+    texto=texto.replace(re,(m,g1)=> /^[A-ZÁÉÍÓÚ]/.test(g1) ? bien.charAt(0).toUpperCase()+bien.slice(1) : bien);
+  }
+  return texto;
 }
 
 // ── PROMPTS POR PRODUCTO ──
@@ -2357,7 +2362,9 @@ async function calcularCarta() {
       const esencialCached=localStorage.getItem(esencialKey);
       let interpBasica;
       if(esencialCached){interpBasica=esencialCached;}
-      else{interpBasica=await llamarClaude(prompt);try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
+      else{interpBasica=await llamarClaude(prompt);}
+      interpBasica=limpiarEsencial(interpBasica);                 // postproceso determinístico, SOLO esencial
+      if(!esencialCached){try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
       renderInterp(interpBasica,'interpretacion-basica');
       _lecturaContexto['esencial']={nombre,productoNombre:'Lectura Esencial Gratuita',texto:interpBasica,codigoPromo:'',fecha,hora,ciudad,pais};
     }

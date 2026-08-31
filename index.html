@@ -1276,6 +1276,44 @@ function buildPromptBasico(nombre, chartData) {
   const textoAspectosSol=aspectosSol.length>0?`\nTu Sol tiene estos aspectos: ${aspectosSol.join(' / ')}.`:'';
   const textoAspectosLuna=aspectosLuna.length>0?`\nTu Luna tiene estos aspectos: ${aspectosLuna.join(' / ')}.`:'';
 
+  // ── Gancho de cierre CONDICIONAL por punto (Sol / Luna / Ascendente) ──
+  // Detecta cuadratura U OPOSICIÓN con Venus/Marte/Mercurio/Júpiter/Saturno y la
+  // traduce a experiencia de vida (sin nombrar planeta ni término técnico). Usa el
+  // array COMPLETO de aspectos (no el truncado de textoAspectos*), así también cubre
+  // al Ascendente, que antes no llegaba al prompt. Máx 2 fragmentos, los de orbe más ajustado.
+  const MAPA_TENSION = {
+    Venus:'cómo amás y qué te atrae',
+    Mars:'cómo actuás y luchás por lo tuyo',
+    Mercury:'cómo pensás y te comunicás',
+    Jupiter:'dónde buscás expansión y sentido',
+    Saturn:'qué estructuras y miedos estás madurando'
+  };
+  const ES_PUNTO = {
+    Sun:n=>n==='Sun',
+    Moon:n=>n==='Moon',
+    Asc:n=>/^(ascendant|first_house|asc)$/i.test(n||'')
+  };
+  const GANCHO_GENERICO = {
+    Sun:'Hay una razón exacta en tu carta — y tiene que ver con cómo amás y con qué tan cómodo/a te sentís luchando por lo tuyo. Eso todavía no lo viste.',
+    Moon:'Eso que notás es síntoma de algo más profundo: qué estructuras y qué miedos estás aprendiendo a sostener con el tiempo. Tu carta completa lo desarrolla.',
+    Asc:'Estás en proceso de hacerla tuya — y cómo lo lográs tiene que ver con cómo pensás y te comunicás con el mundo. Eso todavía no lo viste.'
+  };
+  function ganchoInstr(punto){
+    const test=ES_PUNTO[punto];
+    const frags=aspects.filter(a=>{
+      const tipo=a.aspect||a.aspect_type||a.type;
+      if(tipo!=='square'&&tipo!=='opposition')return false;
+      return (test(a.p1_name)&&MAPA_TENSION[a.p2_name])||(test(a.p2_name)&&MAPA_TENSION[a.p1_name]);
+    }).sort((a,b)=>Math.abs(a.orbit||a.orb||0)-Math.abs(b.orbit||b.orb||0))
+      .map(a=>MAPA_TENSION[test(a.p1_name)?a.p2_name:a.p1_name])
+      .filter((v,i,arr)=>arr.indexOf(v)===i).slice(0,2);
+    if(frags.length>0){
+      return `GANCHO DE CIERRE (obligatorio): 1 o 2 oraciones en "vos", tono evolutivo y predictivo (conectá con algo que puede estar sintiendo ahora o que está por moverse en su vida, sin predecir hechos ni fechas), alrededor de ESTO: ${frags.map(f=>`"${f}"`).join(' y ')}. Traducilo a experiencia de vida concreta, sin nombrar planetas ni usar jerga, y dejá la sensación de que la explicación completa está en su carta.`;
+    }
+    return `GANCHO DE CIERRE (obligatorio, usá EXACTAMENTE esta frase, sin modificarla): "${GANCHO_GENERICO[punto]}"`;
+  }
+  const ganchoSol=ganchoInstr('Sun'),ganchoLuna=ganchoInstr('Moon'),ganchoAsc=ganchoInstr('Asc');
+
   return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
 - Sol en ${solSign}, casa ${solHouse}
 - Luna en ${lunaSign}, casa ${lunaHouse}
@@ -1285,21 +1323,28 @@ CRÍTICO: hablá siempre en segunda persona, de "vos" directamente a ${nombre}. 
 
 Escribí una LECTURA ESENCIAL GRATUITA con exactamente estas tres secciones. Cada título entre dobles asteriscos en línea propia.
 
-REGLA DE ASPECTOS (síntoma sin solución): si el Sol o la Luna tienen aspectos en ${textoAspectosSol} / ${textoAspectosLuna}, nombrá el síntoma concreto que eso genera en la vida real de ${nombre} — algo que pueda reconocer como verdadero apenas lo lea (una dificultad puntual, una reacción que se repite, una tensión que siente pero no termina de entender). NO expliques de dónde viene ni qué hacer con eso. Cerrá la mención con una frase que indique que hay una razón exacta en su carta y que vale la pena mirarla de cerca. Si el aspecto es fluido (lo que técnicamente sería trígono o sextil), mencionalo más liviano, como un don natural, sin necesidad de profundizar.
-No uses nunca las palabras "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto".
+EXTENSIÓN: la lectura completa debe rondar 350 a 400 palabras EN TOTAL. Cada sección es UN SOLO párrafo de interpretación (90 a 120 palabras) seguido de su gancho de cierre. No agregues un segundo párrafo de profundización: la tensión se desarrolla en el gancho, no en prosa larga.
 
-TONO PREDICTIVO: cada sección cierra con 1-2 frases que conecten la tensión natal descrita con algo que la persona puede estar sintiendo ahora o que está por moverse en su vida. No predecir hechos concretos ni dar fechas. Usar frases como "esa tensión tiene una explicación exacta en tu carta", "hay algo que se está por mover ahí", "tu informe completo desarrolla esto en profundidad". Que funcione como gancho emocional, no como predicción. Que la persona lea eso y sienta que necesita saber más.
+REGLA DE ASPECTOS (síntoma sin solución): si el Sol o la Luna tienen aspectos en ${textoAspectosSol} / ${textoAspectosLuna}, nombrá dentro del párrafo el síntoma concreto que eso genera en la vida real de ${nombre} — algo que pueda reconocer como verdadero apenas lo lea (una dificultad puntual, una reacción que se repite, una tensión que siente pero no termina de entender). NO expliques de dónde viene ni qué hacer con eso. Si el aspecto es fluido (lo que técnicamente sería trígono o sextil), mencionalo más liviano, como un don natural, sin necesidad de profundizar.
+No uses nunca las palabras "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto", ni nombres de planetas crudos: todo traducido a experiencia de vida.
+
+TONO PREDICTIVO (aplica a los ganchos de cierre): cada gancho conecta lo descrito con algo que la persona puede estar sintiendo ahora o que está por moverse en su vida. No predecir hechos concretos ni dar fechas. Que funcione como gancho emocional, no como predicción: que lea eso y sienta que necesita saber más. El contenido puntual de cada gancho está en la instrucción de su sección, más abajo; seguila tal cual.
 
 **Tu esencia solar**
-Hablá de tu Sol en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que estás aprendiendo a ser en esta vida, no algo que ya tenés completamente desarrollado. Describí la llama auténtica que venís a encender: cómo se expresa tu identidad cuando estás siendo genuino/a, qué necesitás para sentirte vivo/a. Incluí una tensión o paradoja real de este Sol. 150 a 200 palabras.${textoAspectosSol} Aplicá la regla de aspectos. No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.
+Hablá de tu Sol en ${solSign} en casa ${solHouse}. El Sol es un punto evolutivo, algo que estás aprendiendo a ser en esta vida, no algo que ya tenés completamente desarrollado. Describí en UN SOLO párrafo la llama auténtica que venís a encender: cómo se expresa tu identidad cuando estás siendo genuino/a, qué necesitás para sentirte vivo/a.${textoAspectosSol} Aplicá la regla de aspectos. No menciones heridas profundas, patrones inconscientes ni propósito evolutivo completo.
+${ganchoSol}
 
 **Tu mundo emocional**
-Hablá de tu Luna en ${lunaSign} en casa ${lunaHouse}. La Luna es el mecanismo de seguridad emocional que traés desde tu historia más temprana. Describí cómo procesás lo que sentís, qué necesitás para sentirte seguro/a, cómo reaccionás cuando te sentís vulnerable. 150 a 200 palabras.${textoAspectosLuna} Aplicá la regla de aspectos. Quedate en la superficie luminosa, sin entrar en heridas profundas ni sombras.
+Hablá de tu Luna en ${lunaSign} en casa ${lunaHouse}. La Luna es el mecanismo de seguridad emocional que traés desde tu historia más temprana. Describí en UN SOLO párrafo cómo procesás lo que sentís, qué necesitás para sentirte seguro/a, cómo reaccionás cuando te sentís vulnerable.${textoAspectosLuna} Aplicá la regla de aspectos. Quedate en la superficie luminosa, sin entrar en heridas profundas ni sombras.
+${ganchoLuna}
 
 **Tu presencia en el mundo**
-Hablá de tu Ascendente en ${ascSign}. El Ascendente es una energía nueva que venís a integrar en esta vida. Describí cómo te presentás ante el mundo, la energía que irradiás al entrar a un lugar, cómo te perciben quienes no te conocen. 150 a 200 palabras. No entres en el propósito evolutivo profundo.
+Hablá de tu Ascendente en ${ascSign}. El Ascendente es una energía nueva que venís a integrar en esta vida. Describí en UN SOLO párrafo cómo te presentás ante el mundo, la energía que irradiás al entrar a un lugar, cómo te perciben quienes no te conocen. No entres en el propósito evolutivo profundo.
+${ganchoAsc}
 
-Cerrá la lectura, sin título y sin separador, con exactamente 3 líneas: una pregunta que invite a ${nombre} a querer saber más sobre su carta completa — idealmente conectada con el síntoma que mencionaste antes, no genérica —, una línea en blanco, y una frase poética muy breve que funcione como gancho hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
+Cerrá la lectura, sin título y sin separador, con EXACTAMENTE este párrafo (sin modificarlo):
+"Esto es solo una parte de vos: tu esencia, tu mundo emocional y tu forma de presentarte. Pero todavía no viste cómo amás, cómo actuás cuando algo te importa, cómo pensás y te comunicás, ni qué estructuras estás aprendiendo a sostener. Tu carta completa conecta los 10 planetas y tu ascendente — el mapa entero de cómo todas esas piezas dialogan entre sí."
+Después, en una línea aparte, agregá UNA sola frase poética muy breve que funcione como gancho final hacia la lectura paga. Que no suene a publicidad: que suene a verdad.`;
 }
 
 // ── PROMPTS POR PRODUCTO ──

@@ -1832,9 +1832,11 @@ async function aplicarPromo(producto) {
 }
 
 // ── PROCESAR COMPRA ──
-// Flag de la tarjeta del eclipse: activo si la página se abrió/derivó con ?oferta=eclipse
-// o si se hizo click en el CTA del pop-up. Viaja hasta la generación vía pendiente.extras.
-let _ofertaEclipse = new URLSearchParams(window.location.search).get('oferta')==='eclipse';
+// Campaña del Eclipse Lunar (28/8) RETIRADA por evento vencido. El flag queda en false
+// de forma permanente: ni ?oferta=eclipse ni ningún deep link la reactivan. Se conserva
+// la variable (y _extrasEclipse) para no romper las referencias existentes, todas gateadas
+// por este flag, que ahora quedan inertes.
+let _ofertaEclipse = false;
 function _extrasEclipse(producto){ return (_ofertaEclipse && producto==='transitos') ? {oferta:'eclipse'} : {}; }
 
 async function procesarCompra(producto, precio) {
@@ -1900,6 +1902,7 @@ async function pagarConPaypal(producto, precio) {
   mostrarMensaje(errorId, '');
   const btn = document.getElementById(`btn-paypal-${producto}`);
   const btnMP = document.getElementById(`btn-mp-${producto}`);
+  const _lblPP = btn ? btn.textContent : '';   // etiqueta original para restaurar si falla
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Conectando con PayPal...'; }
   if (btnMP) btnMP.disabled = true;
 
@@ -1917,15 +1920,15 @@ async function pagarConPaypal(producto, precio) {
     });
     const data = await res.json();
     if (!data.url) {
-      mostrarMensaje(errorId, data.error || 'Error al iniciar el pago con PayPal.');
-      if (btn) { btn.disabled = false; btn.textContent = '🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio; }
+      mostrarMensaje(errorId, data.error || 'No pudimos abrir PayPal en este momento. Probá de nuevo o pagá con Mercado Pago.');
+      if (btn) { btn.disabled = false; btn.textContent = _lblPP || ('🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio); }
       if (btnMP) btnMP.disabled = false;
       return;
     }
     window.location.href = data.url;
   } catch(e) {
-    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
-    if (btn) { btn.disabled = false; btn.textContent = '🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio; }
+    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo o pagá con Mercado Pago.');
+    if (btn) { btn.disabled = false; btn.textContent = _lblPP || ('🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio); }
     if (btnMP) btnMP.disabled = false;
   }
 }
@@ -1937,6 +1940,7 @@ async function pagarConMP(producto, precio, errorId) {
   mostrarMensaje(errorId, '');
   const btn = document.getElementById(`btn-mp-${producto}`);
   const btnPP = document.getElementById(`btn-paypal-${producto}`);
+  const _lblMP = btn ? btn.textContent : '';   // etiqueta original (incluye el precio) para restaurar si falla
   if (btn) { btn.disabled = true; btn.textContent = '⟳ Conectando con MercadoPago...'; }
   if (btnPP) btnPP.disabled = true;
 
@@ -1954,15 +1958,15 @@ async function pagarConMP(producto, precio, errorId) {
     });
     const data = await res.json();
     if (!data.url) {
-      mostrarMensaje(errorId, data.error || 'Error al iniciar el pago con MercadoPago.');
-      if (btn) { btn.disabled = false; btn.textContent = '💳 Pagar con MercadoPago'; }
+      mostrarMensaje(errorId, data.error || 'No pudimos abrir Mercado Pago en este momento. Probá de nuevo o pagá con PayPal.');
+      if (btn) { btn.disabled = false; btn.textContent = _lblMP || '💳 Pagar con Mercado Pago'; }
       if (btnPP) btnPP.disabled = false;
       return;
     }
     window.location.href = data.url;
   } catch(e) {
-    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo.');
-    if (btn) { btn.disabled = false; btn.textContent = '💳 Pagar con MercadoPago'; }
+    mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo o pagá con PayPal.');
+    if (btn) { btn.disabled = false; btn.textContent = _lblMP || '💳 Pagar con Mercado Pago'; }
     if (btnPP) btnPP.disabled = false;
   }
 }
@@ -2207,23 +2211,32 @@ document.querySelectorAll('input[id^="email-pago-"]').forEach(function(inp){
     const cont = inp.closest('.compra-form, .preguntas-section') || inp.parentElement;
     const btns = cont ? cont.querySelectorAll('.pago-btns button') : [];
     if(!btns.length) return;
-    // Ayuda breve, mismo tono; aparece solo si escribió algo que todavía no es válido.
+    // Mensaje SIEMPRE visible mientras el email no sea válido, para que se entienda por qué
+    // los botones están deshabilitados (antes solo aparecía tras escribir algo inválido, y
+    // con el campo vacío parecía que los botones no funcionaban).
     const hint = document.createElement('p');
-    hint.textContent = 'Escribí tu mail para continuar';
-    hint.style.cssText = 'display:none;font-size:12px;color:rgba(255,255,255,0.55);margin:6px 0 0;text-align:left;text-transform:none;letter-spacing:normal;';
+    hint.style.cssText = 'display:none;font-size:12px;color:rgba(255,255,255,0.6);margin:6px 0 0;text-align:left;text-transform:none;letter-spacing:normal;';
     inp.insertAdjacentElement('afterend', hint);
     function sync(){
       const val = (inp.value||'').trim();
       const ok = EMAIL_RE.test(val);
       btns.forEach(function(b){
         b.disabled = !ok;
-        b.style.opacity = ok ? '' : '0.45';
+        // Deshabilitado pero claramente reconocible como botón (no desaparece ni se aclara de más).
+        b.style.opacity = ok ? '' : '0.6';
         b.style.cursor  = ok ? '' : 'not-allowed';
       });
-      hint.style.display = (!ok && val.length>0) ? 'block' : 'none';
+      if(ok){
+        hint.style.display = 'none';
+      } else {
+        hint.textContent = (val.length===0)
+          ? 'Ingresá tu email para habilitar el pago y recibir tu lectura.'
+          : 'Ingresá un email válido para continuar. Ahí también recibirás tu lectura.';
+        hint.style.display = 'block';
+      }
     }
     inp.addEventListener('input', sync);
-    sync(); // estado inicial: botones deshabilitados hasta que haya email válido
+    sync(); // estado inicial: botones deshabilitados + mensaje visible hasta que haya email válido
   });
 })();
 
@@ -2354,15 +2367,7 @@ async function calcularCarta() {
       if(btnMpUpg)btnMpUpg.style.display='none';
       setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
     }
-    // Tarjeta del eclipse: si la persona vino por el eclipse, apenas su carta está lista la
-    // llevamos derecho a la oferta de Tránsitos (salvo que sea el retorno de un pago ya hecho).
-    if(_ofertaEclipse && new URLSearchParams(window.location.search).get('lectura')!=='ok'){
-      document.getElementById('eclipse-hint')?.remove();
-      setTimeout(()=>{
-        document.getElementById('form-transitos')?.closest('.producto-card')?.scrollIntoView({behavior:'smooth',block:'center'});
-        mostrarMensaje('success-transitos','🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Lunar en Piscis del 28/8: descubrí en qué área de tu vida cae y qué se cierra para vos.');
-      },700);
-    }
+    // (Campaña del Eclipse retirada: ya no hay scroll ni mensaje automático hacia Tránsitos.)
     setLoaderText('escribiendo tu lectura esencial...');
     const prompt=buildPromptBasico(nombre,chartData);
     try{
@@ -2428,7 +2433,6 @@ async function cargarDesdeLead(token, oferta){
     // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
     const DESTINOS = {
       'transitos':        { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
-      'eclipse':          { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'🌑 Tu carta ya está lista. Desbloqueá tu lectura del Eclipse Lunar en Piscis del 28/8.' },
       'carta-completa':   { form:'form-carta-completa',   email:'email-pago-carta-completa',   success:'success-carta-completa',   msg:'✦ Tu carta ya está lista. Desbloqueá tu informe completo con todo el detalle de tu carta.' },
       'revolucion-solar': { form:'form-revolucion-solar', email:'email-pago-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
       'sinastria':        { form:'form-sinastria',        email:'email-pago-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
@@ -2442,86 +2446,13 @@ async function cargarDesdeLead(token, oferta){
   }catch(e){ /* fallback silencioso: queda el formulario normal */ }
 }
 
-// ── POP-UP TARJETA ECLIPSE (temporal, vence 20/8/2026) ──
-// Flotante abajo-derecha, con X. Aparece a los 4 s o al primer scroll. Nunca bloquea.
-function initEclipsePopup(){
-  if(new Date() >= ECLIPSE_FECHA_FIN) return;                          // expiración hardcodeada
-  try{ if(sessionStorage.getItem('eclipse_popup_cerrado')) return; }catch(e){}
-  if(document.getElementById('eclipse-popup')) return;
-
-  // En mobile la tarjeta flotante tapaba el formulario y peleaba con el teclado. Por eso en
-  // pantallas chicas va FIJA ARRIBA, como barra fina: el formulario queda debajo, sin tapar.
-  const esMobile = window.matchMedia('(max-width:600px)').matches;
-  const wrap=document.createElement('div');
-  wrap.id='eclipse-popup';
-  if(esMobile){
-    wrap.style.cssText='position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border-bottom:1px solid rgba(138,77,171,0.55);padding:12px 44px 12px 16px;box-shadow:0 4px 22px rgba(0,0,0,0.45);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(-100%);transition:opacity .35s,transform .35s;pointer-events:none;';
-    wrap.innerHTML=`
-      <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:4px;right:6px;background:none;border:none;color:rgba(255,255,255,0.6);font-size:26px;line-height:1;cursor:pointer;padding:6px 10px;">×</button>
-      <div style="font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:#82B366;margin-bottom:4px;">🌑 Eclipse Lunar en Piscis · 28 de agosto</div>
-      <div style="font-family:'Playfair Display',serif;font-size:15px;line-height:1.3;margin-bottom:6px;">Descubrí qué se cierra en tu vida</div>
-      <div style="font-size:12px;color:rgba(255,255,255,0.6);line-height:1.45;margin-bottom:10px;">Primero calculá tu carta natal <strong>gratis</strong> acá abajo; después desbloqueás tu lectura del eclipse.</div>
-      <button id="eclipse-popup-cta" style="width:100%;padding:12px;background:#8A4DAB;color:#fff;border:none;border-radius:9px;font-size:13px;letter-spacing:0.04em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
-      <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.4;margin-top:7px;text-align:center;">Mercado Pago $8.500 · PayPal USD 5</div>`;
-  } else {
-    wrap.style.cssText='position:fixed;bottom:20px;right:20px;max-width:340px;z-index:9999;background:linear-gradient(135deg,#12101c,#1c1430);border:1px solid rgba(138,77,171,0.5);border-radius:16px;padding:22px 22px 20px;box-shadow:0 12px 40px rgba(0,0,0,0.55);font-family:Montserrat,sans-serif;color:#f0ede8;opacity:0;transform:translateY(24px);transition:opacity .4s,transform .4s;pointer-events:none;';
-    wrap.innerHTML=`
-      <button id="eclipse-popup-x" aria-label="Cerrar" style="position:absolute;top:8px;right:12px;background:none;border:none;color:rgba(255,255,255,0.55);font-size:22px;line-height:1;cursor:pointer;padding:4px;">×</button>
-      <div style="font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:#82B366;margin-bottom:8px;">🌑 Eclipse Lunar en Piscis · 28 de agosto</div>
-      <div style="font-family:'Playfair Display',serif;font-size:19px;line-height:1.35;margin-bottom:10px;">Descubrí qué se cierra en tu vida</div>
-      <p style="font-size:13px;color:rgba(255,255,255,0.6);line-height:1.55;margin-bottom:14px;">Un cierre breve y potente. Primero calculá tu carta natal <strong>gratis</strong> acá abajo; después desbloqueás tu lectura del eclipse: qué se cierra y qué se hace visible para vos.</p>
-      <button id="eclipse-popup-cta" style="width:100%;padding:13px;background:#8A4DAB;color:#fff;border:none;border-radius:10px;font-size:13px;letter-spacing:0.05em;cursor:pointer;">✦ Ver mi lectura del eclipse</button>
-      <p style="font-size:11px;color:rgba(255,255,255,0.45);line-height:1.5;margin-top:9px;text-align:center;">Pagás con Mercado Pago ($8.500) o PayPal (USD 5)</p>`;
-  }
-  document.body.appendChild(wrap);
-
-  const cerrar=()=>{wrap.style.opacity='0';wrap.style.transform=esMobile?'translateY(-100%)':'translateY(24px)';wrap.style.pointerEvents='none';if(esMobile)document.body.style.paddingTop='';setTimeout(()=>wrap.remove(),400);try{sessionStorage.setItem('eclipse_popup_cerrado','1');}catch(e){}};
-  wrap.querySelector('#eclipse-popup-x').onclick=cerrar;
-  wrap.querySelector('#eclipse-popup-cta').onclick=()=>{
-    _ofertaEclipse=true;
-    try{const u=new URL(window.location);u.searchParams.set('oferta','eclipse');window.history.replaceState({},'',u);}catch(e){}
-    cerrar();
-    if(cartaData){
-      mostrar('section-upsell');
-      mostrarMensaje('success-transitos','🌑 Lectura del Eclipse Lunar en Piscis del 28/8 — descubrí en qué área de tu vida cae y qué se cierra para vos.');
-      const card=document.getElementById('form-transitos')?.closest('.producto-card');
-      setTimeout(()=>card?.scrollIntoView({behavior:'smooth',block:'center'}),120);
-    } else {
-      // Todavía no calculó la carta: se la pedimos primero (sin carta no hay lectura) y
-      // le dejamos claro que el eclipse se desbloquea apenas la genere.
-      let hint=document.getElementById('eclipse-hint');
-      if(!hint){
-        hint=document.createElement('div');
-        hint.id='eclipse-hint';
-        hint.style.cssText='max-width:520px;margin:0 auto 18px;padding:14px 18px;border:1px solid rgba(138,77,171,0.5);border-radius:12px;background:rgba(138,77,171,0.10);color:#f0ede8;font-size:13px;line-height:1.55;';
-        hint.innerHTML='🌑 <strong>Un paso antes:</strong> calculá tu carta natal gratis acá abajo (nombre, fecha y ciudad). Apenas esté lista, desbloqueás tu <strong>lectura del Eclipse Lunar del 28/8</strong> — la pagás con Mercado Pago ($8.500) o PayPal (USD 5).';
-        const form=document.getElementById('section-form');
-        if(form) form.insertBefore(hint, form.firstChild);
-      }
-      setTimeout(()=>document.getElementById('section-form')?.scrollIntoView({behavior:'smooth',block:'start'}),120);
-    }
-  };
-
-  // Aparición.
-  let revelado=false;
-  const revelar=()=>{if(revelado)return;revelado=true;window.removeEventListener('scroll',revelar);wrap.style.pointerEvents='auto';
-    // En mobile la barra fija de arriba empuja el contenido hacia abajo (no lo tapa).
-    if(esMobile){ try{ document.body.style.paddingTop=(wrap.offsetHeight)+'px'; }catch(e){} }
-    requestAnimationFrame(()=>{wrap.style.opacity='1';wrap.style.transform='translateY(0)';});};
-  if(_ofertaEclipse){
-    // Vino por el eclipse (mail / link ?oferta=eclipse): mostrarla enseguida, sin esperar scroll.
-    setTimeout(revelar, 500);
-  } else {
-    // Visita orgánica: a los 3 s o al primer scroll, lo que ocurra antes (menos invasivo).
-    setTimeout(revelar, 3000);
-    window.addEventListener('scroll',revelar,{passive:true});
-  }
-}
+// ── POP-UP TARJETA ECLIPSE ──
+// RETIRADO (evento vencido, 28/8/2026). Se eliminó por completo la función del pop-up,
+// su apertura automática, el scroll/hint hacia Tránsitos y todos sus mensajes. El producto
+// general "Tránsitos Actuales" se mantiene intacto.
 
 window.addEventListener('load',async ()=>{
   const params=new URLSearchParams(window.location.search);
-  // Pop-up del eclipse: no molestar en el retorno de pago.
-  if(params.get('lectura')!=='ok') initEclipsePopup();
   if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
   if(params.get('lead')){ await cargarDesdeLead(params.get('lead'), params.get('oferta')); }
   if(params.get('upgrade')==='lectura-profunda'){

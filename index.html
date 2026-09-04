@@ -292,7 +292,7 @@
       </div>
 
       <!-- TEMAS BLOQUEADOS (clickeables: llevan directo a la card de compra real) -->
-      <div style="margin-top:22px;cursor:pointer;" onclick="gtag('event','click_comprar_informe'); irACartaCompleta();">
+      <div style="margin-top:22px;cursor:pointer;" onclick="onTemasBloqueados()">
         <p style="font-size:13.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px;">Tu carta tiene más capas. Estos temas están en tu informe completo:</p>
         <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;color:rgba(255,255,255,0.4);">
           <span>🔒 Tu mente y tu voz</span>
@@ -598,6 +598,57 @@ function _getClickIds(){
   return out;
 }
 _guardarClickIds();
+
+// ── EMBUDO GA4 (medición comercial; SOLO destino G-639MKD7LWG, sin datos personales) ──
+// Todos los eventos intermedios se envían ÚNICAMENTE a GA4 vía send_to. NUNCA se manda
+// nombre, email, fecha, ciudad ni datos natales: solo slug de producto, precio, moneda y
+// método de pago. La conversión de Google Ads (dUUp) y el purchase se disparan aparte, tras
+// confirmación server-side del pago, y NO se tocan acá.
+const GA4_ID = 'G-639MKD7LWG';
+const GA4_PRECIOS_ARS = {'carta-completa':10000,'lectura-profunda':22000,'revolucion-solar':15000,'sinastria':15000,'transitos':8500,'pregunta':6500,'proposito-vida':10000,'revolucion-lunar':10000};
+const GA4_PRECIOS_USD = {'carta-completa':6,'lectura-profunda':13,'revolucion-solar':9,'sinastria':9,'transitos':5,'pregunta':4,'proposito-vida':6,'revolucion-lunar':9};
+const GA4_NOMBRES = {'carta-completa':'Carta Natal Completa','lectura-profunda':'Lectura Profunda','revolucion-solar':'Revolución Solar','sinastria':'Sinastría','transitos':'Tránsitos Actuales','pregunta':'Pregunta Puntual','proposito-vida':'Propósito de Vida','revolucion-lunar':'Revolución Lunar'};
+const GA4_LISTA = ['carta-completa','lectura-profunda','revolucion-solar','sinastria','transitos','pregunta']; // orden de "Lecturas completas"
+// Envía un evento SOLO a GA4 (nunca al tag de Ads).
+function ga4(event, params){ try{ gtag('event', event, Object.assign({ send_to: GA4_ID }, params||{})); }catch(e){} }
+// Igual pero una sola vez por sesión (dedup por recarga / scroll / doble clic).
+function ga4Once(key, event, params){
+  let sent=false; try{ sent=!!sessionStorage.getItem(key); }catch(e){}
+  if(sent) return;
+  ga4(event, params);
+  try{ sessionStorage.setItem(key,'1'); }catch(e){}
+}
+// Precio/moneda/items reales de un producto según la pasarela ('mercado-pago' → ARS, 'paypal' → USD).
+function ga4DatosPago(producto, metodo){
+  const esPP = metodo==='paypal';
+  let precio = esPP ? GA4_PRECIOS_USD[producto] : GA4_PRECIOS_ARS[producto];
+  // Upgrade de Lectura Profunda: USD 7 solo por PayPal.
+  try{ if(esPP && producto==='lectura-profunda' && new URLSearchParams(location.search).get('upgrade')==='lectura-profunda') precio = 7; }catch(e){}
+  return { payment_type: metodo, value: precio, currency: esPP ? 'USD' : 'ARS',
+    items: [{ item_id: producto, item_name: GA4_NOMBRES[producto]||producto, price: precio, quantity: 1 }] };
+}
+// Temas bloqueados → Carta Natal Completa: dispara select_item + click_comprar_informe (solo a GA4).
+function onTemasBloqueados(){
+  ga4('select_item', { item_list_name:'temas-bloqueados', items:[{ item_id:'carta-completa', item_name:GA4_NOMBRES['carta-completa'], price:GA4_PRECIOS_ARS['carta-completa'], quantity:1 }] });
+  ga4('click_comprar_informe', { item_id:'carta-completa', origen:'temas-bloqueados' });
+  irACartaCompleta();
+}
+// "Lecturas completas" a la vista (view_item_list, una vez por sesión).
+function ga4VerListaProductos(){
+  ga4Once('ga4_view_item_list','view_item_list', {
+    item_list_name:'Lecturas completas',
+    items: GA4_LISTA.map((p,i)=>({ item_id:p, item_name:GA4_NOMBRES[p], price:GA4_PRECIOS_ARS[p], index:i+1, quantity:1 }))
+  });
+}
+// carta_form_started: primera interacción con el formulario gratuito (una vez por sesión).
+(function(){
+  const campos = ['nombre','fecha','hora-hh','hora-mm','ciudad','provincia','pais'];
+  function first(){
+    ga4Once('ga4_form_started','carta_form_started');
+    campos.forEach(id=>{ const el=document.getElementById(id); if(el){ el.removeEventListener('input',first); el.removeEventListener('change',first); } });
+  }
+  campos.forEach(id=>{ const el=document.getElementById(id); if(el){ el.addEventListener('input',first); el.addEventListener('change',first); } });
+})();
 
 // ── ENTRAR SIEMPRE ARRIBA (en el formulario) ──
 // Los botones "Obtener mi carta natal gratis" de espaciolibra.com/gratis-carta-natal
@@ -1900,6 +1951,7 @@ async function pagarConPaypal(producto, precio) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   const errorId = `error-${producto}`;
   mostrarMensaje(errorId, '');
+  ga4('begin_checkout', ga4DatosPago(producto,'paypal')); // presionó PayPal
   const btn = document.getElementById(`btn-paypal-${producto}`);
   const btnMP = document.getElementById(`btn-mp-${producto}`);
   const _lblPP = btn ? btn.textContent : '';   // etiqueta original para restaurar si falla
@@ -1920,13 +1972,16 @@ async function pagarConPaypal(producto, precio) {
     });
     const data = await res.json();
     if (!data.url) {
+      ga4('checkout_error', { payment_type:'paypal', item_id:producto, motivo:'sin_url' });
       mostrarMensaje(errorId, data.error || 'No pudimos abrir PayPal en este momento. Probá de nuevo o pagá con Mercado Pago.');
       if (btn) { btn.disabled = false; btn.textContent = _lblPP || ('🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio); }
       if (btnMP) btnMP.disabled = false;
       return;
     }
+    ga4('add_payment_info', ga4DatosPago(producto,'paypal')); // la pasarela devolvió URL de pago
     window.location.href = data.url;
   } catch(e) {
+    ga4('checkout_error', { payment_type:'paypal', item_id:producto, motivo:'conexion' });
     mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo o pagá con Mercado Pago.');
     if (btn) { btn.disabled = false; btn.textContent = _lblPP || ('🌍 ¿Pagás desde afuera de Argentina? Pagá con PayPal · USD ' + precio); }
     if (btnMP) btnMP.disabled = false;
@@ -1938,6 +1993,7 @@ async function pagarConMP(producto, precio, errorId) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   errorId = errorId || `error-${producto}`;
   mostrarMensaje(errorId, '');
+  ga4('begin_checkout', ga4DatosPago(producto,'mercado-pago')); // presionó Mercado Pago
   const btn = document.getElementById(`btn-mp-${producto}`);
   const btnPP = document.getElementById(`btn-paypal-${producto}`);
   const _lblMP = btn ? btn.textContent : '';   // etiqueta original (incluye el precio) para restaurar si falla
@@ -1958,13 +2014,16 @@ async function pagarConMP(producto, precio, errorId) {
     });
     const data = await res.json();
     if (!data.url) {
+      ga4('checkout_error', { payment_type:'mercado-pago', item_id:producto, motivo:'sin_url' });
       mostrarMensaje(errorId, data.error || 'No pudimos abrir Mercado Pago en este momento. Probá de nuevo o pagá con PayPal.');
       if (btn) { btn.disabled = false; btn.textContent = _lblMP || '💳 Pagar con Mercado Pago'; }
       if (btnPP) btnPP.disabled = false;
       return;
     }
+    ga4('add_payment_info', ga4DatosPago(producto,'mercado-pago')); // la pasarela devolvió URL de pago
     window.location.href = data.url;
   } catch(e) {
+    ga4('checkout_error', { payment_type:'mercado-pago', item_id:producto, motivo:'conexion' });
     mostrarMensaje(errorId, 'Error de conexión. Intentá de nuevo o pagá con PayPal.');
     if (btn) { btn.disabled = false; btn.textContent = _lblMP || '💳 Pagar con Mercado Pago'; }
     if (btnPP) btnPP.disabled = false;
@@ -2156,7 +2215,9 @@ function guardarLead(email, aceptaMarketing){
   };
   const nombre = document.getElementById('nombre')?.value?.trim() || '';
   fetch(`${WORKER_URL}/guardar-lead`,{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ email, nombre, acepta_marketing:!!aceptaMarketing, nacimiento, cartaNatal })}).catch(()=>{});
+    body:JSON.stringify({ email, nombre, acepta_marketing:!!aceptaMarketing, nacimiento, cartaNatal })})
+    .then(function(res){ if(res && res.ok) ga4Once('ga4_generate_lead','generate_lead'); }) // solo si el guardado fue exitoso
+    .catch(()=>{});
 }
 
 // ── CAPTURA DE LEADS (paso 2) ──
@@ -2208,6 +2269,7 @@ document.querySelectorAll('input[id^="email-pago-"]').forEach(function(inp){
 (function(){
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   document.querySelectorAll('input[id^="email-pago-"]').forEach(function(inp){
+    const prod = inp.id.replace('email-pago-','');
     const cont = inp.closest('.compra-form, .preguntas-section') || inp.parentElement;
     const btns = cont ? cont.querySelectorAll('.pago-btns button') : [];
     if(!btns.length) return;
@@ -2228,6 +2290,8 @@ document.querySelectorAll('input[id^="email-pago-"]').forEach(function(inp){
       });
       if(ok){
         hint.style.display = 'none';
+        // email_pago_valido: email válido en un producto pago (una vez por producto/sesión; sin el email)
+        ga4Once('ga4_email_valido_'+prod,'email_pago_valido', { item_id: prod });
       } else {
         hint.textContent = (val.length===0)
           ? 'Ingresá tu email para habilitar el pago y recibir tu lectura.'
@@ -2329,10 +2393,15 @@ function descargarPDF(producto) {
 // ── CALCULAR CARTA ──
 let cartaData=null;
 
-async function calcularCarta() {
+async function calcularCarta(origen) {
   const nombre=document.getElementById('nombre').value.trim(),fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,ciudad=document.getElementById('ciudad').value.trim(),provincia=document.getElementById('provincia')?.value.trim()||'',pais=document.getElementById('pais').value.trim()||'Argentina';
   if(!nombre||!fecha||!ciudad){mostrarMensaje('error-msg','Completá nombre, fecha y ciudad para continuar.');return;}
   ocultarMsg('error-msg'); mostrar('section-loader'); ocultar('section-form');
+  // carta_calculo_iniciado: solo cuando el cálculo lo inicia la persona (no en retorno de pago
+  // ni en el auto-cálculo del upgrade). Dedup por datos para no recontar un refresco.
+  if(origen!=='retorno' && origen!=='upgrade'){
+    ga4Once(cacheKey('carta_calculo_iniciado',fecha,hora,ciudad),'carta_calculo_iniciado');
+  }
   try {
     setLoaderText('buscando tu ciudad en el mapa...');
     const coords=await getCoordenadas(ciudad,pais,provincia);
@@ -2346,6 +2415,7 @@ async function calcularCarta() {
     cartaData=chartData;
     renderCartaNatal(chartData); renderPlanetas(chartData); renderAspectos(chartData);
     ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell');
+    ga4VerListaProductos(); // view_item_list: "Lecturas completas" a la vista
     // ── Evento de embudo GA4: la carta gratis (Sol/Luna/Ascendente) ya está en pantalla ──
     // Mismo patrón de gtag que click_comprar_informe. Guard "una vez por sesión" en
     // sessionStorage: evita duplicados por refresco o por re-ver el mismo resultado, pero
@@ -2354,7 +2424,7 @@ async function calcularCarta() {
     const _cgKey = cacheKey('carta_generada', fecha, hora, ciudad);
     let _cgSent=false; try{ _cgSent=!!sessionStorage.getItem(_cgKey); }catch(e){}
     if(!_cgSent){
-      gtag('event','carta_generada');
+      ga4('carta_generada'); // solo a GA4 (evento de embudo, no conversión de Ads)
       try{ sessionStorage.setItem(_cgKey,'1'); }catch(e){}
     }
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
@@ -2430,6 +2500,7 @@ async function cargarDesdeLead(token, oferta){
     if(nac.pais){ const el=document.getElementById('pais'); if(el) el.value=nac.pais; }
     ocultar('section-form');
     mostrar('section-upsell');
+    ga4VerListaProductos(); // view_item_list: "Lecturas completas" a la vista (retorno por lead)
     // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
     const DESTINOS = {
       'transitos':        { form:'form-transitos',        email:'email-pago-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
@@ -2463,7 +2534,7 @@ window.addEventListener('load',async ()=>{
     if(_upgHora)setHora(_upgHora);
     if(_upgCiudad)document.getElementById('ciudad').value=decodeURIComponent(_upgCiudad);
     document.getElementById('pais').value=decodeURIComponent(_upgPais);
-    if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta();}
+    if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta('upgrade');}
     else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
   }
   if(params.get('lectura')==='ok'){
@@ -2517,7 +2588,7 @@ window.addEventListener('load',async ()=>{
           }
           return null;
         };
-        calcularCarta().then(async () => {
+        calcularCarta('retorno').then(async () => {
           // Mostrar placeholder con indicador de carga y hacer scroll inmediato
           const _producto = pendienteData.producto;
           const _container = document.getElementById('section-lecturas-desbloqueadas');
@@ -2580,7 +2651,7 @@ window.addEventListener('load',async ()=>{
           }
         });
       } else {
-        calcularCarta();
+        calcularCarta('retorno');
       }
     }
   }

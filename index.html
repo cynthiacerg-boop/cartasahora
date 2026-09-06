@@ -246,7 +246,8 @@
         <div class="orbit-ring r3"></div>
         <div class="orbit-ring r4"></div>
       </div>
-      <p id="loader-text">calculando posiciones planetarias...</p>
+      <p id="loader-text">Calculando tus posiciones planetarias…</p>
+      <p id="loader-subnote" style="font-size:12px;color:rgba(255,255,255,0.4);text-align:center;margin-top:10px;line-height:1.5;">Este proceso puede tardar entre 1 y 3 minutos. No cierres esta página.</p>
     </div>
   </div>
 
@@ -266,21 +267,10 @@
       </div>
     </div>
 
-    <div class="card">
-      <div class="section-title">Posiciones planetarias</div>
-      <table class="planets-table">
-        <thead>
-          <tr><th>Planeta</th><th>Signo</th><th>Grado</th><th>Casa</th></tr>
-        </thead>
-        <tbody id="tabla-planetas"></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <div class="section-title" id="aspectos-count">Aspectos principales</div>
-      <table class="aspects-table">
-        <tbody id="tabla-aspectos"></tbody>
-      </table>
+    <!-- TUS TRES ENERGÍAS PRINCIPALES (Sol / Luna / Ascendente) -->
+    <div class="card" id="card-tres-energias">
+      <div class="section-title">Tus tres energías principales</div>
+      <div id="tres-energias" style="display:flex;flex-direction:column;gap:10px;"></div>
     </div>
 
     <div class="card">
@@ -291,9 +281,17 @@
         </div>
       </div>
 
+    </div>
+
+    <!-- TRANSICIÓN HACIA CARTA NATAL COMPLETA (estática, controlada por el frontend) -->
+    <div class="card" id="transicion-carta-completa">
+      <div class="section-title">Esto es solo la base de tu mapa</div>
+      <p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0 0 12px;">Tu Sol, tu Luna y tu Ascendente muestran tres partes esenciales de vos. Pero tu carta contiene otras energías y conexiones que explican cómo pensás, amás, actuás, tomás decisiones y construís tus vínculos.</p>
+      <p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0;">En tu Carta Natal Completa vas a descubrir cómo funciona todo junto: tus recursos, tus tensiones y los patrones que pueden estar influyendo en distintas áreas de tu vida.</p>
+
       <!-- TEMAS BLOQUEADOS (clickeables: llevan directo a la card de compra real) -->
       <div style="margin-top:22px;cursor:pointer;" onclick="onTemasBloqueados()">
-        <p style="font-size:13.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px;">Tu carta tiene más capas. Estos temas están en tu informe completo:</p>
+        <p style="font-size:13.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px;">Estos temas están en tu informe completo:</p>
         <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;color:rgba(255,255,255,0.4);">
           <span>🔒 Tu mente y tu voz</span>
           <span>🔒 El amor y tus vínculos</span>
@@ -306,8 +304,8 @@
         <p style="text-align:center;font-size:14px;font-weight:600;color:#82B366;margin:18px 0 0;letter-spacing:0.02em;">Desbloquealos en tu Carta Natal Completa →</p>
       </div>
 
-      <!-- PRUEBA SOCIAL -->
-      <p style="text-align:center;font-size:12.5px;color:rgba(255,255,255,0.45);margin:22px 0 4px;">✨ Más de 500 lecturas generadas</p>
+      <!-- Dato COMPROBABLE (no cifra social) -->
+      <p style="text-align:center;font-size:12.5px;color:rgba(255,255,255,0.45);margin:22px 0 4px;">✦ Calculada con tus datos reales de nacimiento</p>
     </div>
 
     <div id="section-lecturas-desbloqueadas"></div>
@@ -318,7 +316,7 @@
   <div class="card hidden" id="section-upsell">
     <div class="section-title">Lecturas completas</div>
     <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
-      Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla al instante.
+      Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla en unos minutos.
     </p>
     <div class="productos-grid">
 
@@ -560,6 +558,20 @@
       </button>
     </div>
   </div>
+
+  <!-- DETALLES TÉCNICOS (acordeón nativo, cerrado por defecto) -->
+  <details class="card hidden" id="detalles-tecnicos">
+    <summary style="cursor:pointer;font-family:'Montserrat',sans-serif;font-size:14px;font-weight:600;color:#82B366;letter-spacing:0.03em;padding:2px 0;">Ver todas mis posiciones y aspectos</summary>
+    <div style="margin-top:20px;overflow-x:auto;">
+      <div class="section-title">Posiciones planetarias</div>
+      <table class="planets-table">
+        <thead><tr><th>Planeta</th><th>Signo</th><th>Grado</th><th>Casa</th></tr></thead>
+        <tbody id="tabla-planetas"></tbody>
+      </table>
+      <div class="section-title" id="aspectos-count" style="margin-top:24px;">Aspectos principales</div>
+      <table class="aspects-table"><tbody id="tabla-aspectos"></tbody></table>
+    </div>
+  </details>
 
 </div>
 
@@ -1008,6 +1020,21 @@ function createSVGEl(tag) { return document.createElementNS('http://www.w3.org/2
 
 // Muestra el gráfico oficial que devuelve la Astrologer API (SVG ya renderizado, theme claro
 // + idioma español). Si la API no devolviera el SVG, cae a la rueda propia como respaldo.
+// Tarjeta "Tus tres energías principales" (Sol / Luna / Ascendente con signo y casa)
+function renderTresEnergias(chartData){
+  const s=chartData?.chart_data?.subject||{};
+  const sol=s.sun, luna=s.moon, asc=s.first_house||s.ascendant||s.asc||null;
+  const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?', solHouse=HOUSE_MAP[sol?.house]||'?';
+  const lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?', lunaHouse=HOUSE_MAP[luna?.house]||'?';
+  const ascSign=asc?(SIGN_MAP[asc?.sign]||asc?.sign):'?';
+  const cont=document.getElementById('tres-energias'); if(!cont) return;
+  const fila=(icono,texto)=>`<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid rgba(255,255,255,0.08);border-radius:12px;background:rgba(255,255,255,0.02);"><span style="font-size:19px;line-height:1;width:24px;text-align:center;">${icono}</span><div style="font-size:15.5px;color:#f0ede8;font-family:'Playfair Display',serif;">${texto}</div></div>`;
+  cont.innerHTML =
+    fila('☀️', `Sol en ${solSign} · Casa ${solHouse}`) +
+    fila('🌙', `Luna en ${lunaSign} · Casa ${lunaHouse}`) +
+    fila('⬆️', `Ascendente en ${ascSign}`);
+}
+
 function renderCartaNatal(chartData) {
   const cont = document.getElementById('chart-wheel');
   if (!cont) return;
@@ -1350,38 +1377,38 @@ function buildPromptBasico(nombre, chartData) {
 - Luna en ${lunaSign}, casa ${lunaHouse}
 - Ascendente en ${ascSign}
 
-Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas tres secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
+Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas CUATRO secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
 
-FUNCIÓN DE ESTA LECTURA: es una puerta de entrada, no un informe completo. Tiene que generar identificación ("esto habla de mí") y curiosidad por el resto de la carta, sin resolver toda la interpretación. Presentás únicamente las tres bases: Sol, Luna y Ascendente.
+FUNCIÓN: es la puerta de entrada, no un informe. Tiene que hacer sentir a ${nombre} que la carta se calculó específicamente para ella, darle una comprensión breve pero valiosa y dejarla con una pregunta personal. Se siente COMPLETA como experiencia gratuita, pero es claramente INICIAL: no entregues la profundidad del producto pago.
 
-CRÍTICO — hablá siempre en segunda persona, de "vos" directamente a ${nombre}. Nunca digas "este Sol" o "esa Luna": decí "tu Sol", "tu Luna", "tenés".
+VOZ: segunda persona, "vos", directo a ${nombre}. Voseo rioplatense cálido y natural (sos, tenés, sentís, buscás, podés). Nunca tú/eres/tienes ni "a ti/para ti/contigo". Nunca "este Sol"/"esa Luna": decí "tu Sol", "tu Luna", "tenés".
 
-REGLAS QUE NO PODÉS ROMPER:
-1) Es una lectura NATAL. NO describas procesos actuales ni momentos presentes. Prohibido usar frases como "ahora estás atravesando", "en este momento", "actualmente", "estás en un punto donde", "justamente ahora", "estás en proceso de", "esta etapa te está llevando a". Los procesos temporales pertenecen a otros productos (Tránsitos, Revolución Solar). Hablá de tendencias natales, no de lo que le está pasando hoy.
-2) Interpretá SOLO Sol, Luna y Ascendente. NO desarrolles Mercurio, Venus, Marte, Júpiter, Saturno, Urano, Neptuno, Plutón, Quirón, Lilith, Nodos, ni aspectos entre planetas, ni patrones dominantes, ni casas más allá de la del Sol y la Luna. Podés dar a entender livianamente que estas tres piezas son partes distintas de la personalidad, pero NO hagas la síntesis profunda de cómo se relacionan o se tensionan entre sí: eso es de la Carta Natal Completa.
-3) Voseo rioplatense consistente en TODA la lectura: vos, sos, tenés, sentís, necesitás, buscás, podés, pensás, expresás. NUNCA tú/eres/tienes/sientes/puedes. Evitá también las formas indirectas de tuteo: en vez de "a ti" usá "a vos", en vez de "contigo" usá "con vos", en vez de "para ti" usá "para vos", en vez de "tú misma/tú mismo" usá "vos misma/vos mismo". Ninguna forma de tuteo, ni directa ni reflexiva.
-4) Nada de determinismo ni sentencias psicológicas categóricas. Evitá "siempre", "nunca", "tu destino es", "viniste a", "esto significa que sos". Preferí "podés tender a", "hay una necesidad de", "puede aparecer", "esta posición habla de", "uno de tus aprendizajes puede estar en".
-5) Nada de jerga técnica: no uses "cuadratura", "trígono", "sextil", "conjunción", "oposición", "orbe", "aspecto".
-6) Interpretá la COMBINACIÓN real signo + casa, no el signo genérico. Que no sea un párrafo que le sirva a cualquier persona del mismo signo. No inventes datos que no estén acá.
-7) PRUDENCIA INTERPRETATIVA — DESCRIBIR POSIBILIDADES, NO DEFINIR A LA PERSONA: toda afirmación tiene que poder sostenerse directamente desde el planeta + signo + casa de ese bloque. Diferenciá siempre entre el simbolismo astrológico DISPONIBLE y la manera particular en que esa persona PUEDE estar expresándolo: no conviertas automáticamente una cualidad simbólica del signo o de la casa en una conducta o un rasgo confirmado de la persona. Por ejemplo, en vez de "tenés capacidad para acercarte a lo tabú y a lo que otros evitan mirar", escribí "puede haber interés o sensibilidad hacia experiencias profundas, íntimas o transformadoras"; en vez de "no sos alguien que se cierra de entrada", escribí "podés tender a acercarte inicialmente a las experiencias con apertura, curiosidad o deseo de explorar"; en vez de "tenés una forma generosa y optimista de vincularte", escribí "tu forma inicial de vincularte puede expresar apertura, entusiasmo o una búsqueda de posibilidades". No diagnostiques mecanismos de defensa, heridas, traumas, desconfianza, capacidad sanadora, espiritualidad ni dones extraordinarios como hechos. PERO la lectura tiene que seguir sintiéndose personal y concreta: NO la llenes de "quizás" ni "puede ser". Alterná con naturalidad formulaciones como "hay una necesidad de...", "esta posición pone énfasis en...", "esta combinación habla de...", "podés tender a...", "puede expresarse como...", "aparece una búsqueda de...", "uno de los aprendizajes puede estar relacionado con...". Prudencia NO es texto genérico: mantené profundidad y personalización.
-8) NEUTRALIDAD DE GÉNERO: no marques género cuando no haga falta. NO uses construcciones con barra como "genuino/a", "selectivo/a", "vista/o", "guerrero/a", ni masculino genérico, ni duplicaciones. Evitá también participios y adjetivos que obliguen a marcar masculino/femenino cuando puedan reformularse naturalmente: por ejemplo, en vez de "cómo te ves reflejado/a en el mundo" escribí "cómo te percibís en relación con el mundo". Reformulá de forma natural para que el texto funcione sin marcar género (por ejemplo "cuando te mostrás tal como sos", "alguien que se anima").
-9) LENGUAJE HUMANO: evitá lo excesivamente místico o grandilocuente ("territorio del alma", "dimensiones invisibles", "cualidad sanadora", "entregarte a algo mayor") salvo que haya una razón concreta y necesaria. Mantené el enfoque evolutivo, pero con lenguaje claro, humano y cotidiano.
-10) ORTOGRAFÍA: revisá ortografía y gramática antes de entregar. Español argentino natural, sin errores de tildes ni palabras mal escritas.
+HABLÁ DE POSIBILIDADES: "podrías", "puede aparecer", "quizás reconozcas", "hay una necesidad de", "esta combinación puede expresarse como". Personal y concreto, sin llenarlo de "quizás".
 
-EXTENSIÓN: cada sección es UN SOLO párrafo de 80 a 120 palabras. Total interpretativo 300 a 400 palabras. Priorizá calidad y personalización por encima de llegar a un número exacto: no rellenes.
+PROHIBIDO (respetar el sentido, no solo las palabras):
+- Biografía, infancia, trauma, heridas, mecanismos de defensa o causas psicológicas.
+- Destino o misión: "viniste a", "tu verdadera identidad", "sos alguien que", "siempre", "nunca".
+- Nombrar o interpretar Nodos, Quirón, Lilith ni procesos evolutivos profundos.
+- Jerga de aspectos: "cuadratura", "oposición", "trígono", "sextil", "conjunción", "orbe".
+- Desarrollar Mercurio, Venus, Marte, Júpiter o Saturno (son del producto pago).
+- Cualquier texto comercial o invitación a comprar DENTRO de la lectura.
+Interpretá la combinación real signo + casa (no el signo genérico). No inventes datos que no estén acá. Neutralidad de género: sin "/a" ni duplicaciones; reformulá natural.
 
-FORMATO DE SALIDA (obligatorio): empezá directamente con "**Tu esencia solar**". NO agregues ningún encabezado general ni título arriba de todo. NO uses "#", "##" ni "###". NO uses líneas separadoras "---". Usá EXCLUSIVAMENTE estos tres títulos, escritos exactamente así, cada uno entre dobles asteriscos en su propia línea y sin espacios internos: "**Tu esencia solar**", "**Tu mundo emocional**", "**Tu presencia en el mundo**". Después de la tercera sección, agregá el párrafo de cierre como texto normal, sin título adicional. No agregues ningún otro elemento de Markdown.
+FORMATO: empezá directo con "**Tu esencia solar**". Sin encabezado general, sin "#", sin "---". Usá EXACTAMENTE estos cuatro títulos, cada uno entre ** en su propia línea:
 
 **Tu esencia solar**
-Interpretá tu Sol en ${solSign} en casa ${solHouse} como la combinación signo + casa. Explicá de manera sencilla qué busca desarrollar esa identidad, en qué área de la vida (la casa) necesita expresarse y qué cualidad central aparece en tu forma de ser cuando te mostrás tal como sos. No desarrolles otros planetas ni tensiones.
+Nombrá tu Sol en ${solSign} (casa ${solHouse}). Explicá brevemente su recurso central y qué necesita para expresarse. Entre 55 y 75 palabras.
 
 **Tu mundo emocional**
-Interpretá tu Luna en ${lunaSign} en casa ${lunaHouse} como la combinación signo + casa. Explicá tus necesidades emocionales, tu forma espontánea de reaccionar y qué necesitás para sentirte emocionalmente en contacto con vos. Planteá tendencias y posibilidades, no diagnósticos: se dice "frente a emociones intensas podés tender a reaccionar rápido o a necesitar espacio para recuperar tu autonomía", nunca "cuando sos vulnerable atacás o te alejás".
+Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Explicá una necesidad emocional y una tensión posible. Entre 55 y 75 palabras.
 
-**Tu presencia en el mundo**
-Interpretá tu Ascendente en ${ascSign}. Describí las cualidades de esa forma de acercarte a la vida, cómo te relacionás inicialmente con el entorno y qué recursos naturales trae ese Ascendente. NO afirmes que todavía no lo integraste ni que te falta desarrollarlo: describilo como una forma real y disponible de presentarte ante el mundo.
+**Tu manera de entrar al mundo**
+Nombrá tu Ascendente en ${ascSign}. Explicá cómo iniciás, te mostrás o te vinculás con el entorno. Entre 45 y 65 palabras.
 
-Cerrá la lectura, sin título y sin separador, con un puente breve (2 a 4 oraciones) hacia la Carta Natal Completa. La idea: ya viste tres piezas fundamentales —tu esencia, tu mundo emocional y tu forma de presentarte—, pero todavía falta comprender cómo pensás, cómo amás, qué te moviliza, dónde están tus posibilidades de expansión y qué desafíos te estructuran. Podés mencionar que además queda por descubrir cómo dialogan entre sí las distintas partes de tu carta, pero NO expliques acá cómo se relacionan tu Sol, tu Luna y tu Ascendente ni les asignes una síntesis conjunta (no les pongas adjetivos que los integren tipo "tu Sol profundo, tu Luna intensa y tu Ascendente valiente conviven"): esa integración es justamente lo que se reserva para la Carta Natal Completa. Que genere curiosidad, no miedo ni sensación de información retenida a la fuerza. Podés cerrar con una frase del tipo "Ahí es donde tu carta deja de ser una suma de signos y empieza a contar tu historia" (reformulala con tus palabras, no la copies literal).`;
+**La combinación que te hace único/a**
+Integrá tu Sol, tu Luna y tu Ascendente. Mostrá una posible diferencia o tensión entre esas tres energías, validá que NO es una contradicción ni un defecto (son partes legítimas que conviven) y cerrá abriendo una pregunta o un aspecto que merezca profundizarse. NO expliques todavía cómo funciona todo junto (eso es del producto pago). Entre 80 y 110 palabras.
+
+EXTENSIÓN TOTAL: entre 260 y 340 palabras (máximo absoluto 380). No rellenes. Terminá con la pregunta abierta de la última sección, sin ningún texto comercial ni despedida.`;
 }
 
 // ── POSTPROCESO DETERMINÍSTICO — SOLO Lectura Esencial gratuita ──
@@ -1881,6 +1908,8 @@ async function aplicarPromo(producto) {
   if(data.valido && data.token){
     promoAplicada[producto]=true;
     promoToken[producto]=data.token;
+    // Refrescar el mensaje del email (ahora es "conservar copia", no "habilitar el pago").
+    try{ document.getElementById(`email-pago-${producto}`)?.dispatchEvent(new Event('input',{bubbles:true})); }catch(e){}
     if(successEl){successEl.textContent='✦ Código válido — lectura gratuita desbloqueada';successEl.classList.remove('hidden');}
     if(errorEl)errorEl.classList.add('hidden');
     const _promoRow=codigoEl.closest('.promo-row');
@@ -2087,7 +2116,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     const _prodNombre=nombreProductoMostrar(producto, extras);
     let _card=document.getElementById(`card-lectura-${producto}`);
     if(!_card){_card=document.createElement('div');_card.className='card';_card.id=`card-lectura-${producto}`;_container.appendChild(_card);}
-    _card.innerHTML=`<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${producto}" class="loader-pago">✦ Generando tu lectura...</p></div>`;
+    _card.innerHTML=`<div class="section-title">Tu ${_prodNombre}</div><div class="loader"><div class="orbit"><div class="orbit-ring r1"></div><div class="orbit-ring r2"></div><div class="orbit-ring r3"></div><div class="orbit-ring r4"></div></div><p id="loader-text-${producto}" class="loader-pago">✦ Generando tu lectura...</p><p id="loader-sub-${producto}" style="font-size:12px;color:rgba(255,255,255,0.4);text-align:center;margin-top:10px;line-height:1.5;"></p></div>`;
     setTimeout(()=>_card.scrollIntoView({behavior:'smooth',block:'start'}),100);
   }
   actualizarProgreso(producto,'⟳ Generando tu lectura...');
@@ -2149,8 +2178,11 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     // { completa, token, content }. Si no está completa, NO se muestra nada parcial.
     let textoGenerado, _ccToken = null, prompt = '';
     if(producto==='carta-completa'){
-      actualizarProgreso(producto,'✦ Escribiendo tu carta...');
-      const cc = await llamarCartaCompleta(nombre, pagoId, esPrueba?(promoToken[producto]||''):'');
+      const _stopCC = rotarLoader(`loader-text-${producto}`, MSG_COMPLETA, 4000); // mensajes rotativos
+      const _sub=document.getElementById(`loader-sub-${producto}`); if(_sub) _sub.textContent='Este proceso puede tardar entre 1 y 3 minutos. No cierres esta página.';
+      let cc;
+      try{ cc = await llamarCartaCompleta(nombre, pagoId, esPrueba?(promoToken[producto]||''):''); }
+      finally{ _stopCC(); }
       if(!cc || cc.completa!==true || !cc.content || !cc.content.trim()){
         mostrarMensaje(errorId, (cc && cc.error) || 'No pudimos generar tu carta completa en este momento. Recargá y reintentá, o escribinos a cynthia@espaciolibra.com.');
         return; // no renderiza texto parcial
@@ -2207,6 +2239,13 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div>${preguntaHeader}<div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Guardalo en tu mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><input type="email" id="email-enviar-${producto}" placeholder="tu@email.com" /><label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;"><input type="checkbox" id="terms-${producto}" style="margin-top:2px;flex-shrink:0;" /><span style="flex:1;">Acepto los <a href="https://espaciolibra.com/terminos" target="_blank" style="color:#82B366;">términos y condiciones</a></span></label><label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;"><input type="checkbox" id="marketing-${producto}" style="margin-top:2px;flex-shrink:0;" /><span style="flex:1;">Acepto recibir el clima astrológico semanal</span></label><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">✦ Enviar a mi email</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
 
     renderInterp(textoGenerado,`texto-lectura-${producto}`);
+    // Transición hacia Lectura Profunda al final de la Carta Completa (antes de las demás tarjetas).
+    if(producto==='carta-completa'){
+      const _trans=document.createElement('div');
+      _trans.style.cssText='margin-top:26px;padding-top:22px;border-top:1px solid rgba(255,255,255,0.08);';
+      _trans.innerHTML=`<div style="font-family:'Playfair Display',serif;font-size:19px;color:#f0ede8;margin:0 0 10px;">Comprender tu mapa es el comienzo</div><p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0 0 16px;">Esta lectura te mostró cómo funcionan tus principales energías. Si querés explorar el origen de ciertos patrones, tus heridas, tus dones y trabajar su transformación con herramientas de coaching, el siguiente paso es la Lectura Profunda.</p><button class="btn-primary" style="margin-top:0;" onclick="irALecturaProfunda()">Conocer mi Lectura Profunda</button>`;
+      document.getElementById(`texto-lectura-${producto}`)?.appendChild(_trans);
+    }
     card.scrollIntoView({behavior:'smooth',block:'start'});
     if(_lecturaCortada){
       // La generación llegó al tope de tokens: el texto está incompleto.
@@ -2326,8 +2365,10 @@ document.querySelectorAll('input[id^="email-pago-"]').forEach(function(inp){
         // email_pago_valido: email válido en un producto pago (una vez por producto/sesión; sin el email)
         ga4Once('ga4_email_valido_'+prod,'email_pago_valido', { item_id: prod });
       } else {
+        // Si la lectura ya se generó por promoción, el email es solo para conservar una copia (no hay pago).
+        const _promo = (typeof promoAplicada!=='undefined' && promoAplicada[prod]===true);
         hint.textContent = (val.length===0)
-          ? 'Ingresá tu email para habilitar el pago y recibir tu lectura.'
+          ? (_promo ? 'Si querés conservarla, ingresá tu email y te enviamos una copia.' : 'Ingresá tu email para habilitar el pago y recibir tu lectura.')
           : 'Ingresá un email válido para continuar. Ahí también recibirás tu lectura.';
         hint.style.display = 'block';
       }
@@ -2436,19 +2477,15 @@ async function calcularCarta(origen) {
   if(origen!=='retorno' && origen!=='upgrade'){
     ga4Once(cacheKey('carta_calculo_iniciado',fecha,hora,ciudad),'carta_calculo_iniciado');
   }
+  const _stopCalc = rotarLoader('loader-text', MSG_CALC, 3500); // mensajes rotativos, sin porcentajes
   try {
-    setLoaderText('buscando tu ciudad en el mapa...');
     const coords=await getCoordenadas(ciudad,pais,provincia);
-    const lugarCorto=coords.nombreEncontrado.split(',').slice(0,3).join(',');
-    setLoaderText('Ὄd Ubicación encontrada: '+lugarCorto);
-    await new Promise(r=>setTimeout(r,1200));
-    setLoaderText('calculando tu zona horaria...');
     const timezone=await getTimezone(coords.lat,coords.lon);
-    setLoaderText('calculando posiciones planetarias...');
     const chartData=await obtenerCartaNatal(fecha,hora,coords.lat,coords.lon,timezone,nombre,ciudad,pais);
     cartaData=chartData;
-    renderCartaNatal(chartData); renderPlanetas(chartData); renderAspectos(chartData);
-    ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell');
+    _stopCalc();
+    renderCartaNatal(chartData); renderTresEnergias(chartData); renderPlanetas(chartData); renderAspectos(chartData);
+    ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell'); mostrar('detalles-tecnicos');
     ga4VerListaProductos(); // view_item_list: "Lecturas completas" a la vista
     // ── Evento de embudo GA4: la carta gratis (Sol/Luna/Ascendente) ya está en pantalla ──
     // Mismo patrón de gtag que click_comprar_informe. Guard "una vez por sesión" en
@@ -2487,7 +2524,7 @@ async function calcularCarta(origen) {
     }
     catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
-  }catch(err){ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
+  }catch(err){_stopCalc();ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 
 // ── UTILIDADES ──
@@ -2498,11 +2535,29 @@ function irACartaCompleta(){
   const card=document.getElementById('form-carta-completa')?.closest('.producto-card');
   if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
 }
+// Desde la transición al final de la Carta Completa: scroll suave a Lectura Profunda. NO inicia pago.
+function irALecturaProfunda(){
+  ga4('select_item', { item_list_name:'post-carta-completa', origen:'post-carta-completa', item_id:'lectura-profunda', items:[{ item_id:'lectura-profunda', item_name:(typeof GA4_NOMBRES!=='undefined'?GA4_NOMBRES['lectura-profunda']:'Lectura Profunda'), quantity:1 }] });
+  const card=document.getElementById('form-lectura-profunda')?.closest('.producto-card');
+  if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
+}
 function mostrarMensaje(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.remove('hidden');}}
 function ocultarMsg(id){document.getElementById(id)?.classList.add('hidden');}
+// Rotación de mensajes de espera (sin porcentajes falsos). Devuelve una función para frenar.
+const _rotadores = {};
+function rotarLoader(elId, mensajes, ms){
+  try{ if(_rotadores[elId]) clearInterval(_rotadores[elId]); }catch(e){}
+  const set=(t)=>{ const el=document.getElementById(elId); if(el) el.textContent=t; };
+  let i=0; set(mensajes[0]);
+  _rotadores[elId]=setInterval(()=>{ i=(i+1)%mensajes.length; set(mensajes[i]); }, ms||3500);
+  return ()=>{ try{ clearInterval(_rotadores[elId]); delete _rotadores[elId]; }catch(e){} };
+}
+const MSG_CALC = ['Calculando tus posiciones planetarias…','Identificando tu Sol, tu Luna y tu Ascendente…','Observando cómo se combinan tus energías…','Preparando tu lectura personal…'];
+const MSG_COMPLETA = ['Integrando tus planetas personales…','Revisando las áreas más activadas de tu carta…','Traduciendo tus patrones a un lenguaje claro…','Preparando tu síntesis personal…'];
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
 function reiniciar(){
-  ocultar('section-result');ocultar('section-upsell');mostrar('section-form');
+  ocultar('section-result');ocultar('section-upsell');ocultar('detalles-tecnicos');mostrar('section-form');
+  const _det=document.getElementById('detalles-tecnicos');if(_det)_det.open=false; // acordeón cerrado en la próxima
   cartaData=null;preguntaSeleccionada=null;
   // Limpiar las lecturas pagas ya inyectadas: sin esto la consulta anterior queda colgada bajo la nueva.
   const _desbloq=document.getElementById('section-lecturas-desbloqueadas');if(_desbloq)_desbloq.innerHTML='';

@@ -1001,12 +1001,12 @@ async function llamarCartaCompleta(nombre, pagoId, promoTok){
   }catch(e){ return { completa:false, error:'Error de conexión.' }; }
 }
 
-async function llamarClaude(prompt, pagoId, promoTok, producto, nombre, modelo) {
+async function llamarClaude(prompt, pagoId, promoTok, producto, nombre, modelo, system) {
   _lecturaCortada = false;
   // producto y nombre van solo para que el aviso interno de lectura cortada sirva de algo.
   // modelo: hint opcional (ej. 'haiku' para la tarjeta del eclipse). El worker debe
   // respetarlo; si no lo soporta, cae al modelo por defecto del producto.
-  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||'', producto: producto||'', nombre: nombre||'', modelo: modelo||''})});
+  const res = await fetch(`${WORKER_URL}/interpretar`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({system: system||SYSTEM_EVOLUTIVO, prompt, pagoId: pagoId||'', promoToken: promoTok||'', producto: producto||'', nombre: nombre||'', modelo: modelo||''})});
   if (!res.ok) throw new Error('Error al obtener la interpretación.');
   const data = await res.json();
   if (data.stop_reason === 'max_tokens') _lecturaCortada = true;
@@ -1361,6 +1361,20 @@ PRINCIPIOS DE INTERPRETACIÓN:
 - Usás títulos de sección entre dobles asteriscos en línea propia.
 - NUNCA menciones autores, escuelas o metodologías específicas.`;
 
+// ── SYSTEM PROPIO DE LA LECTURA ESENCIAL GRATUITA (natal descriptivo, NO evolutivo) ──
+// Se usa SOLO para la esencial (no lo comparten los productos pagos, que siguen con SYSTEM_EVOLUTIVO).
+const SYSTEM_NATAL_ESENCIAL = `Sos una astróloga que hace lecturas natales DESCRIPTIVAS, cálidas y humanas, en castellano rioplatense (voseo). Interpretás la carta de nacimiento tal como es: describís cómo la persona funciona, qué la caracteriza y qué necesita, con calidez y cercanía.
+
+NO es una lectura evolutiva, terapéutica ni predictiva: NO hablás del "alma", ni de "puntos de evolución/pasado", ni de "lo que la persona vino a desarrollar o activar", ni de que algo "todavía no está integrado". NO hablás de tránsitos, futuro ni de lo que le está pasando ahora.
+
+Hablás siempre de POSIBILIDADES y tendencias ("podrías", "puede aparecer", "hay una necesidad de", "esta combinación puede expresarse como"), nunca como diagnóstico ni sentencia.
+
+NO atribuís heridas, traumas, mecanismos de defensa, causas biográficas ni carencias psicológicas. NO usás calificativos negativos sobre la persona. Describís con matices, no con juicios.
+
+Cada afirmación se apoya en un dato astrológico concreto (planeta + signo + casa, o un aspecto calculado que se te da). No inventás datos ni relaciones que no estén en la carta.
+
+Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.`;
+
 // ── PROMPT BÁSICO (lectura gratuita) ──
 function buildPromptBasico(nombre, chartData) {
   const subject=chartData?.chart_data?.subject||{};
@@ -1368,18 +1382,27 @@ function buildPromptBasico(nombre, chartData) {
   const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?',lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?';
   const solHouse=HOUSE_MAP[sol?.house]||'?',lunaHouse=HOUSE_MAP[luna?.house]||'?';
   const ascSign=asc?(SIGN_MAP[asc?.sign]||asc?.sign):'?';
-  // La gratuita interpreta SOLO Sol, Luna y Ascendente. No usa aspectos ni otros
-  // planetas: eso es material de los productos pagos. Es una lectura NATAL, sin
-  // procesos actuales. Ver spec "Lectura Esencial" — puerta de entrada, no resumen.
+  // Aspectos calculados ENTRE Sol, Luna y Ascendente (la tríada de la esencial). La integración
+  // final se basa exclusivamente en esto; si no hay, se lo decimos al modelo para que no invente.
+  const _esTriada=n=>/^(sun|moon|ascendant|first_house|asc)$/i.test(n||'');
+  const _nomTri=n=>/^(ascendant|first_house|asc)$/i.test(n)?'Ascendente':(n==='Sun'?'Sol':(n==='Moon'?'Luna':n));
+  const _aspTri=(chartData?.chart_data?.aspects||[])
+    .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect))
+    .filter(a=>_esTriada(a.p1_name)&&_esTriada(a.p2_name))
+    .map(a=>`${_nomTri(a.p1_name)} ${ASPECT_ES[a.aspect]||a.aspect} ${_nomTri(a.p2_name)} (orbe ${Math.abs(a.orbit||0).toFixed(1)})`);
+  const aspTriadaStr=_aspTri.length?_aspTri.join(', '):'(sin aspectos directos calculados entre Sol, Luna y Ascendente)';
 
   return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
 - Sol en ${solSign}, casa ${solHouse}
 - Luna en ${lunaSign}, casa ${lunaHouse}
 - Ascendente en ${ascSign}
+- Aspectos calculados entre Sol, Luna y Ascendente: ${aspTriadaStr}
 
 Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas CUATRO secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
 
-FUNCIÓN: es la puerta de entrada, no un informe. Tiene que hacer sentir a ${nombre} que la carta se calculó específicamente para ella, darle una comprensión breve pero valiosa y dejarla con una pregunta personal. Se siente COMPLETA como experiencia gratuita, pero es claramente INICIAL: no entregues la profundidad del producto pago.
+FUNCIÓN: es la puerta de entrada, no un informe. Es una lectura NATAL DESCRIPTIVA y cálida —NO evolutiva, terapéutica ni predictiva—, válida para cualquier carta. Tiene que hacer sentir a ${nombre} que la carta se calculó específicamente para ella, darle una comprensión breve pero valiosa y generar identificación. Se siente COMPLETA como experiencia gratuita, pero es claramente INICIAL: no entregues la profundidad del producto pago.
+
+TONO: describí con matices, nunca con juicios. NO uses calificativos negativos sobre la persona. Las preguntas o puertas abiertas NO deben presuponer un problema, una carencia ni una dificultad: abren curiosidad, no señalan algo "a corregir".
 
 VOZ: segunda persona, "vos", directo a ${nombre}. Voseo rioplatense cálido y natural (sos, tenés, sentís, buscás, podés). Nunca tú/eres/tienes ni "a ti/para ti/contigo". Nunca "este Sol"/"esa Luna": decí "tu Sol", "tu Luna", "tenés".
 
@@ -1406,15 +1429,15 @@ FORMATO: empezá directo con "**Tu esencia solar**". Sin encabezado general, sin
 Nombrá tu Sol en ${solSign} (casa ${solHouse}). Explicá brevemente su recurso central y qué necesita para expresarse. Entre 55 y 75 palabras.
 
 **Tu mundo emocional**
-Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Explicá una necesidad emocional y una tensión posible. Entre 55 y 75 palabras.
+Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Explicá una necesidad emocional central y qué te ayuda a sentirte en contacto con vos, en tono descriptivo y cálido (sin calificativos negativos). Entre 55 y 75 palabras.
 
 **Tu manera de entrar al mundo**
 Nombrá tu Ascendente en ${ascSign}. Explicá cómo iniciás, te mostrás o te vinculás con el entorno. Entre 45 y 65 palabras.
 
 **La combinación que te hace único/a**
-Integrá tu Sol, tu Luna y tu Ascendente describiendo cómo estas tres energías podrían ALTERNARSE o COMPLEMENTARSE en distintos momentos —a veces toma la delantera una, a veces otra—. NUNCA afirmes que se bloquean, se sabotean, se frenan ni que una necesita controlar a otra: son partes legítimas que conviven. Cerrá abriendo una pregunta o un aspecto que merezca profundizarse. NO expliques todavía cómo funciona todo junto (eso es del producto pago). Entre 80 y 110 palabras.
+Cerrá integrando tu Sol, tu Luna y tu Ascendente basándote EXCLUSIVAMENTE en los "Aspectos calculados entre Sol, Luna y Ascendente" de los datos de arriba. Si hay un aspecto entre dos de ellos, describí en lenguaje cotidiano (sin nombrar el tipo técnico) cómo se relacionan esas dos partes —si conviven con facilidad y se potencian, o si conviven con cierta fricción, siempre como matiz y nunca como defecto—. Si NO hay aspectos directos entre ellos, describí que funcionan de manera más independiente, cada uno con su registro, sin inventar una tensión. Dejá una tensión abierta —lo que todavía queda por descubrir de cómo estas piezas dialogan con el resto de tu carta— que invite a seguir explorando, sin resolverla y sin presuponer un problema. NO expliques cómo funciona todo junto (eso es del producto pago). Entre 80 y 110 palabras.
 
-EXTENSIÓN TOTAL: entre 260 y 340 palabras (máximo absoluto 380). No rellenes. Terminá con la pregunta abierta de la última sección, sin ningún texto comercial ni despedida.`;
+EXTENSIÓN TOTAL: entre 260 y 340 palabras (máximo absoluto 380). No rellenes. Terminá dejando la tensión abierta de la última sección (curiosidad genuina, no un problema), sin texto comercial ni despedida.`;
 }
 
 // ── POSTPROCESO DETERMINÍSTICO — SOLO Lectura Esencial gratuita ──
@@ -2522,7 +2545,7 @@ async function calcularCarta(origen) {
       const esencialCached=localStorage.getItem(esencialKey);
       let interpBasica;
       if(esencialCached){interpBasica=esencialCached;}
-      else{interpBasica=await llamarClaude(prompt);}
+      else{interpBasica=await llamarClaude(prompt, '', '', '', '', '', SYSTEM_NATAL_ESENCIAL);}
       interpBasica=limpiarEsencial(interpBasica);                 // postproceso determinístico, SOLO esencial
       if(!esencialCached){try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
       renderInterp(interpBasica,'interpretacion-basica');

@@ -622,6 +622,31 @@ function _getClickIds(){
 }
 _guardarClickIds();
 
+// ── CONVERSIONES AVANZADAS: normalización + hash del email EN EL NAVEGADOR ──
+// Reglas oficiales de Google (support.google.com/google-ads/answer/13258081): trim,
+// minúsculas y —solo en gmail.com/googlemail.com— quitar los puntos del nombre de
+// usuario. Google NO pide quitar lo posterior a "+", así que no se toca.
+function _normalizarEmailEC(email){
+  let e = (email||'').trim().toLowerCase();
+  const at = e.indexOf('@');
+  if(at < 1) return '';
+  let local = e.slice(0, at);
+  const dominio = e.slice(at+1);
+  if(dominio === 'gmail.com' || dominio === 'googlemail.com') local = local.replace(/\./g,'');
+  return local + '@' + dominio;
+}
+// SHA-256 hex del email ya normalizado (Web Crypto, requiere contexto seguro: HTTPS o
+// localhost). Devuelve '' si no se puede: la conversión igual se dispara, solo sin el
+// dato avanzado. El email en crudo nunca sale de esta función.
+async function _sha256EmailEC(email){
+  try{
+    const norm = _normalizarEmailEC(email);
+    if(!norm) return '';
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(norm));
+    return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join('');
+  }catch(e){ return ''; }
+}
+
 // ── EMBUDO GA4 (medición comercial; SOLO destino G-639MKD7LWG, sin datos personales) ──
 // Todos los eventos intermedios se envían ÚNICAMENTE a GA4 vía send_to. NUNCA se manda
 // nombre, email, fecha, ciudad ni datos natales: solo slug de producto, precio, moneda y
@@ -2072,6 +2097,9 @@ async function pagarConPaypal(producto, precio) {
     producto, nombre: payload.nombre, extras: _extrasEclipse(producto), precio,
     fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
   }));
+  // Guardar el email SOLO en este navegador (sessionStorage) para las conversiones
+  // avanzadas al volver del pago. No viaja en la URL ni se pide de vuelta al servidor.
+  try{ if(payload.email) sessionStorage.setItem('ec_email', payload.email); }catch(e){}
 
   try {
     const res = await fetch(`${WORKER_URL}/crear-pago-paypal`, {
@@ -2114,6 +2142,9 @@ async function pagarConMP(producto, precio, errorId) {
     producto, nombre: payload.nombre, extras: _extrasEclipse(producto), precio,
     fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
   }));
+  // Guardar el email SOLO en este navegador (sessionStorage) para las conversiones
+  // avanzadas al volver del pago. No viaja en la URL ni se pide de vuelta al servidor.
+  try{ if(payload.email) sessionStorage.setItem('ec_email', payload.email); }catch(e){}
 
   try {
     const res = await fetch(`${WORKER_URL}/crear-pago-mp`, {
@@ -2770,6 +2801,17 @@ window.addEventListener('load',async ()=>{
             // cada recarga volvía a disparar la venta con el mismo payment_id.
             const _flagCompra = `purchase_sent_${sessionId}`;
             if(!localStorage.getItem(_flagCompra)){
+              // ── Conversiones avanzadas de Google Ads ──
+              // El email lo guardó ESTE navegador en sessionStorage antes de ir a pagar:
+              // no vuelve del servidor ni viaja en la URL. Se normaliza (reglas oficiales de
+              // Google, incluida la quita de puntos en gmail) y se hashea con SHA-256 en el
+              // navegador; solo se envía el hash como sha256_email_address. Se borra al usarlo.
+              let _ecEmail=''; try{ _ecEmail = sessionStorage.getItem('ec_email')||''; }catch(e){}
+              if(_ecEmail){
+                const _emailHash = await _sha256EmailEC(_ecEmail);
+                if(_emailHash){ gtag('set', 'user_data', { sha256_email_address: _emailHash }); }
+                try{ sessionStorage.removeItem('ec_email'); }catch(e){}
+              }
               // Conversión Google Ads (Mercado Pago): solo tras confirmación 'approved' server-side,
               // con el monto real cobrado y el payment_id de MP como transaction_id (deduplica ventas).
               gtag('event', 'conversion', {

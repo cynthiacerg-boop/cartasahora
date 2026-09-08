@@ -271,9 +271,11 @@
     <div class="card" id="card-tres-energias">
       <div class="section-title">Tus tres energías principales</div>
       <div id="tres-energias" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <!-- Nota breve (sin interpretación de IA) — visible solo cuando la Lectura Esencial está desactivada -->
+      <p id="pilares-nota" class="hidden" style="font-size:14px;color:rgba(255,255,255,0.7);line-height:1.7;margin:16px 0 0;">Estos son los tres pilares principales de tu carta natal. Para descubrir cómo se combinan en vos, accedé a tu Carta Natal Completa.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="card-lectura-esencial">
       <div class="section-title">Tu lectura esencial · Gratis</div>
       <div id="interpretacion-basica">
         <div class="loader" style="padding:20px 0;">
@@ -285,9 +287,11 @@
 
     <!-- TRANSICIÓN HACIA CARTA NATAL COMPLETA (estática, controlada por el frontend) -->
     <div class="card" id="transicion-carta-completa">
-      <div class="section-title">Esto es solo la base de tu mapa</div>
-      <p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0 0 12px;">Tu Sol, tu Luna y tu Ascendente muestran tres partes esenciales de vos. Pero tu carta contiene otras energías y conexiones que explican cómo pensás, amás, actuás, tomás decisiones y construís tus vínculos.</p>
-      <p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0;">En tu Carta Natal Completa vas a descubrir cómo funciona todo junto: tus recursos, tus tensiones y los patrones que pueden estar influyendo en distintas áreas de tu vida.</p>
+      <div class="section-title" id="transicion-titulo">Esto es solo la base de tu mapa</div>
+      <p id="transicion-p1" style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0 0 12px;">Tu Sol, tu Luna y tu Ascendente muestran tres partes esenciales de vos. Pero tu carta contiene otras energías y conexiones que explican cómo pensás, amás, actuás, tomás decisiones y construís tus vínculos.</p>
+      <p id="transicion-p2" style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0;">En tu Carta Natal Completa vas a descubrir cómo funciona todo junto: tus recursos, tus tensiones y los patrones que pueden estar influyendo en distintas áreas de tu vida.</p>
+      <!-- CTA principal de la oferta — visible solo cuando la Lectura Esencial está desactivada -->
+      <button id="cta-desbloquear-completa" class="btn-primary hidden" style="margin-top:20px;" onclick="irACartaCompleta()">Desbloquear mi Carta Natal Completa</button>
 
       <!-- TEMAS BLOQUEADOS (clickeables: llevan directo a la card de compra real) -->
       <div style="margin-top:22px;cursor:pointer;" onclick="onTemasBloqueados()">
@@ -532,7 +536,7 @@
     </div>
 
     <!-- GUARDAR LECTURA GRATIS POR MAIL (acción secundaria, fuera del camino de compra) -->
-    <div class="lectura-acciones" style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);">
+    <div class="lectura-acciones" id="bloque-guardar-esencial" style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);">
       <div class="lectura-acciones-btns">
         <button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('esencial')">✉ Guardá tu lectura esencial gratis en tu mail</button>
       </div>
@@ -579,6 +583,13 @@
 
 <script>
 const WORKER_URL = 'https://cartasahora-proxy.cynthiacerg.workers.dev';
+
+// ── INTERRUPTOR TEMPORAL: LECTURA ESENCIAL GRATUITA ──
+// Poné en true para restaurar la "Lectura Esencial · Gratis" (interpretación de IA gratuita)
+// y su recorrido original. En false (modo actual) NO se llama a la IA para la esencial —
+// solo se muestran la carta, la tarjeta Sol/Luna/Ascendente y la oferta de Carta Natal Completa.
+// Nada más del sitio depende de este flag: los productos pagos siguen intactos.
+const LECTURA_ESENCIAL_ACTIVA = false;
 
 // ── CLICK-IDS DE GOOGLE ADS (gclid/gbraid/wbraid) ──
 // Google atribuye la conversión leyendo la cookie _gcl_aw que gtag pone al
@@ -674,7 +685,30 @@ window.addEventListener('load', () => {
   const _p = new URLSearchParams(window.location.search);
   const _pideScroll = _p.get('lead') || _p.get('upgrade') || _p.get('lectura');
   if (!_pideScroll && !window.location.hash) window.scrollTo(0, 0);
+  aplicarModoSoloPilares();
 });
+
+// ── MODO "SOLO PILARES" (Lectura Esencial desactivada) ──
+// Con LECTURA_ESENCIAL_ACTIVA=false ajusta la vista: oculta la tarjeta de lectura
+// esencial y su guardado por mail, muestra la nota breve de los tres pilares y
+// convierte la transición en la oferta de Carta Natal Completa. Todo es reversible:
+// con el flag en true esta función no hace nada y vuelve el recorrido original.
+// Idempotente (usa las clases 'hidden'); seguro llamarla más de una vez.
+function aplicarModoSoloPilares(){
+  if(LECTURA_ESENCIAL_ACTIVA) return;
+  const ocultarEl = id => document.getElementById(id)?.classList.add('hidden');
+  const mostrarEl = id => document.getElementById(id)?.classList.remove('hidden');
+  ocultarEl('card-lectura-esencial');   // tarjeta "Tu lectura esencial · Gratis"
+  ocultarEl('bloque-guardar-esencial'); // "Guardá tu lectura esencial gratis en tu mail"
+  mostrarEl('pilares-nota');            // nota breve bajo Sol/Luna/Ascendente
+  // Transición → oferta principal de la Carta Natal Completa
+  const tit = document.getElementById('transicion-titulo');
+  if(tit) tit.textContent = 'Ahora descubrí qué significa tu carta';
+  const p1 = document.getElementById('transicion-p1');
+  if(p1) p1.textContent = 'Tu Sol, tu Luna y tu Ascendente son solo el comienzo. En tu Carta Natal Completa vas a descubrir cómo pensás, sentís, amás, actuás y construís tu camino.';
+  ocultarEl('transicion-p2');
+  mostrarEl('cta-desbloquear-completa');
+}
 
 // ── DROPDOWNS DE HORA ──
 function fillHoraDropdowns(hhId, mmId) {
@@ -2538,20 +2572,25 @@ async function calcularCarta(origen) {
       setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
     }
     // (Campaña del Eclipse retirada: ya no hay scroll ni mensaje automático hacia Tránsitos.)
-    setLoaderText('escribiendo tu lectura esencial...');
-    const prompt=buildPromptBasico(nombre,chartData);
-    try{
-      const esencialKey=cacheKey('cartaEsencial',fecha,hora,ciudad);
-      const esencialCached=localStorage.getItem(esencialKey);
-      let interpBasica;
-      if(esencialCached){interpBasica=esencialCached;}
-      else{interpBasica=await llamarClaude(prompt, '', '', '', '', '', SYSTEM_NATAL_ESENCIAL);}
-      interpBasica=limpiarEsencial(interpBasica);                 // postproceso determinístico, SOLO esencial
-      if(!esencialCached){try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
-      renderInterp(interpBasica,'interpretacion-basica');
-      _lecturaContexto['esencial']={nombre,productoNombre:'Lectura Esencial Gratuita',texto:interpBasica,codigoPromo:'',fecha,hora,ciudad,pais};
+    // ── Lectura Esencial gratuita: solo se genera si el interruptor está activo ──
+    // Con LECTURA_ESENCIAL_ACTIVA=false NO se llama a la IA (no se gastan créditos):
+    // aplicarModoSoloPilares() ya dejó la vista en carta + Sol/Luna/Ascendente + oferta.
+    if(LECTURA_ESENCIAL_ACTIVA){
+      setLoaderText('escribiendo tu lectura esencial...');
+      const prompt=buildPromptBasico(nombre,chartData);
+      try{
+        const esencialKey=cacheKey('cartaEsencial',fecha,hora,ciudad);
+        const esencialCached=localStorage.getItem(esencialKey);
+        let interpBasica;
+        if(esencialCached){interpBasica=esencialCached;}
+        else{interpBasica=await llamarClaude(prompt, '', '', '', '', '', SYSTEM_NATAL_ESENCIAL);}
+        interpBasica=limpiarEsencial(interpBasica);                 // postproceso determinístico, SOLO esencial
+        if(!esencialCached){try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
+        renderInterp(interpBasica,'interpretacion-basica');
+        _lecturaContexto['esencial']={nombre,productoNombre:'Lectura Esencial Gratuita',texto:interpBasica,codigoPromo:'',fecha,hora,ciudad,pais};
+      }
+      catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     }
-    catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     const params=new URLSearchParams(window.location.search);
   }catch(err){_stopCalc();ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }

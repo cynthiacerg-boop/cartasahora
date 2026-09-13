@@ -120,6 +120,11 @@
     .pregunta-card { flex: 0 0 78%; max-width: 260px; scroll-snap-align: start; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 16px; font-size: 14px; line-height: 1.5; color: rgba(255,255,255,0.78); cursor: pointer; transition: all 0.2s; font-family: inherit; }
     .pregunta-card:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.95); }
     .pregunta-card.activo { border-color: rgba(138,77,171,0.7); color: #fff; background: rgba(138,77,171,0.14); }
+    /* Pregunta opcional de necesidad (medición; mismo lenguaje visual que .pregunta-card) */
+    .need-chip { width: 100%; text-align: left; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 16px; font-size: 14px; line-height: 1.4; color: rgba(255,255,255,0.78); cursor: pointer; transition: all 0.2s; font-family: inherit; display: flex; align-items: center; gap: 10px; }
+    .need-chip:hover { border-color: rgba(138,77,171,0.4); color: rgba(255,255,255,0.95); }
+    .need-chip-active { border-color: rgba(138,77,171,0.7); color: #fff; background: rgba(138,77,171,0.14); }
+    .need-chip-active::before { content: '✓'; color: #82B366; font-weight: 700; }
     textarea { width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(130,179,102,0.2); border-radius: 8px; padding: 13px 16px; color: #e8e8e8; font-family: 'Montserrat', sans-serif; font-size: 14px; outline: none; resize: vertical; min-height: 90px; transition: border-color 0.2s; }
     textarea:focus { border-color: rgba(130,179,102,0.5); }
     textarea::placeholder { color: rgba(255,255,255,0.2); }
@@ -318,6 +323,21 @@
 
   <!-- UPSELL / PRODUCTOS -->
   <div class="card hidden" id="section-upsell">
+
+    <!-- PREGUNTA OPCIONAL: necesidad del comprador. Solo medición: no bloquea productos,
+         checkout ni generación; no pide nombre ni email; guarda solo el valor interno. -->
+    <div id="card-buyer-need" style="padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid rgba(255,255,255,0.08);">
+      <div class="section-title" style="font-size:17px;">¿Qué te gustaría comprender mejor en este momento?</div>
+      <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 16px;line-height:1.6;">Elegí la opción que más se acerque a lo que estás viviendo. Es opcional.</p>
+      <div id="buyer-need-opciones" style="display:flex;flex-direction:column;gap:10px;">
+        <button type="button" class="need-chip" data-need="purpose_direction" aria-pressed="false" onclick="seleccionarNecesidad('purpose_direction',this)">Mi propósito o dirección</button>
+        <button type="button" class="need-chip" data-need="relationships" aria-pressed="false" onclick="seleccionarNecesidad('relationships',this)">Una relación o vínculo</button>
+        <button type="button" class="need-chip" data-need="work_money" aria-pressed="false" onclick="seleccionarNecesidad('work_money',this)">Mi trabajo y economía</button>
+        <button type="button" class="need-chip" data-need="current_change" aria-pressed="false" onclick="seleccionarNecesidad('current_change',this)">Un cambio que estoy atravesando</button>
+        <button type="button" class="need-chip" data-need="self_knowledge" aria-pressed="false" onclick="seleccionarNecesidad('self_knowledge',this)">Quiero conocerme mejor</button>
+      </div>
+    </div>
+
     <div class="section-title">Lecturas completas</div>
     <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
       Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla en unos minutos.
@@ -672,17 +692,62 @@ function ga4DatosPago(producto, metodo){
 }
 // Temas bloqueados → Carta Natal Completa: dispara select_item + click_comprar_informe (solo a GA4).
 function onTemasBloqueados(){
-  ga4('select_item', { item_list_name:'temas-bloqueados', items:[{ item_id:'carta-completa', item_name:GA4_NOMBRES['carta-completa'], price:GA4_PRECIOS_ARS['carta-completa'], quantity:1 }] });
+  ga4('select_item', Object.assign({ item_list_name:'temas-bloqueados', items:[{ item_id:'carta-completa', item_name:GA4_NOMBRES['carta-completa'], price:GA4_PRECIOS_ARS['carta-completa'], quantity:1 }] }, _needParams()));
   ga4('click_comprar_informe', { item_id:'carta-completa', origen:'temas-bloqueados' });
   irACartaCompleta();
 }
 // "Lecturas completas" a la vista (view_item_list, una vez por sesión).
+// NO se dispara view_item por cada producto: la grilla se muestra toda junta y no hay vista
+// individual real de producto; hacerlo inflaría artificialmente las visualizaciones. La vista
+// individual (view_item) se agregaría solo si en el futuro existe una pantalla propia de producto.
+// view_item_list NO lleva need_category: la grilla suele verse antes de que respondan la pregunta.
 function ga4VerListaProductos(){
   ga4Once('ga4_view_item_list','view_item_list', {
     item_list_name:'Lecturas completas',
     items: GA4_LISTA.map((p,i)=>({ item_id:p, item_name:GA4_NOMBRES[p], price:GA4_PRECIOS_ARS[p], index:i+1, quantity:1 }))
   });
 }
+// select_item: cuando la persona interactúa con una tarjeta de producto (primer click en la
+// tarjeta, una vez por producto/sesión). Es la etapa real "seleccionó un producto"; suma
+// need_category si ya eligió la necesidad. El slug sale del botón de pago dentro de la tarjeta.
+document.addEventListener('click', function(e){
+  const card = e.target.closest && e.target.closest('.producto-card, .preguntas-section');
+  if(!card) return;
+  const btn = card.querySelector('[id^="btn-mp-"]');
+  if(!btn) return;
+  const prod = btn.id.replace('btn-mp-','');
+  ga4Once('ga4_select_item_'+prod, 'select_item', Object.assign({
+    item_list_name:'Lecturas completas',
+    items:[{ item_id:prod, item_name:GA4_NOMBRES[prod]||prod, price:GA4_PRECIOS_ARS[prod], quantity:1 }]
+  }, _needParams()));
+});
+
+// ── PREGUNTA OPCIONAL "¿Qué te gustaría comprender mejor?" (buyer need) ──
+// Solo medición. Guarda únicamente el valor interno (no sensible) en sessionStorage y lo
+// conserva durante la sesión para sumarlo a view_item / begin_checkout / purchase cuando exista.
+function getNeedCategory(){ try{ return sessionStorage.getItem('buyer_need')||''; }catch(e){ return ''; } }
+// Devuelve { need_category } solo si hay respuesta; si no, {} (no ensucia los eventos).
+function _needParams(){ const n=getNeedCategory(); return n ? { need_category:n } : {}; }
+// Normaliza el método de pago a los valores pedidos ('mercado_pago' | 'paypal').
+function _pmNorm(m){ return (String(m||'').toLowerCase().indexOf('paypal')>=0) ? 'paypal' : 'mercado_pago'; }
+// is_test: true solo en flujos de prueba/promo (que NO disparan begin_checkout ni purchase);
+// en compras reales queda false. Se incluye para que el esquema esté presente en GA4.
+function _esTest(producto){ try{ return (typeof promoAplicada!=='undefined' && promoAplicada[producto]===true); }catch(e){ return false; } }
+function seleccionarNecesidad(valor, btn){
+  try{ sessionStorage.setItem('buyer_need', valor); }catch(e){}
+  // Marca visual (un solo elemento activo). Cambiar la respuesta re-marca y vuelve a emitir.
+  try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b===btn); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
+  // Solo GA4 vía el helper existente. NO se hace dataLayer.push directo: hoy no hay GTM y, si
+  // más adelante se instala, evitamos que el mismo evento se cuente dos veces.
+  // buyer_need_selected es una dimensión opcional (need_category), NO una etapa obligatoria del embudo.
+  ga4('buyer_need_selected', { need_category: valor });
+}
+// Al recargar: re-marcar el chip elegido si ya había respuesta en la sesión.
+function _restaurarNecesidad(){
+  const n=getNeedCategory(); if(!n) return;
+  try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b.getAttribute('data-need')===n); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
+}
+_restaurarNecesidad();
 // carta_form_started: primera interacción con el formulario gratuito (una vez por sesión).
 (function(){
   const campos = ['nombre','fecha','hora-hh','hora-mm','ciudad','provincia','pais'];
@@ -2080,7 +2145,9 @@ async function pagarConPaypal(producto, precio) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   const errorId = `error-${producto}`;
   mostrarMensaje(errorId, '');
-  ga4('begin_checkout', ga4DatosPago(producto,'paypal')); // presionó PayPal
+  // Importe/moneda EXACTOS que van a la pasarela (ga4DatosPago ya contempla el upgrade USD 7).
+  const _datosPP = ga4DatosPago(producto,'paypal');
+  ga4('begin_checkout', Object.assign({}, _datosPP, { payment_method:'paypal', is_test:_esTest(producto) }, _needParams())); // presionó PayPal
   const btn = document.getElementById(`btn-paypal-${producto}`);
   const btnMP = document.getElementById(`btn-mp-${producto}`);
   const _lblPP = btn ? btn.textContent : '';   // etiqueta original para restaurar si falla
@@ -2090,7 +2157,9 @@ async function pagarConPaypal(producto, precio) {
   const payload = _buildPayload(producto);
   localStorage.setItem('pendiente', JSON.stringify({
     producto, nombre: payload.nombre, extras: _extrasEclipse(producto), precio,
-    fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
+    fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais,
+    // Fallback EXACTO para purchase si /verificar-pago volviera sin monto (nunca el número USD del onclick).
+    checkout_value: _datosPP.value, checkout_currency: _datosPP.currency, payment_method: 'paypal'
   }));
 
   try {
@@ -2122,7 +2191,9 @@ async function pagarConMP(producto, precio, errorId) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   errorId = errorId || `error-${producto}`;
   mostrarMensaje(errorId, '');
-  ga4('begin_checkout', ga4DatosPago(producto,'mercado-pago')); // presionó Mercado Pago
+  // Importe/moneda EXACTOS que van a la pasarela (MP siempre ARS).
+  const _datosMP = ga4DatosPago(producto,'mercado-pago');
+  ga4('begin_checkout', Object.assign({}, _datosMP, { payment_method:'mercado_pago', is_test:_esTest(producto) }, _needParams())); // presionó Mercado Pago
   const btn = document.getElementById(`btn-mp-${producto}`);
   const btnPP = document.getElementById(`btn-paypal-${producto}`);
   const _lblMP = btn ? btn.textContent : '';   // etiqueta original (incluye el precio) para restaurar si falla
@@ -2132,7 +2203,9 @@ async function pagarConMP(producto, precio, errorId) {
   const payload = _buildPayload(producto);
   localStorage.setItem('pendiente', JSON.stringify({
     producto, nombre: payload.nombre, extras: _extrasEclipse(producto), precio,
-    fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais
+    fecha: payload.fecha, hora: payload.hora, ciudad: payload.ciudad, pais: payload.pais,
+    // Fallback EXACTO para purchase si /verificar-pago volviera sin monto (nunca el número USD del onclick).
+    checkout_value: _datosMP.value, checkout_currency: _datosMP.currency, payment_method: 'mercado_pago'
   }));
 
   try {
@@ -2704,6 +2777,17 @@ window.addEventListener('load',async ()=>{
         pais:     params.get('pais')||'Argentina',
         extras: {}, precio: 0
       };
+      // Reconstruir también el fallback exacto (checkout_value/currency) desde producto + pasarela,
+      // por si /verificar-pago volviera sin monto en este camino (localStorage perdido).
+      try{
+        const _pas = params.get('pasarela')||'';
+        const _met = (_pas==='paypal') ? 'paypal' : 'mercado-pago';
+        if(_u.producto){
+          const _d = ga4DatosPago(_u.producto, _met);
+          _u.checkout_value = _d.value; _u.checkout_currency = _d.currency;
+          _u.payment_method = _pmNorm(_pas);
+        }
+      }catch(e){}
       if(_u.producto && _u.fecha && _u.ciudad) pendienteData = _u;
     }
     if(pendienteData && pendienteData.fecha && pendienteData.ciudad){
@@ -2757,9 +2841,14 @@ window.addEventListener('load',async ()=>{
 
           const confirmado = await verificar();
           if(confirmado){
-            // Monto y moneda reales cobrados, confirmados server-side por el webhook de MP.
-            const montoReal = Number(confirmado.monto) || Number(pendienteData.precio) || undefined;
-            const monedaReal = confirmado.moneda || 'ARS';
+            // Monto/moneda: SIEMPRE prioridad al valor real confirmado server-side.
+            // Si excepcionalmente /verificar-pago volviera sin monto, se usa el importe/moneda
+            // EXACTOS guardados al iniciar este checkout (checkout_value/checkout_currency).
+            // Nunca se usa el número USD del onclick ni se asume ARS por defecto: si no se conoce
+            // el importe/moneda, quedan undefined (mejor sin dato que un dato falso que ensucie
+            // ingresos, ROAS y costo por venta del dashboard).
+            const montoReal = Number(confirmado.monto) || Number(pendienteData.checkout_value) || undefined;
+            const monedaReal = confirmado.moneda || pendienteData.checkout_currency || undefined;
             // La successUrl es revisitable y el pago sigue confirmado en KV 24h: sin este flag,
             // cada recarga volvía a disparar la venta con el mismo payment_id.
             const _flagCompra = `purchase_sent_${sessionId}`;
@@ -2791,18 +2880,24 @@ window.addEventListener('load',async ()=>{
               //   'transaction_id': sessionId
               // });
               // send_to explícito: sin él, gtag emite el purchase también al tag de Ads.
-              gtag('event', 'purchase', {
+              // value/currency quedan con el monto REAL cobrado (ARS en MP, USD en PayPal),
+              // verificado server-side. Se AGREGAN payment_method, need_category e is_test sin
+              // tocar el esquema previo. is_test=false: solo llega acá un pago real confirmado.
+              const _pmPurchase = _pmNorm(new URLSearchParams(window.location.search).get('pasarela')||'');
+              gtag('event', 'purchase', Object.assign({
                 send_to: 'G-639MKD7LWG',
                 value: montoReal,
                 currency: monedaReal,
                 transaction_id: sessionId,
+                payment_method: _pmPurchase,
+                is_test: false,
                 items: [{
                   item_id: _producto,
                   item_name: _prodNombre,
                   price: montoReal,
                   quantity: 1
                 }]
-              });
+              }, _needParams()));
               localStorage.setItem(_flagCompra, '1');
             }
             localStorage.removeItem('pendiente');

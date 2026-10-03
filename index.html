@@ -163,7 +163,18 @@
     .legend-line { width: 20px; height: 2px; border-radius: 1px; }
     .rs-campos { background: rgba(130,179,102,0.05); border: 1px solid rgba(130,179,102,0.15); border-radius: 10px; padding: 16px; margin-bottom: 10px; }
     .rs-campos label { color: rgba(130,179,102,0.7); margin-bottom: 6px; display: block; }
+    /* Ventana emergente de la pregunta de necesidad (se abre al calcular la carta) */
+    .need-modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(5,5,12,0.78); }
+    .need-modal-box { position: relative; width: 100%; max-width: 460px; max-height: calc(100vh - 32px); overflow-y: auto; background: #14121f; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 30px 24px 22px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+    .need-modal-close { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; background: none; border: none; color: rgba(255,255,255,0.55); font-size: 26px; line-height: 1; cursor: pointer; font-family: inherit; }
+    .need-modal-close:hover { color: #fff; }
+    .need-modal-listo { background: rgba(130,179,102,0.12); border: 1px solid rgba(130,179,102,0.35); border-radius: 10px; padding: 10px 14px; margin: 0 0 16px; font-size: 13.5px; font-weight: 600; color: #82B366; text-align: center; }
+    .need-modal-skip { display: block; margin: 16px auto 0; padding: 12px 22px; min-height: 44px; background: none; border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; color: rgba(255,255,255,0.7); font-size: 13.5px; font-family: inherit; cursor: pointer; }
+    .need-modal-skip:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
     @media (max-width: 540px) {
+      .need-modal-box { padding: 28px 18px 18px; }
+      .need-chip { padding: 16px; min-height: 52px; }
+      .need-modal-skip { width: 100%; }
       .form-grid { grid-template-columns: 1fr; }
       .form-group.full { grid-column: 1; }
       .card { padding: 24px 18px; }
@@ -299,7 +310,7 @@
       <button id="cta-desbloquear-completa" class="btn-primary hidden" style="margin-top:20px;" onclick="irACartaCompleta()">Desbloquear mi Carta Natal Completa</button>
 
       <!-- TEMAS BLOQUEADOS (clickeables: llevan directo a la card de compra real) -->
-      <div style="margin-top:22px;cursor:pointer;" onclick="onTemasBloqueados()">
+      <div id="bloque-temas-bloqueados" style="margin-top:22px;cursor:pointer;" onclick="onTemasBloqueados()">
         <p style="font-size:13.5px;color:rgba(255,255,255,0.6);line-height:1.6;margin:0 0 12px;">Estos temas están en tu informe completo:</p>
         <div style="display:flex;flex-direction:column;gap:9px;font-size:14px;color:rgba(255,255,255,0.4);">
           <span>🔒 Tu mente y tu voz</span>
@@ -321,22 +332,27 @@
 
   </div>
 
-  <!-- UPSELL / PRODUCTOS -->
-  <div class="card hidden" id="section-upsell">
-
-    <!-- PREGUNTA OPCIONAL: necesidad del comprador. Solo medición: no bloquea productos,
-         checkout ni generación; no pide nombre ni email; guarda solo el valor interno. -->
-    <div id="card-buyer-need" style="padding-bottom:22px;margin-bottom:22px;border-bottom:1px solid rgba(255,255,255,0.08);">
-      <div class="section-title" style="font-size:17px;">¿Qué te gustaría comprender mejor en este momento?</div>
+  <!-- VENTANA EMERGENTE: pregunta opcional de necesidad del comprador (se abre al calcular la carta).
+       Solo medición: no bloquea ni retrasa el cálculo; guarda solo el valor interno. -->
+  <div id="modal-necesidad" class="need-modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-necesidad-titulo" onclick="if(event.target===this)cerrarModalNecesidad(true)">
+    <div class="need-modal-box">
+      <button type="button" class="need-modal-close" aria-label="Cerrar" onclick="cerrarModalNecesidad(true)">×</button>
+      <div id="modal-necesidad-listo" class="need-modal-listo hidden">✓ Tu carta ya está lista</div>
+      <div class="section-title" id="modal-necesidad-titulo" style="font-size:16px;text-transform:none;letter-spacing:0.01em;line-height:1.45;margin-bottom:10px;">Mientras calculamos tu carta… ¿qué te gustaría comprender mejor en este momento?</div>
       <p style="font-size:13px;color:rgba(255,255,255,0.5);margin:0 0 16px;line-height:1.6;">Elegí la opción que más se acerque a lo que estás viviendo. Es opcional.</p>
       <div id="buyer-need-opciones" style="display:flex;flex-direction:column;gap:10px;">
-        <button type="button" class="need-chip" data-need="purpose_direction" aria-pressed="false" onclick="seleccionarNecesidad('purpose_direction',this)">Mi propósito o dirección</button>
-        <button type="button" class="need-chip" data-need="relationships" aria-pressed="false" onclick="seleccionarNecesidad('relationships',this)">Una relación o vínculo</button>
-        <button type="button" class="need-chip" data-need="work_money" aria-pressed="false" onclick="seleccionarNecesidad('work_money',this)">Mi trabajo y economía</button>
-        <button type="button" class="need-chip" data-need="current_change" aria-pressed="false" onclick="seleccionarNecesidad('current_change',this)">Un cambio que estoy atravesando</button>
-        <button type="button" class="need-chip" data-need="self_knowledge" aria-pressed="false" onclick="seleccionarNecesidad('self_knowledge',this)">Quiero conocerme mejor</button>
+        <button type="button" class="need-chip" data-need="purpose_direction" aria-pressed="false" onclick="seleccionarNecesidad('purpose_direction',this);cerrarModalNecesidad(false)">Mi propósito o dirección</button>
+        <button type="button" class="need-chip" data-need="relationships" aria-pressed="false" onclick="seleccionarNecesidad('relationships',this);cerrarModalNecesidad(false)">Una relación o vínculo</button>
+        <button type="button" class="need-chip" data-need="work_money" aria-pressed="false" onclick="seleccionarNecesidad('work_money',this);cerrarModalNecesidad(false)">Mi trabajo y economía</button>
+        <button type="button" class="need-chip" data-need="current_change" aria-pressed="false" onclick="seleccionarNecesidad('current_change',this);cerrarModalNecesidad(false)">Un cambio que estoy atravesando</button>
+        <button type="button" class="need-chip" data-need="self_knowledge" aria-pressed="false" onclick="seleccionarNecesidad('self_knowledge',this);cerrarModalNecesidad(false)">Quiero conocerme mejor</button>
       </div>
+      <button type="button" class="need-modal-skip" onclick="cerrarModalNecesidad(true)">Saltear</button>
     </div>
+  </div>
+
+  <!-- UPSELL / PRODUCTOS -->
+  <div class="card hidden" id="section-upsell">
 
     <div class="section-title">Lecturas completas</div>
     <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
@@ -713,6 +729,7 @@ function ga4VerListaProductos(){
 document.addEventListener('click', function(e){
   const card = e.target.closest && e.target.closest('.producto-card, .preguntas-section');
   if(!card) return;
+  if(e.target.closest('#bloque-temas-bloqueados')) return; // ese click ya emite su propio select_item (onTemasBloqueados)
   const btn = card.querySelector('[id^="btn-mp-"]');
   if(!btn) return;
   const prod = btn.id.replace('btn-mp-','');
@@ -748,6 +765,50 @@ function _restaurarNecesidad(){
   try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b.getAttribute('data-need')===n); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
 }
 _restaurarNecesidad();
+// Ventana emergente de la pregunta: se abre al calcular (no bloquea el cálculo). Si la persona ya
+// respondió en esta sesión no se vuelve a abrir. Cerrarla (Saltear / X / afuera / Esc) NO emite
+// ningún evento: solo elegir una opción dispara buyer_need_selected (vía seleccionarNecesidad).
+function abrirModalNecesidad(){
+  if(getNeedCategory()) return;
+  const m=document.getElementById('modal-necesidad'); if(!m) return;
+  document.getElementById('modal-necesidad-listo')?.classList.add('hidden');
+  m.classList.remove('hidden');
+  document.body.style.overflow='hidden'; // bloquea el scroll del fondo
+}
+function cerrarModalNecesidad(){
+  const m=document.getElementById('modal-necesidad'); if(!m) return;
+  m.classList.add('hidden');
+  document.body.style.overflow='';
+}
+// La carta terminó con la ventana abierta: no se cierra sola, solo avisa.
+function avisarCartaListaEnModal(){
+  const m=document.getElementById('modal-necesidad');
+  if(m && !m.classList.contains('hidden')) document.getElementById('modal-necesidad-listo')?.classList.remove('hidden');
+}
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') cerrarModalNecesidad(); });
+// Flujo normal: la Carta Natal Completa (mismo nodo, un solo #form-carta-completa) sube a los
+// resultados justo después de la lectura esencial, con los temas bloqueados adentro, y reemplaza
+// a la tarjeta de transición. En el retorno por lead no se llama: la tarjeta queda en la grilla.
+function reubicarCartaCompleta(){
+  const form=document.getElementById('form-carta-completa');
+  const card=form?.closest('.producto-card');
+  const res=document.getElementById('section-result');
+  const transicion=document.getElementById('transicion-carta-completa');
+  if(!card||!res||!transicion) return;
+  const temas=document.getElementById('bloque-temas-bloqueados');
+  if(temas){ temas.style.marginBottom='22px'; card.insertBefore(temas, form); }
+  transicion.classList.add('hidden');
+  res.insertBefore(card, transicion);
+  card.style.marginBottom='20px';
+  if(!document.getElementById('encabezado-carta-completa')){
+    const enc=document.createElement('div');
+    enc.id='encabezado-carta-completa';
+    enc.style.cssText='margin:0 4px 16px;';
+    enc.innerHTML='<div class="section-title">Esto es solo la base de tu mapa</div>'
+      +'<p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0;">Tu Sol, tu Luna y tu Ascendente son el comienzo. En tu Carta Natal Completa vas a ver cómo funciona todo junto.</p>';
+    res.insertBefore(enc, card);
+  }
+}
 // carta_form_started: primera interacción con el formulario gratuito (una vez por sesión).
 (function(){
   const campos = ['nombre','fecha','hora-hh','hora-mm','ciudad','provincia','pais'];
@@ -2602,6 +2663,7 @@ async function calcularCarta(origen) {
   const nombre=document.getElementById('nombre').value.trim(),fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,ciudad=document.getElementById('ciudad').value.trim(),provincia=document.getElementById('provincia')?.value.trim()||'',pais=document.getElementById('pais').value.trim()||'Argentina';
   if(!nombre||!fecha||!ciudad){mostrarMensaje('error-msg','Completá nombre, fecha y ciudad para continuar.');return;}
   ocultarMsg('error-msg'); mostrar('section-loader'); ocultar('section-form');
+  if(origen!=='retorno' && origen!=='upgrade') abrirModalNecesidad(); // pregunta en ventana, en paralelo al cálculo
   // carta_calculo_iniciado: solo cuando el cálculo lo inicia la persona (no en retorno de pago
   // ni en el auto-cálculo del upgrade). Dedup por datos para no recontar un refresco.
   if(origen!=='retorno' && origen!=='upgrade'){
@@ -2615,7 +2677,9 @@ async function calcularCarta(origen) {
     cartaData=chartData;
     _stopCalc();
     renderCartaNatal(chartData); renderTresEnergias(chartData); renderPlanetas(chartData); renderAspectos(chartData);
+    reubicarCartaCompleta(); // Carta Natal Completa justo debajo de la lectura esencial
     ocultar('section-loader'); mostrar('section-result'); mostrar('section-upsell'); mostrar('detalles-tecnicos');
+    avisarCartaListaEnModal();
     ga4VerListaProductos(); // view_item_list: "Lecturas completas" a la vista
     // ── Evento de embudo GA4: la carta gratis (Sol/Luna/Ascendente) ya está en pantalla ──
     // Mismo patrón de gtag que click_comprar_informe. Guard "una vez por sesión" en
@@ -2659,7 +2723,7 @@ async function calcularCarta(origen) {
       catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     }
     const params=new URLSearchParams(window.location.search);
-  }catch(err){_stopCalc();ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
+  }catch(err){_stopCalc();cerrarModalNecesidad();ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 
 // ── UTILIDADES ──

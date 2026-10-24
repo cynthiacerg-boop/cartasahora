@@ -1,0 +1,24 @@
+# Config reflejando el worker real en Cloudflare (leída por API el 2026-10-24).
+# Los secretos (ADMIN_SECRET, ANTHROPIC_KEY, MP_ACCESS_TOKEN, PAYPAL_CLIENT_ID,
+# PAYPAL_CLIENT_SECRET, PAYPAL_WEBHOOK_ID, PROMO_CODE, RAPIDAPI_KEY, RESEND_API_KEY,
+# UNSUB_SECRET) NO van acá: viven en Cloudflare y se cargan con `wrangler secret put`.
+name = "cartasahora-proxy"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+workers_dev = true
+preview_urls = true
+
+[triggers]
+crons = ["0 * * * *"]
+
+[[kv_namespaces]]
+binding = "LEADS_KV"
+id = "c3f4a718ac1649f5abac888b3485fed9"
+
+[[kv_namespaces]]
+binding = "PAGOS_KV"
+id = "0be7b496e54842cf80d2b141f7de8b58"
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT"
+id = "5855ba84011c42c4a526e2cae18e9fde"

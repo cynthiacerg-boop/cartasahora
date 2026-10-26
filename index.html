@@ -96,6 +96,12 @@
     .texto-bloqueado-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max-content; max-width: 92%; padding: 10px 16px; background: rgba(26,26,46,0.88); border: 1px solid rgba(130,179,102,0.5); border-radius: 999px; color: #fff; font-family: 'Montserrat', sans-serif; font-size: 12.5px; font-weight: 500; line-height: 1.35; text-align: center; letter-spacing: 0.02em; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
     .texto-bloqueado:hover .texto-bloqueado-chip, .texto-bloqueado-chip:focus-visible { border-color: #82B366; background: rgba(130,179,102,0.22); }
     .productos-grid { display: grid; gap: 16px; margin-top: 8px; }
+    /* "¿Buscás otra lectura?": discreto y secundario, no compite con el botón de pago de Carta Completa */
+    .otras-lecturas-toggle { text-align: center; margin: 28px 0 8px; }
+    .otras-lecturas-titulo { font-family: 'Montserrat', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.55); margin-bottom: 12px; }
+    .btn-otras-lecturas { padding: 12px 22px; min-height: 44px; background: none; border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; color: rgba(255,255,255,0.7); font-family: 'Montserrat', sans-serif; font-size: 13.5px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+    .btn-otras-lecturas:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+    #otras-lecturas { margin-top: 20px; }
     .producto-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; transition: border-color 0.2s, background 0.2s; cursor: pointer; }
     .producto-card:hover { border-color: rgba(138,77,171,0.4); background: rgba(138,77,171,0.05); }
     .producto-card.destacado { border-color: rgba(138,77,171,0.35); background: linear-gradient(135deg, rgba(138,77,171,0.1), rgba(130,179,102,0.05)); }
@@ -375,10 +381,6 @@
   <!-- UPSELL / PRODUCTOS -->
   <div class="card hidden" id="section-upsell">
 
-    <div class="section-title">Lecturas completas</div>
-    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
-      Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla en unos minutos.
-    </p>
     <div class="productos-grid">
 
       <div class="producto-card destacado">
@@ -411,6 +413,20 @@
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
+
+    </div>
+
+    <!-- Otras lecturas: colapsadas por defecto. Carta Natal Completa es la única oferta visible. -->
+    <div id="bloque-otras-lecturas" class="otras-lecturas-toggle">
+      <div class="otras-lecturas-titulo">¿Buscás otra lectura?</div>
+      <button type="button" id="btn-otras-lecturas" class="btn-otras-lecturas" aria-expanded="false" aria-controls="otras-lecturas" onclick="alternarOtrasLecturas()">Ver otras lecturas</button>
+    </div>
+
+    <div id="otras-lecturas" class="hidden">
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0 0 20px;line-height:1.6;">
+      Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla en unos minutos.
+    </p>
+    <div class="productos-grid">
 
       <div class="producto-card">
         <div class="producto-header">
@@ -585,6 +601,8 @@
         <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
       </div>
     </div>
+
+    </div><!-- /#otras-lecturas -->
 
     <!-- GUARDAR LECTURA GRATIS POR MAIL (acción secundaria, fuera del camino de compra) -->
     <div class="lectura-acciones" id="bloque-guardar-esencial" style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);">
@@ -2870,6 +2888,7 @@ async function calcularCarta(origen) {
       // Upgrade es USD 7 solo por PayPal: ocultar MP para no mostrar el precio completo al lado.
       const btnMpUpg=document.querySelector('#form-lectura-profunda .btn-mp');
       if(btnMpUpg)btnMpUpg.style.display='none';
+      abrirOtrasLecturas('deeplink'); // Lectura Profunda está en el bloque colapsado
       setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
     }
     // (Campaña del Eclipse retirada: ya no hay scroll ni mensaje automático hacia Tránsitos.)
@@ -2905,9 +2924,31 @@ function irACartaCompleta(){
   const card=document.getElementById('form-carta-completa')?.closest('.producto-card');
   if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
 }
+// ── Otras lecturas (colapsadas por defecto bajo la Carta Natal Completa) ──
+// abrirOtrasLecturas es idempotente: ver_otras_lecturas se emite solo al pasar de cerrado a abierto.
+// origen: 'boton' | 'deeplink' (?upgrade=, ?lead=&oferta=) | 'post_compra' (botón tras la Carta Completa).
+function abrirOtrasLecturas(origen){
+  const cont=document.getElementById('otras-lecturas'); if(!cont) return;
+  const btn=document.getElementById('btn-otras-lecturas');
+  const yaAbierta=!cont.classList.contains('hidden');
+  cont.classList.remove('hidden');
+  if(btn){ btn.textContent='Ocultar otras lecturas'; btn.setAttribute('aria-expanded','true'); }
+  if(!yaAbierta) ga4('ver_otras_lecturas', { origen: origen||'boton' });
+}
+function cerrarOtrasLecturas(){
+  const cont=document.getElementById('otras-lecturas'); if(!cont) return;
+  const btn=document.getElementById('btn-otras-lecturas');
+  cont.classList.add('hidden');
+  if(btn){ btn.textContent='Ver otras lecturas'; btn.setAttribute('aria-expanded','false'); }
+}
+function alternarOtrasLecturas(){
+  const cont=document.getElementById('otras-lecturas'); if(!cont) return;
+  if(cont.classList.contains('hidden')) abrirOtrasLecturas('boton'); else cerrarOtrasLecturas();
+}
 // Desde la transición al final de la Carta Completa: scroll suave a Lectura Profunda. NO inicia pago.
 function irALecturaProfunda(){
   ga4('select_item', { item_list_name:'post-carta-completa', origen:'post-carta-completa', item_id:'lectura-profunda', items:[{ item_id:'lectura-profunda', item_name:(typeof GA4_NOMBRES!=='undefined'?GA4_NOMBRES['lectura-profunda']:'Lectura Profunda'), quantity:1 }] });
+  abrirOtrasLecturas('post_compra'); // Lectura Profunda vive en el bloque colapsado
   const card=document.getElementById('form-lectura-profunda')?.closest('.producto-card');
   if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
 }
@@ -2926,7 +2967,7 @@ const MSG_CALC = ['Calculando tus posiciones planetarias…','Identificando tu S
 const MSG_COMPLETA = ['Integrando tus planetas personales…','Revisando las áreas más activadas de tu carta…','Traduciendo tus patrones a un lenguaje claro…','Preparando tu síntesis personal…'];
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
 function reiniciar(){
-  ocultar('section-result');ocultar('section-upsell');ocultar('detalles-tecnicos');mostrar('section-form');
+  ocultar('section-result');ocultar('section-upsell');ocultar('detalles-tecnicos');mostrar('section-form');cerrarOtrasLecturas();
   const _det=document.getElementById('detalles-tecnicos');if(_det)_det.open=false; // acordeón cerrado en la próxima
   cartaData=null;preguntaSeleccionada=null;
   // Limpiar las lecturas pagas ya inyectadas: sin esto la consulta anterior queda colgada bajo la nueva.
@@ -2941,7 +2982,7 @@ function reiniciar(){
 
 // ── RETORNO DEL MAIL (?lead=token): precargar la carta guardada ──
 // Reusa la carta natal ya calculada (no re-gasta /carta) y lleva directo a la
-// tarjeta del producto ofrecido (?oferta=, cross-sell) o a Tránsitos por defecto,
+// tarjeta del producto ofrecido (?oferta=, cross-sell) o a Carta Natal Completa por defecto,
 // con el email precargado. Si el lead es viejo (sin carta) o el token no existe,
 // no hace nada y queda el formulario normal.
 async function cargarDesdeLead(token, oferta){
@@ -2960,14 +3001,16 @@ async function cargarDesdeLead(token, oferta){
     ocultar('section-form');
     mostrar('section-upsell');
     ga4VerListaProductos(); // view_item_list: "Lecturas completas" a la vista (retorno por lead)
-    // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
+    // Producto destino: el del cross-sell (?oferta=) o Carta Natal Completa por defecto (sin oferta o valor desconocido).
     const DESTINOS = {
       'transitos':        { form:'form-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
       'carta-completa':   { form:'form-carta-completa',   success:'success-carta-completa',   msg:'✦ Tu carta ya está lista. Desbloqueá tu informe completo con todo el detalle de tu carta.' },
       'revolucion-solar': { form:'form-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
       'sinastria':        { form:'form-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
     };
-    const dest = DESTINOS[oferta] || DESTINOS['transitos'];
+    const _claveDest = DESTINOS[oferta] ? oferta : 'carta-completa';
+    const dest = DESTINOS[_claveDest];
+    if(_claveDest!=='carta-completa') abrirOtrasLecturas('deeplink'); // el resto de las lecturas está en el bloque colapsado
     // El email ya no se precarga: el pago no lo necesita. Si la persona quiere una
     // copia por mail, la pide después, sobre la lectura ya generada.
     mostrarMensaje(dest.success, dest.msg);
@@ -2994,7 +3037,7 @@ window.addEventListener('load',async ()=>{
     if(_upgCiudad)document.getElementById('ciudad').value=decodeURIComponent(_upgCiudad);
     document.getElementById('pais').value=decodeURIComponent(_upgPais);
     if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta('upgrade');}
-    else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
+    else{ocultar('section-form');mostrar('section-upsell');abrirOtrasLecturas('deeplink');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
   }
   if(params.get('lectura')==='ok'){
     // Soporta PayPal (order_id o token), MercadoPago (payment_id) y legacy Stripe (session_id)

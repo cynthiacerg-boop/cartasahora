@@ -1754,7 +1754,7 @@ EXTENSIÓN TOTAL: entre 165 y 210 palabras (máximo absoluto 230). No rellenes. 
 // ── TEXTO BORROSO CON CANDADO — SOLO Lectura Esencial gratuita ──
 // Se agrega al DOM ya renderizado (no toca el texto, ni la caché, ni _lecturaContexto): debajo de las
 // secciones 1, 2 y 3 (Sol, Luna, Ascendente), nunca debajo de la última (el gancho). Relleno genérico,
-// aria-hidden y no seleccionable; el chip (y el bloque) llevan a la tarjeta de Carta Natal Completa.
+// aria-hidden y no seleccionable. Un solo chip (sobre el último borroso); chip y bloques llevan a la Carta Natal Completa.
 const _RELLENO_BLOQUEADO = {
   sol:'Esta cualidad se combina con otras partes de tu carta y cambia por completo la forma en que aparece en tu día a día, en las decisiones que tomás y en lo que elegís mostrar de vos.',
   luna:'Hay un matiz más profundo en la manera en que esta necesidad se cruza con el resto de tu mundo interno, y se nota sobre todo en los momentos en que buscás sentirte en calma y en casa.',
@@ -1762,19 +1762,26 @@ const _RELLENO_BLOQUEADO = {
 };
 function agregarBloquesBloqueados(containerId){
   const c=document.getElementById(containerId); if(!c) return;
-  const bloques=c.querySelectorAll('.interp-block');
+  const bloques=Array.from(c.querySelectorAll('.interp-block'));
+  // renderInterp abre un bloque nuevo si hay línea en blanco entre el título y el texto, así que una
+  // sección puede ser varios bloques. Se agrupa por títulos: cada sección termina donde empieza el próximo título.
+  const titulos=[]; bloques.forEach(function(b,i){ if(b.querySelector('.interp-title')) titulos.push(i); });
   const secciones=['sol','luna','ascendente'];
-  const n=Math.min(3, bloques.length-1);   // nunca el último bloque (el gancho)
-  for(let i=0;i<n;i++){
-    const sec=secciones[i];
+  const n=Math.min(3, titulos.length-1);   // nunca la última sección (el gancho)
+  for(let k=0;k<n;k++){
+    const sec=secciones[k];
+    const fin=(titulos[k+1]!==undefined ? titulos[k+1] : bloques.length)-1;
     const w=document.createElement('div'); w.className='texto-bloqueado'; w.setAttribute('data-section',sec);
     const fake=document.createElement('p'); fake.className='texto-bloqueado-relleno'; fake.setAttribute('aria-hidden','true');
     fake.textContent=_RELLENO_BLOQUEADO[sec];
-    const chip=document.createElement('button'); chip.type='button'; chip.className='texto-bloqueado-chip';
-    chip.textContent='🔒 Seguí leyendo';
-    w.appendChild(fake); w.appendChild(chip);
+    w.appendChild(fake);
+    if(k===n-1){   // un solo chip, sobre el último párrafo borroso
+      const chip=document.createElement('button'); chip.type='button'; chip.className='texto-bloqueado-chip';
+      chip.textContent='🔒 Seguí leyendo';
+      w.appendChild(chip);
+    }
     w.addEventListener('click', function(){ ga4('click_texto_bloqueado', { section: sec }); irACartaCompleta(); });
-    bloques[i].appendChild(w);
+    bloques[fin].appendChild(w);
   }
 }
 

@@ -981,7 +981,7 @@ var worker_default = {
             "anthropic-beta": "prompt-caching-2024-07-31"
           },
           body: JSON.stringify({
-            model: esEsencial ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+            model: "claude-sonnet-4-6",
             // 8000 es un techo, no una meta: las lecturas terminan solas mucho antes.
             // Con 4000 las cartas completas con muchos aspectos se cortaban a la mitad.
             max_tokens: esEsencial ? 1500 : 8e3,
@@ -1060,7 +1060,7 @@ var worker_default = {
               "anthropic-beta": "prompt-caching-2024-07-31"
             },
             body: JSON.stringify({
-              model: esEsencial ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+              model: "claude-sonnet-4-6",
               max_tokens: esEsencial ? 1500 : 8e3,
               system: body.system ? [{ type: "text", text: body.system, cache_control: { type: "ephemeral" } }] : void 0,
               messages: [{ role: "user", content: lectura }]

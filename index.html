@@ -1633,7 +1633,7 @@ Cada afirmación se apoya en un dato astrológico concreto (planeta + signo + ca
 
 Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.
 
-LENGUAJE NEUTRO OBLIGATORIO: nunca uses adjetivos o participios con género referidos a la persona (viva, interesada, orientada, cansado, único/a, vos misma/mismo). Reformulá con verbos o sustantivos: 'sentís que estás viva' → 'sentís vitalidad'; 'vos misma' → 'vos'. Revisá el texto final antes de entregarlo.`;
+LENGUAJE NEUTRO OBLIGATORIO: nunca uses adjetivos o participios con género referidos a la persona (viva, interesada, orientada, cansado, único/a, vos misma/mismo). Reformulá con verbos o sustantivos: 'sentís que estás viva' → 'sentís vitalidad'; 'vos misma' → 'vos'. Palabras prohibidas referidas a la persona: segura/seguro, serena/sereno, tranquila/tranquilo, sola/solo, lista/listo, cansada/cansado, viva/vivo, interesada/interesado, orientada/orientado, única/único, misma/mismo. Reemplazos: 'sentirte segura' → 'sentir seguridad'; 'te presentás serena' → 'transmitís serenidad'. Revisá el texto final antes de entregarlo.`;
 
 // ── PROMPT BÁSICO (lectura gratuita) ──
 function buildPromptBasico(nombre, chartData, need) {
@@ -1721,23 +1721,24 @@ PROHIBIDO (respetar el sentido, no solo las palabras):
 - EXCEPCIÓN ÚNICA: los "DATOS EXTRA, SOLO PARA LA SECCIÓN 4" (planetas, Nodo, casas, aspecto) se usan SOLO como insumo interno de la sección 4, para describir una experiencia concreta. Nunca los nombres ni los desarrolles: ni planetas, ni nodos, ni signos de esos datos, ni números de casa, ni tipos de aspecto.
 - Interpretar elementos o modalidades: nada de fuego/tierra/aire/agua, cardinal/fijo/mutable, predominio, carencia ni "balance".
 - Cualquier texto comercial o invitación a comprar DENTRO de la lectura.
+- PROHIBIDO usar la frase "Y hay algo más en cómo vivís esto".
 Interpretá la combinación real signo + casa (no el signo genérico). No inventes datos que no estén acá. Neutralidad de género: sin "/a" ni duplicaciones; reformulá natural.
-REDACCIÓN NATURAL: usá construcciones correctas — "que tenga sustancia" (nunca "que sienta sustancia"); "te mostrás" o "te presentás" (nunca "te muestran"). Voseo reflexivo siempre.
+REDACCIÓN NATURAL: usá construcciones correctas — "que tenga sustancia" (nunca "que sienta sustancia"); "te mostrás" o "te presentás" (nunca "te muestran"). Voseo reflexivo siempre. Cada oración que empiece con "Tu Sol…", "Tu Luna…" o "Tu Ascendente…" sigue en tercera persona ("Tu Ascendente te presenta…"), nunca "te presentás".
 
 FORMATO: empezá directo con "**Tu esencia solar**". Sin encabezado general, sin "#", sin "---". Usá EXACTAMENTE estos cuatro títulos, cada uno entre ** en su propia línea:
 
 **Tu esencia solar**
-Nombrá tu Sol en ${solSign} (casa ${solHouse}). Idea: su recurso central y qué necesita para expresarse. Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. Terminá con una frase breve que deje abierto que hay más, cerrando con puntos suspensivos (ejemplo de tono: "Y hay algo más en cómo vivís esto…"). No cortes una frase a la mitad. Entre 40 y 50 palabras.
+Nombrá tu Sol en ${solSign} (casa ${solHouse}). Idea: su recurso central y qué necesita para expresarse. Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. EXACTAMENTE 3 oraciones. La tercera oración es una frase breve que deja abierto que hay más sobre esta energía y termina en puntos suspensivos. Cada sección debe usar una frase de cierre DISTINTA y propia de esa energía (no repitas estructura entre secciones). No cortes una frase a la mitad.
 
 **Tu mundo emocional**
-Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Idea: una necesidad emocional central y qué te ayuda a sentirte en contacto con vos, en tono descriptivo y cálido (sin calificativos negativos). Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. Terminá con una frase breve que deje abierto que hay más, cerrando con puntos suspensivos (ejemplo de tono: "Y hay algo más en cómo vivís esto…"). No cortes una frase a la mitad. Entre 40 y 50 palabras.
+Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Idea: una necesidad emocional central y qué te ayuda a sentirte en contacto con vos, en tono descriptivo y cálido (sin calificativos negativos). Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. EXACTAMENTE 3 oraciones. La tercera oración es una frase breve que deja abierto que hay más sobre esta energía y termina en puntos suspensivos. Cada sección debe usar una frase de cierre DISTINTA y propia de esa energía (no repitas estructura entre secciones). No cortes una frase a la mitad.
 
 **Tu manera de entrar al mundo**
-Nombrá tu Ascendente en ${ascSign}. Idea: cómo iniciás, te mostrás o te vinculás con el entorno. Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. Terminá con una frase breve que deje abierto que hay más, cerrando con puntos suspensivos (ejemplo de tono: "Y hay algo más en cómo vivís esto…"). No cortes una frase a la mitad. Entre 40 y 50 palabras.
+Nombrá tu Ascendente en ${ascSign}. Idea: cómo iniciás, te mostrás o te vinculás con el entorno. Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. EXACTAMENTE 3 oraciones. La tercera oración es una frase breve que deja abierto que hay más sobre esta energía y termina en puntos suspensivos. Cada sección debe usar una frase de cierre DISTINTA y propia de esa energía (no repitas estructura entre secciones). No cortes una frase a la mitad.
 
 **${TITULO_GANCHO}**
 Esta sección muestra UNA tensión concreta que la persona vive en el área elegida: algo que le pasa, que se repite y que le cuesta entender. No describas virtudes ni capacidades: describí la fricción. Basala en los DATOS EXTRA (por ejemplo, una necesidad que choca con otra, o algo que busca pero que su propia forma de ser le complica).
-Estructura obligatoria:
+Estructura obligatoria: EXACTAMENTE 4 oraciones: situación cotidiana, contradicción, frase puente ("La explicación está en una parte de tu carta que todavía no se abrió.") y pregunta final.
 - 1 frase con la situación cotidiana reconocible y específica de esta carta, que empiece con "Es posible que te pase que…" o similar.
 - 1 frase que nombre la contradicción interna, sin explicar de dónde viene.
 - 1 frase puente corta: "La explicación está en una parte de tu carta que todavía no se abrió."
@@ -2879,7 +2880,7 @@ async function calcularCarta(origen) {
       setLoaderText('escribiendo tu lectura esencial...');
       const prompt=buildPromptBasico(nombre,chartData,needSel);
       try{
-        const esencialKey=cacheKey('cartaEsencialV4',fecha,hora,ciudad)+'_'+(needSel||'none');
+        const esencialKey=cacheKey('cartaEsencialV5',fecha,hora,ciudad)+'_'+(needSel||'none');
         const esencialCached=localStorage.getItem(esencialKey);
         let interpBasica;
         if(esencialCached){interpBasica=esencialCached;}

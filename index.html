@@ -1578,7 +1578,7 @@ Cada afirmación se apoya en un dato astrológico concreto (planeta + signo + ca
 
 Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.
 
-Usá lenguaje neutro en género: evitá adjetivos con género sobre la persona (orientada/orientado, único/única). Reformulá con sustantivos o verbos.`;
+LENGUAJE NEUTRO OBLIGATORIO: nunca uses adjetivos o participios con género referidos a la persona (viva, interesada, orientada, cansado, único/a, vos misma/mismo). Reformulá con verbos o sustantivos: 'sentís que estás viva' → 'sentís vitalidad'; 'vos misma' → 'vos'. Revisá el texto final antes de entregarlo.`;
 
 // ── PROMPT BÁSICO (lectura gratuita) ──
 function buildPromptBasico(nombre, chartData, need) {
@@ -1658,7 +1658,7 @@ Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas CINC
 
 FUNCIÓN: es la puerta de entrada, no un informe. Es una lectura NATAL DESCRIPTIVA y cálida —NO evolutiva, terapéutica ni predictiva—, válida para cualquier carta. Tiene que hacer sentir a ${nombre} que la carta se calculó específicamente para ella, darle una comprensión breve pero valiosa y generar identificación. Se siente COMPLETA como experiencia gratuita, pero es claramente INICIAL: no entregues la profundidad del producto pago.
 
-TONO: describí con matices, nunca con juicios. NO uses calificativos negativos sobre la persona. Las preguntas o puertas abiertas NO deben presuponer un problema, una carencia ni una dificultad: abren curiosidad, no señalan algo "a corregir".
+TONO: describí con matices, nunca con juicios. NO uses calificativos negativos sobre la persona. Las preguntas o puertas abiertas NO deben presuponer un problema, una carencia ni una dificultad: abren curiosidad, no señalan algo "a corregir". Esta regla aplica a las secciones 1 a 4. La sección 5 describe una fricción a propósito: ahí sí se nombra una tensión, siempre como patrón a comprender, nunca como defecto ni condena.
 
 VOZ: segunda persona, "vos", directo a ${nombre}. Voseo rioplatense cálido y natural (sos, tenés, sentís, buscás, podés). Nunca tú/eres/tienes ni "a ti/para ti/contigo". Nunca "este Sol"/"esa Luna": decí "tu Sol", "tu Luna", "tenés".
 
@@ -1695,7 +1695,17 @@ Nombrá tu Ascendente en ${ascSign}. Explicá cómo iniciás, te mostrás o te v
 Cerrá esta sección integrando tu Sol, tu Luna y tu Ascendente basándote EXCLUSIVAMENTE en los "Aspectos calculados entre Sol, Luna y Ascendente" de los datos de arriba. Si hay un aspecto entre dos de ellos, describí en lenguaje cotidiano (sin nombrar el tipo técnico) cómo se relacionan esas dos partes —si conviven con facilidad y se potencian, o si conviven con cierta fricción, siempre como matiz y nunca como defecto—. Si NO hay aspectos directos entre ellos, describí que funcionan de manera más independiente, cada uno con su registro, sin inventar una tensión. La sección cierra integrando: sin dejar preguntas ni tensiones abiertas. NO expliques cómo funciona todo junto con el resto de la carta (eso es del producto pago). Entre 90 y 120 palabras.
 
 **${TITULO5}**
-Describí UN patrón concreto que surge de los DATOS EXTRA, en lenguaje de experiencia cotidiana (qué le pasa a la persona, cómo se nota en su vida), sin nombrar planetas, nodos, puntos técnicos ni tipos de aspecto. Que sea específico de esta carta, no genérico. Mostrá el patrón pero NO expliques de dónde viene ni cómo trabajarlo. Terminá con UNA pregunta abierta, en segunda persona, que la persona sienta que quiere responder. Sin texto comercial, sin mencionar informes ni compras. Entre 70 y 100 palabras.
+Esta sección muestra UNA tensión concreta que la persona vive en el área elegida: algo que le pasa, que se repite y que le cuesta entender. No describas virtudes ni capacidades: describí la fricción. Basala en los DATOS EXTRA (por ejemplo, una necesidad que choca con otra, o algo que busca pero que su propia forma de ser le complica).
+Estructura obligatoria:
+- 1 o 2 frases que describan una situación cotidiana reconocible y específica de esta carta, que empiecen con "Es posible que te pase que…" o similar.
+- 1 frase que nombre la contradicción interna, sin explicar de dónde viene.
+- 1 frase puente: "Eso tiene una explicación en tu carta, y está en una parte que esta lectura todavía no abrió."
+- Cierre: una pregunta que la persona NO pueda responder sola, del tipo "¿por qué…?" o "¿qué es lo que…?". Prohibido cerrar con "¿te reconocés…?", "¿sentís que…?" o cualquier pregunta que se conteste con sí o no.
+Nunca halagues ni resuelvas la tensión. No nombres planetas, nodos, signos, casas ni tipos de aspecto. Nada de fatalismo: la tensión es un patrón a comprender, no un defecto. Sin texto comercial, sin mencionar informes ni compras. Entre 70 y 100 palabras.
+
+EJEMPLO DE TONO Y ESTRUCTURA (para un vínculo). Es solo una referencia: NO lo copies ni repitas sus frases; escribí una tensión propia, basada en los DATOS EXTRA de esta carta:
+"Es posible que te pase que, cuando alguien empieza a necesitarte más, sentís ganas de tomar distancia, aunque esa persona te importe. Buscás cercanía, pero cuando llega, algo en vos se incomoda. Eso tiene una explicación en tu carta, y está en una parte que esta lectura todavía no abrió. ¿Qué es lo que se activa en vos justo cuando el vínculo se vuelve más profundo?"
+Si el área elegida es vínculos, NO uses la situación del ejemplo (distancia cuando el otro necesita más). Buscá otra tensión que surja de los datos de esta carta.
 
 EXTENSIÓN TOTAL: entre 340 y 440 palabras (máximo absoluto 480). No rellenes. Terminá con la pregunta abierta de la última sección, sin texto comercial ni despedida.`;
 }
@@ -2793,7 +2803,7 @@ async function calcularCarta(origen) {
       setLoaderText('escribiendo tu lectura esencial...');
       const prompt=buildPromptBasico(nombre,chartData,needSel);
       try{
-        const esencialKey=cacheKey('cartaEsencialV2',fecha,hora,ciudad)+'_'+(needSel||'none');
+        const esencialKey=cacheKey('cartaEsencialV3',fecha,hora,ciudad)+'_'+(needSel||'none');
         const esencialCached=localStorage.getItem(esencialKey);
         let interpBasica;
         if(esencialCached){interpBasica=esencialCached;}

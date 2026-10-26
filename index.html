@@ -219,8 +219,8 @@
 
   <div id="upgrade-banner" class="card hidden" style="border-color:rgba(138,77,171,0.4);background:linear-gradient(135deg,rgba(138,77,171,0.08),rgba(130,179,102,0.04));text-align:center;">
     <p style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.2em;color:#8A4DAB;text-transform:uppercase;margin:0 0 10px;">✦ Upgrade disponible</p>
-    <p style="font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 6px;">Para completar tu upgrade a Lectura Profunda,</p>
-    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">calculá tu carta natal y pagá los USD 7 restantes.</p>
+    <p style="font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 6px;">Tu siguiente paso: la Lectura Profunda,</p>
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">calculá tu carta natal para continuar.</p>
   </div>
 
   <div class="card" id="section-form">
@@ -739,9 +739,7 @@ function ga4Once(key, event, params){
 // Precio/moneda/items reales de un producto según la pasarela ('mercado-pago' → ARS, 'paypal' → USD).
 function ga4DatosPago(producto, metodo){
   const esPP = metodo==='paypal';
-  let precio = esPP ? GA4_PRECIOS_USD[producto] : GA4_PRECIOS_ARS[producto];
-  // Upgrade de Lectura Profunda: USD 7 solo por PayPal.
-  try{ if(esPP && producto==='lectura-profunda' && new URLSearchParams(location.search).get('upgrade')==='lectura-profunda') precio = 7; }catch(e){}
+  const precio = esPP ? GA4_PRECIOS_USD[producto] : GA4_PRECIOS_ARS[producto];
   return { payment_type: metodo, value: precio, currency: esPP ? 'USD' : 'ARS',
     items: [{ item_id: producto, item_name: GA4_NOMBRES[producto]||producto, price: precio, quantity: 1 }] };
 }
@@ -2328,7 +2326,6 @@ let _ofertaEclipse = false;
 function _extrasEclipse(producto){ return (_ofertaEclipse && producto==='transitos') ? {oferta:'eclipse'} : {}; }
 
 async function procesarCompra(producto, precio) {
-  if(producto==='lectura-profunda' && new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
   const errorId=`error-${producto}`;
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
@@ -2390,7 +2387,7 @@ async function pagarConPaypal(producto, precio) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   const errorId = `error-${producto}`;
   mostrarMensaje(errorId, '');
-  // Importe/moneda EXACTOS que van a la pasarela (ga4DatosPago ya contempla el upgrade USD 7).
+  // Importe/moneda EXACTOS que van a la pasarela (ga4DatosPago).
   const _datosPP = ga4DatosPago(producto,'paypal');
   ga4('begin_checkout', Object.assign({}, _datosPP, { payment_method:'paypal', is_test:_esTest(producto) }, _needParams())); // presionó PayPal
   const btn = document.getElementById(`btn-paypal-${producto}`);
@@ -2881,15 +2878,8 @@ async function calcularCarta(origen) {
       try{ sessionStorage.setItem(_cgKey,'1'); }catch(e){}
     }
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
-      const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');
-      if(precioEl)precioEl.textContent='USD 7';
-      const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');
-      if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';
-      // Upgrade es USD 7 solo por PayPal: ocultar MP para no mostrar el precio completo al lado.
-      const btnMpUpg=document.querySelector('#form-lectura-profunda .btn-mp');
-      if(btnMpUpg)btnMpUpg.style.display='none';
       abrirOtrasLecturas('deeplink'); // Lectura Profunda está en el bloque colapsado
-      setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
+      setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Tu siguiente paso: la Lectura Profunda, para comprender los patrones que marcan tu historia.');},600);
     }
     // (Campaña del Eclipse retirada: ya no hay scroll ni mensaje automático hacia Tránsitos.)
     // ── Lectura Esencial gratuita: solo se genera si el interruptor está activo ──
@@ -3037,7 +3027,7 @@ window.addEventListener('load',async ()=>{
     if(_upgCiudad)document.getElementById('ciudad').value=decodeURIComponent(_upgCiudad);
     document.getElementById('pais').value=decodeURIComponent(_upgPais);
     if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta('upgrade');}
-    else{ocultar('section-form');mostrar('section-upsell');abrirOtrasLecturas('deeplink');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
+    else{ocultar('section-form');mostrar('section-upsell');abrirOtrasLecturas('deeplink');mostrarMensaje('success-lectura-profunda','✦ Tu siguiente paso: la Lectura Profunda, para comprender los patrones que marcan tu historia.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
   }
   if(params.get('lectura')==='ok'){
     // Soporta PayPal (order_id o token), MercadoPago (payment_id) y legacy Stripe (session_id)

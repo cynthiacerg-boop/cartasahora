@@ -742,7 +742,9 @@ document.addEventListener('click', function(e){
 // ── PREGUNTA OPCIONAL "¿Qué te gustaría comprender mejor?" (buyer need) ──
 // Solo medición. Guarda únicamente el valor interno (no sensible) en sessionStorage y lo
 // conserva durante la sesión para sumarlo a view_item / begin_checkout / purchase cuando exista.
-function getNeedCategory(){ try{ return sessionStorage.getItem('buyer_need')||''; }catch(e){ return ''; } }
+// _needMem: respaldo en memoria por si sessionStorage no está disponible (modo privado estricto).
+let _needMem='';
+function getNeedCategory(){ try{ return sessionStorage.getItem('buyer_need')||_needMem; }catch(e){ return _needMem; } }
 // Devuelve { need_category } solo si hay respuesta; si no, {} (no ensucia los eventos).
 function _needParams(){ const n=getNeedCategory(); return n ? { need_category:n } : {}; }
 // Normaliza el método de pago a los valores pedidos ('mercado_pago' | 'paypal').
@@ -751,6 +753,7 @@ function _pmNorm(m){ return (String(m||'').toLowerCase().indexOf('paypal')>=0) ?
 // en compras reales queda false. Se incluye para que el esquema esté presente en GA4.
 function _esTest(producto){ try{ return (typeof promoAplicada!=='undefined' && promoAplicada[producto]===true); }catch(e){ return false; } }
 function seleccionarNecesidad(valor, btn){
+  _needMem=valor;
   try{ sessionStorage.setItem('buyer_need', valor); }catch(e){}
   // Marca visual (un solo elemento activo). Cambiar la respuesta re-marca y vuelve a emitir.
   try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b===btn); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
@@ -765,9 +768,10 @@ function _restaurarNecesidad(){
   try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b.getAttribute('data-need')===n); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
 }
 _restaurarNecesidad();
-// Ventana emergente de la pregunta: se abre al calcular (no bloquea el cálculo). Si la persona ya
-// respondió en esta sesión no se vuelve a abrir. Cerrarla (Saltear / X / afuera / Esc) NO emite
-// ningún evento: solo elegir una opción dispara buyer_need_selected (vía seleccionarNecesidad).
+// Ventana emergente de la pregunta: se abre al calcular (no bloquea el cálculo, pero la lectura
+// esencial espera la respuesta, ver esperarNecesidad). Si la persona ya respondió en esta sesión no
+// se vuelve a abrir. Cerrarla sin elegir (Saltear / X / afuera / Esc) registra 'skip' (y emite
+// buyer_need_selected con need_category='skip'), así no reaparece en la misma sesión.
 function abrirModalNecesidad(){
   if(getNeedCategory()) return;
   const m=document.getElementById('modal-necesidad'); if(!m) return;
@@ -775,17 +779,36 @@ function abrirModalNecesidad(){
   m.classList.remove('hidden');
   document.body.style.overflow='hidden'; // bloquea el scroll del fondo
 }
-function cerrarModalNecesidad(){
+// salteado=false: cierre interno (elección de un chip o error de cálculo) → no registra 'skip'.
+// Cualquier otro cierre con el modal abierto y sin respuesta previa se registra como 'skip'.
+function cerrarModalNecesidad(salteado){
   const m=document.getElementById('modal-necesidad'); if(!m) return;
+  const estabaAbierto=!m.classList.contains('hidden');
   m.classList.add('hidden');
   document.body.style.overflow='';
+  if(estabaAbierto && salteado!==false && !getNeedCategory()) seleccionarNecesidad('skip', null);
+  _liberarEsperaNecesidad();
+}
+// La lectura esencial se genera recién cuando el modal se resuelve (o a los maxMs). Si ya hay
+// respuesta, o el modal no está abierto (retorno de pago / upgrade), no espera. Devuelve el valor
+// guardado ('' si venció el tiempo sin respuesta).
+let _needWaiters=[];
+function _liberarEsperaNecesidad(){ const w=_needWaiters; _needWaiters=[]; w.forEach(function(f){ f(); }); }
+function esperarNecesidad(maxMs){
+  const m=document.getElementById('modal-necesidad');
+  if(getNeedCategory() || !m || m.classList.contains('hidden')) return Promise.resolve(getNeedCategory());
+  return new Promise(function(resolve){
+    const t=setTimeout(function(){ _needWaiters=_needWaiters.filter(function(f){ return f!==fin; }); resolve(getNeedCategory()); }, maxMs);
+    function fin(){ clearTimeout(t); resolve(getNeedCategory()); }
+    _needWaiters.push(fin);
+  });
 }
 // La carta terminó con la ventana abierta: no se cierra sola, solo avisa.
 function avisarCartaListaEnModal(){
   const m=document.getElementById('modal-necesidad');
   if(m && !m.classList.contains('hidden')) document.getElementById('modal-necesidad-listo')?.classList.remove('hidden');
 }
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') cerrarModalNecesidad(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') cerrarModalNecesidad(true); });
 // Flujo normal: la Carta Natal Completa (mismo nodo, un solo #form-carta-completa) sube a los
 // resultados justo después de la lectura esencial, con los temas bloqueados adentro, y reemplaza
 // a la tarjeta de transición. En el retorno por lead no se llama: la tarjeta queda en la grilla.
@@ -1553,10 +1576,12 @@ NO atribuís heridas, traumas, mecanismos de defensa, causas biográficas ni car
 
 Cada afirmación se apoya en un dato astrológico concreto (planeta + signo + casa, o un aspecto calculado que se te da). No inventás datos ni relaciones que no estén en la carta.
 
-Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.`;
+Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.
+
+Usá lenguaje neutro en género: evitá adjetivos con género sobre la persona (orientada/orientado, único/única). Reformulá con sustantivos o verbos.`;
 
 // ── PROMPT BÁSICO (lectura gratuita) ──
-function buildPromptBasico(nombre, chartData) {
+function buildPromptBasico(nombre, chartData, need) {
   const subject=chartData?.chart_data?.subject||{};
   const sol=subject.sun,luna=subject.moon,asc=subject.first_house||subject.ascendant||subject.asc||null;
   const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?',lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?';
@@ -1572,13 +1597,64 @@ function buildPromptBasico(nombre, chartData) {
     .map(a=>`${_nomTri(a.p1_name)} ${ASPECT_ES[a.aspect]||a.aspect} ${_nomTri(a.p2_name)} (orbe ${Math.abs(a.orbit||0).toFixed(1)})`);
   const aspTriadaStr=_aspTri.length?_aspTri.join(', '):'(sin aspectos directos calculados entre Sol, Luna y Ascendente)';
 
+  // ── Datos extra SOLO para la sección 5, según la necesidad elegida en el modal ──
+  // Insumo interno del modelo: la sección 5 nunca los nombra. Todo sale de chart_data.subject/houses/aspects.
+  const grupo = need==='purpose_direction'?'proposito' : need==='relationships'?'vinculo' : need==='work_money'?'trabajo' : need==='current_change'?'cambio' : 'patron';
+  const TITULO5 = {
+    proposito:'Lo que tu carta dice sobre tu dirección',
+    vinculo:'Lo que tu carta dice sobre cómo amás',
+    trabajo:'Lo que tu carta dice sobre tu trabajo',
+    cambio:'Lo que tu carta dice sobre este cambio',
+    patron:'Un patrón que se repite en vos'
+  }[grupo];
+  const _hs=chartData?.chart_data?.houses||{};
+  const _signoDe=p=>p?(SIGN_MAP[p.sign]||p.sign||'?'):'?';
+  const _ptxt=(nom,p)=>p?`${nom} en ${_signoDe(p)}, casa ${HOUSE_MAP[p.house]||'?'}`:null;
+  const _cuspide=(num,k)=>{const c=_hs[k]||subject[k];return c?.sign?`Casa ${num} en ${SIGN_MAP[c.sign]||c.sign}`:null;};
+  const _aspMin=(A,B)=>{
+    const ok=(n,L)=>L.includes(String(n||'').toLowerCase());
+    let best=null;
+    (chartData?.chart_data?.aspects||[]).forEach(a=>{
+      if(!['conjunction','opposition','trine','square','sextile'].includes(a.aspect)) return;
+      if(!((ok(a.p1_name,A)&&ok(a.p2_name,B))||(ok(a.p2_name,A)&&ok(a.p1_name,B)))) return;
+      const o=Math.abs(a.orbit||0);
+      if(!best||o<best.o) best={a,o};
+    });
+    return best;
+  };
+  const _nomP=n=>PLANET_ES[n]||n;
+  const _txtAsp=b=>`${_nomP(b.a.p1_name)} ${ASPECT_ES[b.a.aspect]||b.a.aspect} ${_nomP(b.a.p2_name)} (orbe ${b.o.toFixed(1)})`;
+  const _posPlaneta=n=>_ptxt(_nomP(n),subject[String(n||'').toLowerCase()]);
+  const PERSONALES=['sun','moon','mercury','venus','mars'];
+  let extra=[];
+  if(grupo==='proposito'){
+    extra=[_ptxt('Nodo Norte',subject.true_north_lunar_node),_cuspide(10,'tenth_house')];
+  }else if(grupo==='vinculo'){
+    const b=_aspMin(['venus'],['mars','saturn','pluto']);
+    extra=[_ptxt('Venus',subject.venus),b?`Aspecto más cerrado de Venus: ${_txtAsp(b)}`:'(Venus no tiene aspecto directo con Marte, Saturno ni Plutón)'];
+  }else if(grupo==='trabajo'){
+    extra=[_ptxt('Saturno',subject.saturn),_cuspide(2,'second_house'),_cuspide(10,'tenth_house')];
+  }else if(grupo==='cambio'){
+    const b=_aspMin(['saturn'],PERSONALES);
+    extra=[_ptxt('Saturno',subject.saturn),b?`Aspecto más cerrado de Saturno con un planeta personal: ${_txtAsp(b)}`:'(Saturno no tiene aspecto directo con un planeta personal)'];
+  }else{
+    const b=_aspMin(['mercury','venus','mars'],['saturn','pluto']);
+    extra=b
+      ? [`Aspecto de menor orbe: ${_txtAsp(b)}`,_posPlaneta(b.a.p1_name),_posPlaneta(b.a.p2_name)]
+      : [_ptxt('Mercurio',subject.mercury)];
+  }
+  const extraStr=extra.filter(Boolean).map(l=>'- '+l).join('\n') || '- (sin datos extra disponibles: apoyate en Sol, Luna y Ascendente, sin inventar)';
+
   return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
 - Sol en ${solSign}, casa ${solHouse}
 - Luna en ${lunaSign}, casa ${lunaHouse}
 - Ascendente en ${ascSign}
 - Aspectos calculados entre Sol, Luna y Ascendente: ${aspTriadaStr}
 
-Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas CUATRO secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
+DATOS EXTRA, SOLO PARA LA SECCIÓN 5 (insumo interno: nunca los nombres en el texto):
+${extraStr}
+
+Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas CINCO secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
 
 FUNCIÓN: es la puerta de entrada, no un informe. Es una lectura NATAL DESCRIPTIVA y cálida —NO evolutiva, terapéutica ni predictiva—, válida para cualquier carta. Tiene que hacer sentir a ${nombre} que la carta se calculó específicamente para ella, darle una comprensión breve pero valiosa y generar identificación. Se siente COMPLETA como experiencia gratuita, pero es claramente INICIAL: no entregues la profundidad del producto pago.
 
@@ -1598,12 +1674,13 @@ PROHIBIDO (respetar el sentido, no solo las palabras):
 - Nombrar o interpretar Nodos, Quirón, Lilith ni procesos evolutivos profundos.
 - Jerga de aspectos: "cuadratura", "oposición", "trígono", "sextil", "conjunción", "orbe".
 - Desarrollar Mercurio, Venus, Marte, Júpiter o Saturno (son del producto pago).
+- EXCEPCIÓN ÚNICA: los "DATOS EXTRA, SOLO PARA LA SECCIÓN 5" (planetas, Nodo, casas, aspecto) se usan SOLO como insumo interno de la sección 5, para describir una experiencia concreta. Nunca los nombres ni los desarrolles: ni planetas, ni nodos, ni signos de esos datos, ni números de casa, ni tipos de aspecto.
 - Interpretar elementos o modalidades: nada de fuego/tierra/aire/agua, cardinal/fijo/mutable, predominio, carencia ni "balance".
 - Cualquier texto comercial o invitación a comprar DENTRO de la lectura.
 Interpretá la combinación real signo + casa (no el signo genérico). No inventes datos que no estén acá. Neutralidad de género: sin "/a" ni duplicaciones; reformulá natural.
 REDACCIÓN NATURAL: usá construcciones correctas — "que tenga sustancia" (nunca "que sienta sustancia"); "te mostrás" o "te presentás" (nunca "te muestran"). Voseo reflexivo siempre.
 
-FORMATO: empezá directo con "**Tu esencia solar**". Sin encabezado general, sin "#", sin "---". Usá EXACTAMENTE estos cuatro títulos, cada uno entre ** en su propia línea:
+FORMATO: empezá directo con "**Tu esencia solar**". Sin encabezado general, sin "#", sin "---". Usá EXACTAMENTE estos cinco títulos, cada uno entre ** en su propia línea:
 
 **Tu esencia solar**
 Nombrá tu Sol en ${solSign} (casa ${solHouse}). Explicá brevemente su recurso central y qué necesita para expresarse. Entre 55 y 75 palabras.
@@ -1614,10 +1691,13 @@ Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Explicá una necesidad emoci
 **Tu manera de entrar al mundo**
 Nombrá tu Ascendente en ${ascSign}. Explicá cómo iniciás, te mostrás o te vinculás con el entorno. Entre 45 y 65 palabras.
 
-**La combinación que te hace único/a**
-Cerrá integrando tu Sol, tu Luna y tu Ascendente basándote EXCLUSIVAMENTE en los "Aspectos calculados entre Sol, Luna y Ascendente" de los datos de arriba. Si hay un aspecto entre dos de ellos, describí en lenguaje cotidiano (sin nombrar el tipo técnico) cómo se relacionan esas dos partes —si conviven con facilidad y se potencian, o si conviven con cierta fricción, siempre como matiz y nunca como defecto—. Si NO hay aspectos directos entre ellos, describí que funcionan de manera más independiente, cada uno con su registro, sin inventar una tensión. Dejá una tensión abierta —lo que todavía queda por descubrir de cómo estas piezas dialogan con el resto de tu carta— que invite a seguir explorando, sin resolverla y sin presuponer un problema. NO expliques cómo funciona todo junto (eso es del producto pago). Entre 80 y 110 palabras.
+**Cómo dialogan tus tres energías**
+Cerrá esta sección integrando tu Sol, tu Luna y tu Ascendente basándote EXCLUSIVAMENTE en los "Aspectos calculados entre Sol, Luna y Ascendente" de los datos de arriba. Si hay un aspecto entre dos de ellos, describí en lenguaje cotidiano (sin nombrar el tipo técnico) cómo se relacionan esas dos partes —si conviven con facilidad y se potencian, o si conviven con cierta fricción, siempre como matiz y nunca como defecto—. Si NO hay aspectos directos entre ellos, describí que funcionan de manera más independiente, cada uno con su registro, sin inventar una tensión. La sección cierra integrando: sin dejar preguntas ni tensiones abiertas. NO expliques cómo funciona todo junto con el resto de la carta (eso es del producto pago). Entre 90 y 120 palabras.
 
-EXTENSIÓN TOTAL: entre 260 y 340 palabras (máximo absoluto 380). No rellenes. Terminá dejando la tensión abierta de la última sección (curiosidad genuina, no un problema), sin texto comercial ni despedida.`;
+**${TITULO5}**
+Describí UN patrón concreto que surge de los DATOS EXTRA, en lenguaje de experiencia cotidiana (qué le pasa a la persona, cómo se nota en su vida), sin nombrar planetas, nodos, puntos técnicos ni tipos de aspecto. Que sea específico de esta carta, no genérico. Mostrá el patrón pero NO expliques de dónde viene ni cómo trabajarlo. Terminá con UNA pregunta abierta, en segunda persona, que la persona sienta que quiere responder. Sin texto comercial, sin mencionar informes ni compras. Entre 70 y 100 palabras.
+
+EXTENSIÓN TOTAL: entre 340 y 440 palabras (máximo absoluto 480). No rellenes. Terminá con la pregunta abierta de la última sección, sin texto comercial ni despedida.`;
 }
 
 // ── POSTPROCESO DETERMINÍSTICO — SOLO Lectura Esencial gratuita ──
@@ -2686,10 +2766,13 @@ async function calcularCarta(origen) {
     // sessionStorage: evita duplicados por refresco o por re-ver el mismo resultado, pero
     // NO es permanente: si la persona vuelve en otra sesión y genera de nuevo, sí se cuenta
     // (una sesión nueva, o una carta con otros datos, vuelve a disparar el evento).
+    // Necesidad elegida en el modal: se espera hasta 20 s (o a que elija / saltee / cierre). La carta ya
+    // está en pantalla; solo la lectura esencial y carta_generada (que lleva need_category) esperan.
+    const needSel=await esperarNecesidad(20000);
     const _cgKey = cacheKey('carta_generada', fecha, hora, ciudad);
     let _cgSent=false; try{ _cgSent=!!sessionStorage.getItem(_cgKey); }catch(e){}
     if(!_cgSent){
-      ga4('carta_generada'); // solo a GA4 (evento de embudo, no conversión de Ads)
+      ga4('carta_generada', { need_category: needSel||'none' }); // solo a GA4 (evento de embudo, no conversión de Ads)
       try{ sessionStorage.setItem(_cgKey,'1'); }catch(e){}
     }
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
@@ -2708,9 +2791,9 @@ async function calcularCarta(origen) {
     // aplicarModoSoloPilares() ya dejó la vista en carta + Sol/Luna/Ascendente + oferta.
     if(LECTURA_ESENCIAL_ACTIVA){
       setLoaderText('escribiendo tu lectura esencial...');
-      const prompt=buildPromptBasico(nombre,chartData);
+      const prompt=buildPromptBasico(nombre,chartData,needSel);
       try{
-        const esencialKey=cacheKey('cartaEsencial',fecha,hora,ciudad);
+        const esencialKey=cacheKey('cartaEsencialV2',fecha,hora,ciudad)+'_'+(needSel||'none');
         const esencialCached=localStorage.getItem(esencialKey);
         let interpBasica;
         if(esencialCached){interpBasica=esencialCached;}
@@ -2723,7 +2806,7 @@ async function calcularCarta(origen) {
       catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     }
     const params=new URLSearchParams(window.location.search);
-  }catch(err){_stopCalc();cerrarModalNecesidad();ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
+  }catch(err){_stopCalc();cerrarModalNecesidad(false);ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 
 // ── UTILIDADES ──

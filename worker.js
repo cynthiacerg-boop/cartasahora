@@ -958,7 +958,7 @@ var worker_default = {
           const b = ccConstruirBase(body.chartData.subject || {}, body.chartData.aspects || [], nombre);
           if (b.solSign === "?" || b.ascSign === "?") return json({ error: "Datos de carta incompletos" }, 400);
           const pago = body.pagoId ? await env.PAGOS_KV.get("pago:" + body.pagoId, "json") : null;
-          const email = pago && pago.email || String(body.email || "").trim();
+          const email = String(body.email || "").trim() || pago && pago.email || "";
           const gen = await ccGenerar(env, ccPromptCartaCompleta(b, nombre));
           if (!gen.completa) {
             ctx.waitUntil(notificarLecturaCortada(env, { producto: "carta-completa", nombre, email: email || null, pagoId: body.pagoId, tokens: gen.usage && gen.usage.output_tokens }));
@@ -1025,7 +1025,7 @@ var worker_default = {
           ccContent = stored.content;
           producto = stored.producto || producto;
           nombre = stored.nombre || nombre;
-          if (stored.email) email = stored.email;
+          if (!String(email || "").trim() && stored.email) email = stored.email;
         }
         const ruedaOk = typeof rueda === "string" && rueda.length > 0 && rueda.length < 3e6 && /^[A-Za-z0-9+/=]+$/.test(rueda);
         let esPrueba = false;

@@ -359,11 +359,7 @@ async function darDeBaja(env, email) {
   }
   lead.acepta_marketing = false;
   lead.baja_ts = Date.now();
-  const metadata = { ts: lead.timestamp, mkt: false, done: lead.seguimiento_enviado === true };
-  if (lead.compra_ts) {
-    metadata.compra_ts = lead.compra_ts;
-    metadata.post = false;
-  }
+  const metadata = metaLead(lead, lead.compra_ts ? { post: false } : {});
   await env.LEADS_KV.put(`lead:${e}`, JSON.stringify(lead), { expirationTtl: 60 * 60 * 24 * 365 * 2, metadata });
 }
 __name(darDeBaja, "darDeBaja");
@@ -469,7 +465,26 @@ async function notificarLecturaCortada(env, datos) {
   }
 }
 __name(notificarLecturaCortada, "notificarLecturaCortada");
-var SEGUIMIENTO_DELAY_MS = 2 * 60 * 60 * 1e3;
+var H_MS = 60 * 60 * 1e3;
+var D_MS = 24 * H_MS;
+// Secuencia de 5 mails para no-compradores. Solo entran los leads creados desde esta fecha de
+// corte (fijada al desplegar, en UTC): los leads anteriores no reciben nada.
+var SECUENCIA_DESDE = Date.parse("2026-11-01T21:38:42.629Z");
+// Cuándo corresponde cada paso, contado desde lead.timestamp: 2 hs, día 2, 4, 6 y 8.
+var SECUENCIA_OFFSETS_MS = [2 * H_MS, 2 * D_MS, 4 * D_MS, 6 * D_MS, 8 * D_MS];
+// Control de activación por paso. Arrancan todos apagados hasta revisar los mails con
+// /probar-secuencia. Mientras un paso esté en false los leads esperan en ese paso (no se saltean).
+// Para activarlo, pasar a true y desplegar. Los pasos 3 y 4 tienen textos pendientes ({REVISAR} /
+// {PEGAR}): aun en true, un mail con un marcador sin completar NO se envía.
+var SECUENCIA_ACTIVOS = { 1: false, 2: false, 3: false, 4: false, 5: false };
+// Separación mínima entre dos mails de la secuencia al mismo lead (evita ráfagas al reactivar un paso).
+var SECUENCIA_ESPACIADO_MS = 48 * H_MS;
+var BONUS_VENTANA_MS = 72 * H_MS;
+var PRUEBA_SECUENCIA_DESTINO = "cynthiacerg@gmail.com";
+var BONUS_TOKEN_TTL = 60 * 60 * 24 * 7;
+var SITIO_URL = "https://cartasahora.espaciolibra.com/";
+var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+var MARCADOR_PENDIENTE_RE = /\{(REVISAR|PEGAR)/;
 var POST_COMPRA_1_MS = 3 * 24 * 60 * 60 * 1e3;
 var POST_COMPRA_2_MS = 10 * 24 * 60 * 60 * 1e3;
 var CROSS_SELL = {
@@ -488,17 +503,44 @@ var PRODUCTO_INFO = {
   "transitos": { nombre: "Tr\xE1nsitos Actuales", precio: "$8.500", gancho: "qu\xE9 est\xE1n activando los planetas en tu carta ahora mismo y por qu\xE9 sent\xEDs lo que sent\xEDs" },
   "sinastria": { nombre: "Sinastr\xEDa \xB7 Compatibilidad", precio: "$15.000", gancho: "la qu\xEDmica real entre tu carta y la de otra persona: qu\xE9 los une, qu\xE9 los desaf\xEDa, el karma compartido" }
 };
+// Metadata de la clave lead:<mail> en LEADS_KV. TODOS los lugares que guardan un lead la arman acá,
+// para que list() siempre vea lo mismo: ts, mkt, done (seguimiento terminado o cortado), sec (último
+// paso de la secuencia enviado) y, si hubo compra, compra_ts + post (cross-sell pendiente).
+function metaLead(lead, extra) {
+  const m = {
+    ts: lead.timestamp,
+    mkt: lead.acepta_marketing === true,
+    done: lead.seguimiento_enviado === true,
+    sec: lead.secuencia && lead.secuencia.paso || 0
+  };
+  if (lead.compra_ts) {
+    m.compra_ts = lead.compra_ts;
+    m.post = lead.post_compra ? !(lead.post_compra.uno && lead.post_compra.dos) : true;
+  }
+  return Object.assign(m, extra || {});
+}
+__name(metaLead, "metaLead");
+async function guardarLeadKV(env, lead, extraMeta) {
+  await env.LEADS_KV.put(`lead:${normEmail(lead.email)}`, JSON.stringify(lead), {
+    expirationTtl: 60 * 60 * 24 * 365 * 2,
+    metadata: metaLead(lead, extraMeta)
+  });
+}
+__name(guardarLeadKV, "guardarLeadKV");
 async function procesarSeguimientos(env) {
   const list = await env.LEADS_KV.list({ prefix: "lead:" });
   const ahora = Date.now();
+  const total = SECUENCIA_OFFSETS_MS.length;
   let enviados = 0;
   for (const k of list.keys) {
     if (enviados >= 50) break;
     const md = k.metadata;
     if (md) {
-      if (md.mkt !== true) continue;
-      if (md.done === true) continue;
-      if (!md.ts || ahora - md.ts < SEGUIMIENTO_DELAY_MS) continue;
+      if (md.mkt !== true || md.done === true) continue;
+      if (!md.ts || md.ts < SECUENCIA_DESDE) continue;
+      const p = md.sec || 0;
+      if (p >= total || !SECUENCIA_ACTIVOS[p + 1]) continue;
+      if (ahora - md.ts < SECUENCIA_OFFSETS_MS[p]) continue;
     }
     let lead;
     try {
@@ -506,23 +548,34 @@ async function procesarSeguimientos(env) {
     } catch {
       continue;
     }
-    if (!lead) continue;
-    if (lead.acepta_marketing !== true) continue;
+    if (!lead || lead.acepta_marketing !== true) continue;
+    if (!lead.timestamp || lead.timestamp < SECUENCIA_DESDE) continue;
     if (await estaDadoDeBaja(env, lead.email)) {
       await darDeBaja(env, lead.email);
       continue;
     }
     if (lead.seguimiento_enviado === true) continue;
-    if (!lead.timestamp || ahora - lead.timestamp < SEGUIMIENTO_DELAY_MS) continue;
-    const ok = await enviarSeguimientoOferta(env, lead);
-    if (ok) {
+    if (Array.isArray(lead.compras) && lead.compras.length) {
       lead.seguimiento_enviado = true;
-      await env.LEADS_KV.put(k.name, JSON.stringify(lead), {
-        expirationTtl: 60 * 60 * 24 * 365 * 2,
-        metadata: { ts: lead.timestamp, mkt: lead.acepta_marketing === true, done: true }
-      });
-      enviados++;
+      await guardarLeadKV(env, lead);
+      continue;
     }
+    const paso = lead.secuencia && lead.secuencia.paso || 0;
+    const sig = paso + 1;
+    if (sig > total || !SECUENCIA_ACTIVOS[sig]) continue;
+    if (ahora - lead.timestamp < SECUENCIA_OFFSETS_MS[paso]) continue;
+    const ultimo = lead.secuencia && lead.secuencia.ultimo_ts;
+    if (ultimo && ahora - ultimo < SECUENCIA_ESPACIADO_MS) continue;
+    const opts = sig === total ? { hasta: ahora + BONUS_VENTANA_MS } : {};
+    const ok = await enviarPasoSecuencia(env, lead, sig, opts);
+    if (!ok) continue;
+    lead.secuencia = { paso: sig, ultimo_ts: ahora };
+    if (sig === total) {
+      lead.bonus = { producto: "transitos", hasta: opts.hasta, usado: false };
+      lead.seguimiento_enviado = true;
+    }
+    await guardarLeadKV(env, lead);
+    enviados++;
   }
   console.log(`Seguimientos enviados: ${enviados}`);
 }
@@ -556,24 +609,120 @@ async function obtenerUltimaNotaSubstack(env) {
   }
 }
 __name(obtenerUltimaNotaSubstack, "obtenerUltimaNotaSubstack");
-async function enviarSeguimientoOferta(env, lead) {
-  try {
-    const nombre = (lead.nombre || "").trim();
-    const saludo = nombre ? `Hola ${esc(nombre)}` : "Hola";
-    const link = lead.token ? "https://cartasahora.espaciolibra.com/?lead=" + encodeURIComponent(lead.token) : "https://cartasahora.espaciolibra.com/?nombre=" + encodeURIComponent(nombre);
-    const ultimaNota = await obtenerUltimaNotaSubstack(env);
-    const html = `
-<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
-  <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra \xB7 Astrolog\xEDa Evolutiva</p>
-  <p>${saludo}:</p>
-  <p>Hace un rato calculaste tu carta natal y viste solo una parte. Tu <strong>informe completo en PDF</strong> incluye el an\xE1lisis detallado de tu personalidad, v\xEDnculos, vocaci\xF3n y los desaf\xEDos que marca tu carta \u2014 toda la profundidad que estos 3 elementos solo empiezan a mostrar.</p>
-  <p style="text-align:center;margin:28px 0;">
+var VENUS_TEXTOS = {
+  Ari: "Am\xE1s con impulso. Cuando algo te atrae, vas, y esa franqueza es un regalo: no le hac\xE9s perder el tiempo a nadie. La sombra aparece cuando el entusiasmo se apaga apenas termina la conquista, o cuando la impaciencia no deja que el v\xEDnculo madure. El aprendizaje: sostener el fuego cuando ya no hay novedad.",
+  Tau: "Am\xE1s con el cuerpo y con el tiempo. Necesit\xE1s constancia, gestos concretos, sentir que la otra persona est\xE1. Tu forma de querer da seguridad y calma. La sombra: aferrarte a lo conocido aunque ya no te nutra. El aprendizaje: confiar en que soltar no es perder.",
+  Gem: "Am\xE1s conversando. Lo primero que te enamora es una mente que te despierte curiosidad, y con vos el v\xEDnculo se mantiene vivo a fuerza de juego, ideas y movimiento. La sombra: escaparte a la cabeza cuando aparece una emoci\xF3n inc\xF3moda. El aprendizaje: quedarte tambi\xE9n cuando la charla se pone seria.",
+  Can: "Am\xE1s cuidando. Ten\xE9s una sensibilidad fina para registrar lo que el otro necesita, a veces antes que la otra persona misma, y sab\xE9s crear refugio. La sombra: dar para asegurarte de que no te dejen, o cerrarte cuando algo te lastima. El aprendizaje: pedir cuidado con la misma naturalidad con la que lo das.",
+  Leo: "Am\xE1s con el coraz\xF3n a la vista. Tu forma de querer es c\xE1lida y generosa, y necesit\xE1s sentir que te eligen y te celebran. La sombra: cuando ese reconocimiento se vuelve la medida de todo, o cuando el orgullo no te deja mostrar fragilidad. El aprendizaje: brillar sin depender del aplauso del otro.",
+  Vir: "Am\xE1s en los detalles. Tu cari\xF1o se nota en lo que hac\xE9s: recordar, resolver, estar en lo pr\xE1ctico. Quer\xE9s que el v\xEDnculo funcione y le pon\xE9s trabajo. La sombra: una exigencia, con vos o con el otro, que convierte el amor en una lista de cosas para corregir. El aprendizaje: aceptar que algo imperfecto tambi\xE9n puede ser suficiente.",
+  Lib: "Am\xE1s buscando equilibrio. Ten\xE9s un talento natural para el encuentro, la armon\xEDa y la belleza compartida, y sab\xE9s ver al otro. La sombra: ceder tanto para evitar el conflicto que tu propio deseo queda en segundo plano. El aprendizaje: descubrir que un desacuerdo bien dicho tambi\xE9n acerca.",
+  Sco: "Am\xE1s a fondo o no am\xE1s. Busc\xE1s intensidad, verdad, un v\xEDnculo que te transforme; lo superficial no te alcanza. La sombra: el miedo a la traici\xF3n que se vuelve control, o poner a prueba al otro para ver si se queda. El aprendizaje: confiar sin necesitar tener todo bajo control.",
+  Sag: "Am\xE1s con libertad. Te atrae quien te abre el mundo: ideas, viajes, otra forma de mirar la vida. Con vos, el v\xEDnculo es crecimiento compartido. La sombra: que la b\xFAsqueda de lo que viene te haga perder lo que ya est\xE1. El aprendizaje: encontrar la aventura tambi\xE9n en la profundidad de lo cotidiano.",
+  Cap: "Am\xE1s en serio. No te entreg\xE1s r\xE1pido, pero cuando lo hac\xE9s, constru\xEDs: tu forma de querer es leal, responsable, pensada a largo plazo. La sombra: una reserva emocional que hace que el otro no sepa cu\xE1nto te importa. El aprendizaje: dejar ver la ternura que hay detr\xE1s de la estructura.",
+  Aqu: "Am\xE1s desde la libertad y la amistad. Necesit\xE1s un v\xEDnculo donde cada uno pueda seguir siendo quien es, y valor\xE1s la autenticidad por encima de cualquier convenci\xF3n. La sombra: tomar distancia emocional justo cuando el v\xEDnculo pide cercan\xEDa. El aprendizaje: descubrir que la intimidad no te quita libertad.",
+  Pis: "Am\xE1s sin bordes. Ten\xE9s una empat\xEDa enorme y una capacidad de entrega casi total; ves lo mejor del otro, a veces antes de que exista. La sombra: idealizar, querer salvar, perderte en el otro. El aprendizaje: amar con la misma compasi\xF3n sin dejar tu propio lugar.",
+  Generico: "Tu carta muestra una forma propia de vincularte: qu\xE9 te atrae, qu\xE9 necesit\xE1s para sentirte en confianza y qu\xE9 patrones se repiten cuando quer\xE9s a alguien. Entender eso no es para etiquetarte, es para dejar de repetir lo que ya no te hace bien y elegir con m\xE1s conciencia."
+};
+function textoVenus(lead) {
+  const s = lead && lead.cartaNatal && lead.cartaNatal.subject && lead.cartaNatal.subject.venus && lead.cartaNatal.subject.venus.sign;
+  return VENUS_TEXTOS[s] || VENUS_TEXTOS.Generico;
+}
+__name(textoVenus, "textoVenus");
+function fechaLimiteAR(ms) {
+  const f = new Date(ms).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires", weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit", hour12: false });
+  return f + " hs (hora de Argentina)";
+}
+__name(fechaLimiteAR, "fechaLimiteAR");
+function botonMail(link, texto) {
+  return `<p style="text-align:center;margin:0 0 28px;">
+    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">${texto}</a>
+  </p>`;
+}
+__name(botonMail, "botonMail");
+var PRECIO_CARTA_HTML = `<p style="text-align:center;margin:28px 0 22px;">
     <span style="font-size:26px;color:#8A4DAB;">$10.000</span>
-    <span style="font-size:14px;color:#777;"> v\xEDa Mercado Pago</span>
+    <span style="font-size:14px;color:#777;"> con Mercado Pago \xB7 USD 6 con PayPal</span>
+  </p>`;
+async function armarMailSecuencia(env, lead, paso, opts) {
+  opts = opts || {};
+  const nombre = (lead.nombre || "").trim();
+  const saludo = nombre ? `Hola ${esc(nombre)}` : "Hola";
+  let link = lead.token ? `${SITIO_URL}?lead=${encodeURIComponent(lead.token)}&oferta=carta-completa` : `${SITIO_URL}?nombre=${encodeURIComponent(nombre)}`;
+  const firma = "<p>Cynthia</p>";
+  let asunto, preheader, cuerpo;
+  if (paso === 1) {
+    asunto = "Tu carta natal tiene m\xE1s para mostrarte";
+    preheader = "Lo que viste es la base. Hay mucho m\xE1s.";
+    cuerpo = `<p>${saludo}:</p>
+  <p>Hace un rato calculaste tu carta natal y le\xEDste la base: tu esencia, tu mundo emocional y la forma en que te mostr\xE1s al mundo.</p>
+  <p>Es un buen comienzo, pero es una parte. Tu carta tambi\xE9n habla de c\xF3mo am\xE1s, c\xF3mo pens\xE1s y comunic\xE1s, c\xF3mo luch\xE1s por lo tuyo y qu\xE9 estructuras est\xE1s madurando en esta etapa.</p>
+  <p>Todo eso est\xE1 en tu <strong>Carta Natal Completa</strong>. Ya tenemos tu carta calculada, as\xED que no ten\xE9s que volver a cargar tus datos.</p>
+  ${PRECIO_CARTA_HTML}
+  ${botonMail(link, "Ver mi Carta Completa")}
+  <p>Cynthia<br>Espacio Libra</p>`;
+  } else if (paso === 2) {
+    asunto = "Algo de tu carta sobre c\xF3mo am\xE1s";
+    preheader = "Un adelanto que no estaba en tu lectura gratuita.";
+    cuerpo = `<p>${saludo}:</p>
+  <p>Te quiero mostrar algo de tu carta que no apareci\xF3 en tu lectura gratuita: <strong>c\xF3mo am\xE1s</strong>.</p>
+  <p>${textoVenus(lead)}</p>
+  <p>Esto es solo una pieza. En tu Carta Completa se cruza con c\xF3mo pens\xE1s, c\xF3mo luch\xE1s por lo tuyo y qu\xE9 est\xE1s madurando. Ah\xED aparece el patr\xF3n entero, no solo un rasgo suelto.</p>
+  ${botonMail(link, "Quiero ver mi carta entera")}
+  ${firma}`;
+  } else if (paso === 3) {
+    asunto = "Tu carta no es un destino";
+    preheader = "La forma en que trabajo y por qu\xE9.";
+    cuerpo = `<p>${saludo}:</p>
+  <p>Mucha gente se acerca a la astrolog\xEDa con miedo a que le digan algo malo, o con la sospecha de que va a recibir frases gen\xE9ricas que le sirven a cualquiera.</p>
+  <p>Yo trabajo desde otro lugar. Para m\xED, tu carta natal no es un destino escrito: es un mapa de tus recursos, de tus patrones y de lo que est\xE1s aprendiendo en esta vida. No predice qu\xE9 te va a pasar; te ayuda a entender por qu\xE9 reaccion\xE1s como reaccion\xE1s y qu\xE9 pod\xE9s hacer distinto.</p>
+  <p>Soy Cynthia, astr\xF3loga, y me form\xE9 en astrolog\xEDa evolutiva. {REVISAR: sumar una l\xEDnea de formaci\xF3n que quieras mostrar}. Dise\xF1\xE9 Cartas Ahora para que cada lectura siga esta misma mirada: sin fatalismo, sin tecnicismos y hablando de tu vida concreta.</p>
+  <p>Si tu lectura gratuita te reson\xF3, la Carta Completa es el paso siguiente.</p>
+  ${botonMail(link, "Ver mi Carta Completa")}
+  ${firma}`;
+  } else if (paso === 4) {
+    asunto = "Lo que hay del otro lado de los temas bloqueados";
+    preheader = "Esto es lo que incluye tu Carta Completa.";
+    cuerpo = `<p>${saludo}:</p>
+  <p>Te cuento qu\xE9 recib\xEDs con tu Carta Natal Completa, para que sepas exactamente qu\xE9 hay antes de decidir:</p>
+  <ul style="padding-left:20px;">
+    <li><strong>Tu esencia, tu mundo emocional y c\xF3mo te mostr\xE1s</strong>, ahora en profundidad</li>
+    <li><strong>C\xF3mo pens\xE1s y comunic\xE1s</strong></li>
+    <li><strong>C\xF3mo am\xE1s y qu\xE9 busc\xE1s en un v\xEDnculo</strong></li>
+    <li><strong>C\xF3mo luch\xE1s por lo tuyo</strong></li>
+    <li><strong>D\xF3nde busc\xE1s crecer y expandirte</strong></li>
+    <li><strong>Qu\xE9 estructuras est\xE1s madurando</strong></li>
+    <li><strong>Los patrones que dominan tu carta</strong> y las \xE1reas de tu vida donde se juegan</li>
+  </ul>
+  <p>As\xED se lee un fragmento de una Carta Completa:</p>
+  <blockquote style="border-left:3px solid #8A4DAB;margin:16px 0;padding:4px 16px;color:#555;font-style:italic;">{PEGAR: 4–6 l\xEDneas reales de una Carta Completa de prueba, sin datos personales}</blockquote>
+  <p>La recib\xEDs en el momento, en pantalla y en tu mail. No hace falta saber astrolog\xEDa.</p>
+  ${PRECIO_CARTA_HTML}
+  ${botonMail(link, "Quiero mi Carta Completa")}
+  ${firma}`;
+  } else {
+    const hasta = opts.hasta || lead.bonus && lead.bonus.hasta || Date.now() + BONUS_VENTANA_MS;
+    link += "&bonus=transitos";
+    asunto = "Tu Carta Completa + Tr\xE1nsitos de regalo (72 hs)";
+    preheader = "Tu mapa y lo que se est\xE1 activando ahora.";
+    cuerpo = `<p>${saludo}:</p>
+  <p>Durante estos d\xEDas te mostr\xE9 algunas partes de tu carta. Hoy te quiero hacer una propuesta.</p>
+  <p>Si ped\xEDs tu <strong>Carta Natal Completa</strong> en las pr\xF3ximas 72 horas, te regalo tambi\xE9n tu lectura de <strong>Tr\xE1nsitos Actuales</strong> (valor $8.500): qu\xE9 est\xE1 moviendo este momento en tu carta y por qu\xE9 sent\xEDs lo que sent\xEDs.</p>
+  <p>Las dos juntas se complementan: una te muestra tu mapa, la otra qu\xE9 parte de ese mapa se est\xE1 activando ahora.</p>
+  <p style="text-align:center;margin:26px 0 8px;line-height:1.9;">
+    <strong>Carta Completa: <span style="color:#8A4DAB;">$10.000</span></strong> <span style="font-size:14px;color:#777;">con Mercado Pago \xB7 USD 6 con PayPal</span><br>
+    <strong>Tr\xE1nsitos Actuales: de regalo</strong>
   </p>
-  <p style="text-align:center;margin:0 0 28px;">
-    <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">Quiero mi informe completo</a>
-  </p>
+  <p style="text-align:center;">El regalo vale hasta el <strong>${esc(fechaLimiteAR(hasta))}</strong>.</p>
+  ${botonMail(link, "Quiero mi carta + mi regalo")}
+  ${firma}`;
+  }
+  const ultimaNota = await obtenerUltimaNotaSubstack(env);
+  const html = `
+<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
+  <span style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;line-height:1px;color:#ffffff;">${esc(preheader)}</span>
+  <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra \xB7 Astrolog\xEDa Evolutiva</p>
+  ${cuerpo}
   ${ultimaNota ? `<p style="text-align:center;border-top:1px solid #eee;padding-top:18px;margin:24px 0 0;font-size:13px;color:#777;">\u{1F4D6} Mi \xFAltima nota: <a href="${ultimaNota.link}" style="color:#8A4DAB;text-decoration:none;">${esc(ultimaNota.titulo)}</a></p>` : ""}
   <p style="text-align:center;${ultimaNota ? "" : "border-top:1px solid #eee;"}padding-top:14px;margin:14px 0 0;">
     <a href="https://cynthialibra.substack.com/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Mis notas en Substack</a> \xB7
@@ -584,6 +733,99 @@ async function enviarSeguimientoOferta(env, lead) {
     ${await pieBaja(env, lead.email, "pediste tu carta natal en Espacio Libra")}
   </p>
 </div>`;
+  return { subject: asunto, html };
+}
+__name(armarMailSecuencia, "armarMailSecuencia");
+async function enviarPasoSecuencia(env, lead, paso, opts) {
+  opts = opts || {};
+  try {
+    const { subject, html } = await armarMailSecuencia(env, lead, paso, opts);
+    if (!opts.forzar && MARCADOR_PENDIENTE_RE.test(html)) {
+      console.warn(`Secuencia paso ${paso}: texto con marcador sin completar, no se env\xEDa`);
+      return false;
+    }
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.RESEND_API_KEY}` },
+      body: JSON.stringify({
+        from: "Espacio Libra <cartas@espaciolibra.com>",
+        to: [opts.to || lead.email],
+        reply_to: "cynthia@espaciolibra.com",
+        subject: (opts.prefijoAsunto || "") + subject,
+        headers: await cabecerasBaja(env, lead.email),
+        html
+      })
+    });
+    return res.ok;
+  } catch (e) {
+    console.warn(`Error secuencia paso ${paso}:`, e.message);
+    return false;
+  }
+}
+__name(enviarPasoSecuencia, "enviarPasoSecuencia");
+// ── Bonus del mail 5: Tránsitos de regalo con la Carta Completa (72 hs) ──
+// El pago identifica al lead por su TOKEN (lt, un UUID opaco que viaja en external_reference /
+// custom_id), nunca por el mail de la pasarela. El worker decide: la URL (?bonus=) no autoriza nada.
+async function resolverLeadEmail(env, meta) {
+  const lt = meta && meta.lt;
+  if (typeof lt !== "string" || !UUID_RE.test(lt)) return "";
+  const e = await env.LEADS_KV.get("lead-token:" + lt);
+  return e ? normEmail(e) : "";
+}
+__name(resolverLeadEmail, "resolverLeadEmail");
+// external_reference (MP) y custom_id (PayPal) admiten ~255 caracteres: se recortan ciudad y
+// nombre, en ese orden, antes que perder el token del lead.
+function armarRefPago(meta) {
+  const m = { ...meta };
+  if (!(typeof m.lt === "string" && UUID_RE.test(m.lt))) delete m.lt;
+  let s = JSON.stringify(m);
+  for (const campo of ["ciudad", "nombre"]) {
+    while (s.length > 250 && typeof m[campo] === "string" && m[campo].length > 8) {
+      m[campo] = m[campo].slice(0, Math.max(8, m[campo].length - (s.length - 250)));
+      s = JSON.stringify(m);
+    }
+  }
+  return s;
+}
+__name(armarRefPago, "armarRefPago");
+// Reserva el bonus para esta compra. Muta `lead` (el llamador lo persiste). Idempotente por pagoId.
+async function activarBonusEnLead(env, lead, pagoId, ts) {
+  const b = lead && lead.bonus;
+  if (!b || b.producto !== "transitos" || b.usado === true || !pagoId) return false;
+  if (b.pagoId) return b.pagoId === String(pagoId);
+  if (!(ts <= b.hasta)) return false;
+  b.pagoId = String(pagoId);
+  b.token = crypto.randomUUID();
+  await env.PAGOS_KV.put("bonus-token:" + b.token, JSON.stringify({ email: normEmail(lead.email), pagoId: b.pagoId, gen: false }), { expirationTtl: BONUS_TOKEN_TTL });
+  try {
+    const pago = await env.PAGOS_KV.get("pago:" + pagoId, "json");
+    if (pago) {
+      pago.bonus_token = b.token;
+      await env.PAGOS_KV.put("pago:" + pagoId, JSON.stringify(pago), { expirationTtl: 86400 });
+    }
+  } catch (e) {
+    console.warn("bonus: no se pudo marcar el pago:", e.message);
+  }
+  if (!b.mail_ts && await enviarMailRegalo(env, lead)) b.mail_ts = Date.now();
+  return true;
+}
+__name(activarBonusEnLead, "activarBonusEnLead");
+async function enviarMailRegalo(env, lead) {
+  try {
+    if (!lead.email || !lead.bonus || !lead.bonus.token) return false;
+    const nombre = (lead.nombre || "").trim();
+    const saludo = nombre ? `Hola ${esc(nombre)}` : "Hola";
+    const link = `${SITIO_URL}?lead=${encodeURIComponent(lead.token || "")}&regalo=${encodeURIComponent(lead.bonus.token)}`;
+    const html = `
+<div style="font-family:Georgia,serif;max-width:560px;margin:0 auto;color:#2a2a2a;line-height:1.7;">
+  <p style="font-size:11px;letter-spacing:0.3em;color:#8A4DAB;text-transform:uppercase;margin:0 0 18px;">Espacio Libra \xB7 Astrolog\xEDa Evolutiva</p>
+  <p>${saludo}:</p>
+  <p>Tu Carta Completa ya est\xE1 en camino y tu regalo tambi\xE9n: tu lectura de <strong>Tr\xE1nsitos Actuales</strong> te espera, sin costo.</p>
+  <p>Si cerraste la p\xE1gina, pod\xE9s generarla desde ac\xE1 cuando quieras:</p>
+  ${botonMail(link, "Generar mi Tr\xE1nsitos de regalo")}
+  <p>Cynthia</p>
+  <p style="font-size:12px;color:#999;border-top:1px solid #eee;padding-top:12px;margin-top:24px;">Recib\xEDs este mail porque compraste una Carta Completa con regalo en Espacio Libra.</p>
+</div>`;
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${env.RESEND_API_KEY}` },
@@ -591,19 +833,63 @@ async function enviarSeguimientoOferta(env, lead) {
         from: "Espacio Libra <cartas@espaciolibra.com>",
         to: [lead.email],
         reply_to: "cynthia@espaciolibra.com",
-        subject: "Tu carta natal tiene m\xE1s para revelarte",
-        headers: await cabecerasBaja(env, lead.email),
+        subject: "✦ Tu regalo de Tr\xE1nsitos Actuales te espera",
         html
       })
     });
     return res.ok;
   } catch (e) {
-    console.warn("Error seguimiento oferta:", e.message);
+    console.warn("Error mail regalo:", e.message);
     return false;
   }
 }
-__name(enviarSeguimientoOferta, "enviarSeguimientoOferta");
-async function registrarCompra(env, email, producto) {
+__name(enviarMailRegalo, "enviarMailRegalo");
+// Estado del token de bonus (null si no existe o ya generó su lectura).
+async function bonusDisponible(env, token) {
+  if (typeof token !== "string" || !UUID_RE.test(token)) return null;
+  const rec = await env.PAGOS_KV.get("bonus-token:" + token, "json");
+  return rec && !rec.gen ? rec : null;
+}
+__name(bonusDisponible, "bonusDisponible");
+async function bonusToken(env, token) {
+  if (typeof token !== "string" || !UUID_RE.test(token)) return null;
+  return await env.PAGOS_KV.get("bonus-token:" + token, "json");
+}
+__name(bonusToken, "bonusToken");
+// Marca el token como en uso ANTES de llamar al modelo (evita dos generaciones con un doble clic).
+async function reservarBonus(env, token) {
+  const rec = await bonusDisponible(env, token);
+  if (!rec) return null;
+  rec.gen = true;
+  await env.PAGOS_KV.put("bonus-token:" + token, JSON.stringify(rec), { expirationTtl: BONUS_TOKEN_TTL });
+  return rec;
+}
+__name(reservarBonus, "reservarBonus");
+async function liberarBonus(env, token) {
+  const rec = await bonusToken(env, token);
+  if (!rec) return;
+  rec.gen = false;
+  await env.PAGOS_KV.put("bonus-token:" + token, JSON.stringify(rec), { expirationTtl: BONUS_TOKEN_TTL });
+}
+__name(liberarBonus, "liberarBonus");
+// La lectura de regalo se generó bien: el lead pasa a "usado" y suma Tránsitos a sus compras
+// (el cross-sell post-compra lo saltea y ofrece Revolución Solar). NO es una venta: sin purchase.
+async function finalizarBonus(env, rec) {
+  try {
+    const raw = await env.LEADS_KV.get("lead:" + normEmail(rec.email));
+    if (!raw) return;
+    const lead = JSON.parse(raw);
+    if (lead.bonus) lead.bonus.usado = true;
+    const compras = Array.isArray(lead.compras) ? lead.compras.slice() : [];
+    if (!compras.includes("transitos")) compras.push("transitos");
+    lead.compras = compras;
+    await guardarLeadKV(env, lead);
+  } catch (e) {
+    console.warn("bonus: no se pudo cerrar el bonus del lead:", e.message);
+  }
+}
+__name(finalizarBonus, "finalizarBonus");
+async function registrarCompra(env, email, producto, pago) {
   try {
     const mail = (email || "").toLowerCase().trim();
     if (!mail || !mail.includes("@") || !producto) return;
@@ -623,15 +909,10 @@ async function registrarCompra(env, email, producto) {
     lead.compra_ts = Date.now();
     lead.seguimiento_enviado = true;
     lead.post_compra = { oferta: null, uno: false, dos: false };
+    if (producto === "carta-completa" && pago && pago.id) await activarBonusEnLead(env, lead, pago.id, pago.ts || Date.now());
     await env.LEADS_KV.put(key, JSON.stringify(lead), {
       expirationTtl: 60 * 60 * 24 * 365 * 2,
-      metadata: {
-        ts: lead.timestamp,
-        mkt: lead.acepta_marketing === true,
-        done: true,
-        compra_ts: lead.compra_ts,
-        post: true
-      }
+      metadata: metaLead(lead)
     });
   } catch (e) {
     console.warn("registrarCompra:", e.message);
@@ -703,7 +984,7 @@ async function procesarPostCompra(env) {
       const post = !(cerrar || pc.dos);
       await env.LEADS_KV.put(k.name, JSON.stringify(lead), {
         expirationTtl: 60 * 60 * 24 * 365 * 2,
-        metadata: { ts: lead.timestamp, mkt: true, done: true, compra_ts: lead.compra_ts, post }
+        metadata: metaLead(lead, { mkt: true, done: true, post })
       });
     }
   }
@@ -732,6 +1013,7 @@ async function enviarCrossSell(env, lead, producto, esRecordatorio) {
   <p style="text-align:center;margin:0 0 28px;">
     <a href="${link}" style="display:inline-block;padding:14px 32px;background:#82B366;color:#fff;text-decoration:none;border-radius:8px;font-family:Arial,sans-serif;font-size:14px;letter-spacing:0.08em;">Quiero mi ${esc(info.nombre)}</a>
   </p>
+  ${esRecordatorio ? "" : '<p>Una cosa m\xE1s: \xBFc\xF3mo te result\xF3 tu lectura? Si respond\xE9s este mail con una o dos l\xEDneas, me ayuda much\xEDsimo. Lo leo yo.</p>'}
   ${ultimaNota ? `<p style="text-align:center;border-top:1px solid #eee;padding-top:18px;margin:24px 0 0;font-size:13px;color:#777;">\u{1F4D6} Mi \xFAltima nota: <a href="${ultimaNota.link}" style="color:#8A4DAB;text-decoration:none;">${esc(ultimaNota.titulo)}</a></p>` : ""}
   <p style="text-align:center;${ultimaNota ? "" : "border-top:1px solid #eee;"}padding-top:14px;margin:14px 0 0;">
     <a href="https://cynthialibra.substack.com/" style="color:#8A4DAB;text-decoration:none;font-size:13px;margin:0 8px;">Mis notas en Substack</a> \xB7
@@ -949,6 +1231,7 @@ var worker_default = {
       }
     }
     if (path === "/interpretar" && request.method === "POST") {
+      let bonusTok = null, bonusRec = null;
       try {
         const body = await request.json();
         if (body.producto === "carta-completa" && body.chartData) {
@@ -969,7 +1252,15 @@ var worker_default = {
         }
         const esEsencial = (body.prompt || "").includes("LECTURA ESENCIAL GRATUITA");
         if (!esEsencial) {
-          const autorizado = await pagoAutorizado(env, body.pagoId, body.promoToken);
+          let autorizado = await pagoAutorizado(env, body.pagoId, body.promoToken);
+          if (!autorizado && body.producto === "transitos" && body.promoToken) {
+            // Regalo de Tránsitos (mail 5): token de un solo uso, válido SOLO para este producto.
+            bonusRec = await reservarBonus(env, body.promoToken);
+            if (bonusRec) {
+              bonusTok = body.promoToken;
+              autorizado = true;
+            }
+          }
           if (!autorizado) return json({ error: "Pago no verificado" }, 403);
         }
         const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -990,6 +1281,13 @@ var worker_default = {
           })
         });
         const data = await res.json();
+        if (bonusTok) {
+          const generoBien = data.stop_reason !== "max_tokens" && Array.isArray(data.content) && data.content.length > 0;
+          const tok = bonusTok;
+          bonusTok = null;
+          if (generoBien) await finalizarBonus(env, bonusRec);
+          else await liberarBonus(env, tok);
+        }
         if (data.stop_reason === "max_tokens" && !esEsencial) {
           ctx.waitUntil((async () => {
             let pago = null;
@@ -1010,6 +1308,12 @@ var worker_default = {
         }
         return json(data);
       } catch (e) {
+        if (bonusTok) {
+          try {
+            await liberarBonus(env, bonusTok);
+          } catch {
+          }
+        }
         return json({ error: e.message }, 500);
       }
     }
@@ -1032,6 +1336,7 @@ var worker_default = {
         if (promoToken) {
           const tok = await env.PAGOS_KV.get(`promo-token:${promoToken}`);
           if (tok) esPrueba = true;
+          else if (producto === "transitos" && await bonusToken(env, promoToken)) esPrueba = true;
         }
         const esEsencialGratis = producto === "esencial" && !!body.texto;
         if (!esPrueba && !esEsencialGratis && !ccContent) {
@@ -1219,7 +1524,7 @@ var worker_default = {
         const tokenData = await tokenRes.json();
         if (!tokenRes.ok) return json({ error: "Error auth PayPal", detalle: tokenData, status: tokenRes.status }, 500);
         const accessToken = tokenData.access_token;
-        const customId = JSON.stringify({ producto, nombre, email: email || "", fecha: fecha || "", hora: hora || "", ciudad: ciudad || "", pais: pais || "" });
+        const customId = armarRefPago({ producto, nombre, email: email || "", fecha: fecha || "", hora: hora || "", ciudad: ciudad || "", pais: pais || "", lt: body.lt });
         let successUrl = "https://cartasahora.espaciolibra.com/?lectura=ok&pasarela=paypal&producto=" + encodeURIComponent(producto) + "&nombre=" + encodeURIComponent(nombre) + "&fecha=" + encodeURIComponent(fecha || "") + "&hora=" + encodeURIComponent(hora || "") + "&ciudad=" + encodeURIComponent(ciudad || "") + "&pais=" + encodeURIComponent(pais || "");
         if (gclid) successUrl += "&gclid=" + encodeURIComponent(gclid);
         if (gbraid) successUrl += "&gbraid=" + encodeURIComponent(gbraid);
@@ -1317,7 +1622,7 @@ var worker_default = {
         });
         if (!await env.PAGOS_KV.get(`proc:${orderId}`)) {
           await env.PAGOS_KV.put(`proc:${orderId}`, "1", { expirationTtl: 60 * 60 * 24 * 30 });
-          await registrarCompra(env, meta.email || "", meta.producto || "");
+          await registrarCompra(env, await resolverLeadEmail(env, meta) || meta.email || "", meta.producto || "", { id: orderId, ts: Date.now() });
         }
         return json({ ok: true });
       } catch (e) {
@@ -1369,7 +1674,7 @@ var worker_default = {
           });
           if (!await env.PAGOS_KV.get(`proc:${orderId}`)) {
             await env.PAGOS_KV.put(`proc:${orderId}`, "1", { expirationTtl: 60 * 60 * 24 * 30 });
-            await registrarCompra(env, meta.email || "", meta.producto || "");
+            await registrarCompra(env, await resolverLeadEmail(env, meta) || meta.email || "", meta.producto || "", { id: orderId, ts: Date.now() });
           }
         }
         return new Response(JSON.stringify({ received: true }), {
@@ -1402,7 +1707,7 @@ var worker_default = {
           ctx.waitUntil(_logPagoMP(env, { in: _logIn, mpBody: null, status: 400, mpResp: null, error: "Producto no v\xE1lido" }));
           return json({ error: "Producto no v\xE1lido" }, 400);
         }
-        const externalReference = JSON.stringify({ producto, nombre, email: email || "", fecha: fecha || "", hora: hora || "", ciudad: ciudad || "", pais: pais || "" });
+        const externalReference = armarRefPago({ producto, nombre, email: email || "", fecha: fecha || "", hora: hora || "", ciudad: ciudad || "", pais: pais || "", lt: body.lt });
         let successUrl = "https://cartasahora.espaciolibra.com/?lectura=ok&pasarela=mp&producto=" + encodeURIComponent(producto) + "&nombre=" + encodeURIComponent(nombre) + "&fecha=" + encodeURIComponent(fecha || "") + "&hora=" + encodeURIComponent(hora || "") + "&ciudad=" + encodeURIComponent(ciudad || "") + "&pais=" + encodeURIComponent(pais || "");
         if (gclid) successUrl += "&gclid=" + encodeURIComponent(gclid);
         if (gbraid) successUrl += "&gbraid=" + encodeURIComponent(gbraid);
@@ -1506,7 +1811,7 @@ var worker_default = {
               monto: payment.transaction_amount,
               moneda: payment.currency_id || "ARS"
             });
-            await registrarCompra(env, meta.email || payment.payer?.email || "", meta.producto || "");
+            await registrarCompra(env, await resolverLeadEmail(env, meta) || meta.email || payment.payer?.email || "", meta.producto || "", { id: String(paymentId), ts: Date.now() });
           }
         }
         return new Response(JSON.stringify({ received: true }), {
@@ -1579,7 +1884,7 @@ var worker_default = {
           // no reiniciar el reloj del seguimiento
           seguimiento_enviado: prev.seguimiento_enviado || false
         };
-        let compraRegistrada = false;
+        let compraRegistrada = false, bonusActivo = false;
         if (pagoId) {
           let pago = null;
           try {
@@ -1595,17 +1900,15 @@ var worker_default = {
             lead.seguimiento_enviado = true;
             lead.post_compra = lead.post_compra || { oferta: null, uno: false, dos: false };
             compraRegistrada = true;
+            // Compra desde otro dispositivo: si este lead tenía un bonus vigente al momento del pago,
+            // escribir su mail lo recupera (el pago ya está confirmado en KV, el navegador solo pasa el id).
+            if (pago.producto === "carta-completa") bonusActivo = await activarBonusEnLead(env, lead, pagoId, pago.timestamp || Date.now());
           }
         }
         const ttl = { expirationTtl: 60 * 60 * 24 * 365 * 2 };
-        const metadata = { ts: lead.timestamp, mkt: lead.acepta_marketing === true, done: lead.seguimiento_enviado === true };
-        if (lead.compra_ts) {
-          metadata.compra_ts = lead.compra_ts;
-          metadata.post = lead.post_compra ? !(lead.post_compra.uno && lead.post_compra.dos) : true;
-        }
-        await env.LEADS_KV.put(key, JSON.stringify(lead), { ...ttl, metadata });
+        await env.LEADS_KV.put(key, JSON.stringify(lead), { ...ttl, metadata: metaLead(lead) });
         await env.LEADS_KV.put(`lead-token:${token}`, email.toLowerCase().trim(), ttl);
-        return json({ ok: true, token, compra: compraRegistrada });
+        return json({ ok: true, token, compra: compraRegistrada, bonus: bonusActivo });
       } catch (e) {
         return json({ error: e.message }, 500);
       }
@@ -1621,12 +1924,55 @@ var worker_default = {
           lead = JSON.parse(await env.LEADS_KV.get(`lead:${email}`)) || {};
         } catch {
         }
+        const b = lead.bonus;
         return json({
           nombre: lead.nombre || "",
           email: lead.email || email,
           nacimiento: lead.nacimiento || null,
-          cartaNatal: lead.cartaNatal || null
+          cartaNatal: lead.cartaNatal || null,
+          // Aviso de la página (?bonus=transitos): solo si el bonus sigue vigente según el worker.
+          bonus: b && b.producto === "transitos" && b.usado !== true && !b.pagoId && Date.now() <= b.hasta ? { hasta: b.hasta } : null
         });
+      } catch (e) {
+        return json({ error: e.message }, 500);
+      }
+    }
+    if (path === "/reclamar-bonus" && request.method === "POST") {
+      try {
+        const { pagoId, token } = await request.json();
+        let t = "";
+        if (pagoId) {
+          const pago = await env.PAGOS_KV.get(`pago:${pagoId}`, "json");
+          if (pago?.confirmado && pago.producto === "carta-completa" && pago.bonus_token) t = pago.bonus_token;
+        } else if (token) {
+          t = String(token);
+        }
+        if (!t || !await bonusDisponible(env, t)) return json({ disponible: false });
+        return json({ disponible: true, token: t });
+      } catch (e) {
+        return json({ disponible: false, error: e.message }, 500);
+      }
+    }
+    if (path === "/probar-secuencia" && request.method === "POST") {
+      const authHeader = request.headers.get("Authorization") || "";
+      if (!env.ADMIN_SECRET || authHeader !== `Bearer ${env.ADMIN_SECRET}`) return json({ error: "No autorizado" }, 401);
+      try {
+        // Manda los 5 mails (o ?paso=N) SOLO a la casilla de prueba, con datos de ejemplo.
+        // ?venus=Lib elige el texto del mail 2. Ignora el control de activación y los marcadores.
+        const solo = parseInt(url.searchParams.get("paso") || "0");
+        const venus = url.searchParams.get("venus") || "";
+        const lead = {
+          email: PRUEBA_SECUENCIA_DESTINO,
+          nombre: "Cynthia",
+          token: "00000000-0000-4000-8000-000000000000",
+          cartaNatal: venus ? { subject: { venus: { sign: venus } } } : null
+        };
+        const resultados = {};
+        for (let p = 1; p <= 5; p++) {
+          if (solo && p !== solo) continue;
+          resultados[p] = await enviarPasoSecuencia(env, lead, p, { to: PRUEBA_SECUENCIA_DESTINO, prefijoAsunto: `[PRUEBA ${p}/5] `, forzar: true, hasta: Date.now() + BONUS_VENTANA_MS });
+        }
+        return json({ destino: PRUEBA_SECUENCIA_DESTINO, enviados: resultados });
       } catch (e) {
         return json({ error: e.message }, 500);
       }

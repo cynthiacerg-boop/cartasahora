@@ -579,7 +579,7 @@
         </label>
         <label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;">
           <input type="checkbox" id="marketing-esencial" style="margin-top:2px;flex-shrink:0;" />
-          <span style="flex:1;">Quiero recibir el clima astrológico semanal (opcional)</span>
+          <span style="flex:1;">Quiero recibir el clima astrológico semanal y novedades de Espacio Libra (opcional)</span>
         </label>
         <button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('esencial')">Enviarme una copia</button>
         <p id="success-email-esencial" class="success-msg hidden"></p>
@@ -2185,6 +2185,20 @@ async function procesarCompra(producto, precio) {
   // Si no es prueba, la compra se inicia desde pagarConPaypal / pagarConMP
 }
 
+// ── Token del lead ──
+// Viene de ?lead= (link del mail) o lo devuelve /guardar-lead al dejar el mail. Se recuerda en
+// este navegador para mandarlo SIEMPRE al crear el pago. Si no hay, el pago sale igual.
+let _leadToken = '';
+function _guardarLeadToken(t){
+  if(!t || typeof t!=='string') return;
+  _leadToken = t;
+  try{ localStorage.setItem('lead_token', t); }catch(e){}
+}
+function _leadTokenActual(){
+  if(_leadToken) return _leadToken;
+  try{ return localStorage.getItem('lead_token') || ''; }catch(e){ return ''; }
+}
+
 // ── Datos comunes de pago (usados por ambas pasarelas) ──
 function _buildPayload(producto) {
   return {
@@ -2193,6 +2207,9 @@ function _buildPayload(producto) {
     // El pago ya NO pide email: nunca se manda uno inventado ni el de la pasarela.
     // El email opcional se solicita después, para enviar la copia de la lectura.
     email:  '',
+    // Token opaco del lead (no es un dato personal): el worker lo usa para marcar la compra en el
+    // lead correcto y activar el bonus del mail 5, sin depender del mail de la pasarela.
+    lt:     _leadTokenActual(),
     fecha:  document.getElementById('fecha')?.value || '',
     hora:   document.getElementById('hora')?.value || '',
     ciudad: document.getElementById('ciudad')?.value?.trim() || '',
@@ -2456,7 +2473,7 @@ async function generarYEnviarLectura(producto, nombre, extras, esPrueba, pagoId)
     // Bloque OPCIONAL de copia por mail, debajo de la lectura ya visible. El sustantivo
     // se adapta: "carta" para Carta Natal Completa, "lectura" para el resto.
     const _sustantivo = producto==='carta-completa' ? 'carta' : 'lectura';
-    card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div>${preguntaHeader}<div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Guardá esta ${_sustantivo} en tu mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><p style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;margin:0 0 4px;text-align:left;text-transform:none;letter-spacing:normal;">Si querés conservar una copia para volver a leerla cuando quieras, ingresá tu email y te la enviamos.</p><input type="email" id="email-enviar-${producto}" placeholder="Tu email" /><label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;"><input type="checkbox" id="terms-${producto}" style="margin-top:2px;flex-shrink:0;" /><span style="flex:1;">Acepto los <a href="https://espaciolibra.com/terminos" target="_blank" style="color:#82B366;">términos y condiciones</a></span></label><label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;"><input type="checkbox" id="marketing-${producto}" style="margin-top:2px;flex-shrink:0;" /><span style="flex:1;">Quiero recibir el clima astrológico semanal (opcional)</span></label><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">Enviarme una copia</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
+    card.innerHTML=`<div class="section-title">Tu ${productoNombre}</div>${preguntaHeader}<div id="texto-lectura-${producto}"></div><div class="lectura-acciones"><div class="lectura-acciones-btns"><button class="btn-accion btn-accion-outline" onclick="mostrarEmailInput('${producto}')">✉ Guardá esta ${_sustantivo} en tu mail</button></div><div id="email-envio-${producto}" class="hidden email-envio-form"><p style="font-size:13px;color:rgba(255,255,255,0.65);line-height:1.6;margin:0 0 4px;text-align:left;text-transform:none;letter-spacing:normal;">Si querés conservar una copia para volver a leerla cuando quieras, ingresá tu email y te la enviamos.</p><input type="email" id="email-enviar-${producto}" placeholder="Tu email" /><label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;"><input type="checkbox" id="terms-${producto}" style="margin-top:2px;flex-shrink:0;" /><span style="flex:1;">Acepto los <a href="https://espaciolibra.com/terminos" target="_blank" style="color:#82B366;">términos y condiciones</a></span></label><label style="display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:12px;color:rgba(255,255,255,0.85);cursor:pointer;line-height:1.5;width:100%;box-sizing:border-box;"><input type="checkbox" id="marketing-${producto}" style="margin-top:2px;flex-shrink:0;" /><span style="flex:1;">Quiero recibir el clima astrológico semanal y novedades de Espacio Libra (opcional)</span></label><button class="btn-primary" style="margin-top:0;font-size:12px;padding:12px;" onclick="enviarPorMail('${producto}')">Enviarme una copia</button><p id="success-email-${producto}" class="success-msg hidden"></p><p id="error-email-${producto}" class="error-msg hidden"></p></div></div>`;
 
     renderInterp(textoGenerado,`texto-lectura-${producto}`);
     // Transición hacia Lectura Profunda al final de la Carta Completa (antes de las demás tarjetas).
@@ -2512,8 +2529,48 @@ function guardarLead(email, aceptaMarketing, pagoId){
   const nombre = document.getElementById('nombre')?.value?.trim() || '';
   fetch(`${WORKER_URL}/guardar-lead`,{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ email, nombre, acepta_marketing:!!aceptaMarketing, nacimiento, cartaNatal, pagoId: pagoId||'' })})
-    .then(function(res){ if(res && res.ok) ga4Once('ga4_generate_lead','generate_lead'); }) // solo si el guardado fue exitoso
+    .then(async function(res){
+      if(!(res && res.ok)) return;
+      ga4Once('ga4_generate_lead','generate_lead'); // solo si el guardado fue exitoso
+      try{
+        const d = await res.json();
+        _guardarLeadToken(d.token);
+        // Compra hecha en otro dispositivo con un bonus vigente: al dejar su mail recupera su lead.
+        if(d.bonus && pagoId) mostrarRegaloTransitos({pagoId});
+      }catch(e){}
+    })
     .catch(()=>{});
+}
+
+// ── REGALO: Tránsitos Actuales con la Carta Completa (mail 5) ──
+// La tarjeta aparece solo si el worker confirma que hay un regalo disponible (por pago o por el
+// token del mail). No dispara purchase: no es una venta.
+async function mostrarRegaloTransitos(ref){
+  try{
+    if(document.getElementById('card-regalo-transitos')) return;
+    const r = await fetch(`${WORKER_URL}/reclamar-bonus`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ref)});
+    const d = await r.json();
+    if(!d || !d.disponible || !d.token) return;
+    const container = document.getElementById('section-lecturas-desbloqueadas');
+    if(!container) return;
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'card-regalo-transitos';
+    card.innerHTML = `<div class="section-title">Tu regalo: Tránsitos Actuales</div><p style="font-size:14.5px;color:rgba(255,255,255,0.72);line-height:1.7;margin:0 0 16px;">Por pedir tu Carta Completa a tiempo, tenés una lectura de Tránsitos Actuales sin costo: qué está activando este momento en tu carta.</p><button class="btn-primary" style="margin-top:0;" id="btn-regalo-transitos">Generar mi Tránsitos de regalo</button>`;
+    container.appendChild(card);
+    document.getElementById('btn-regalo-transitos').onclick = function(){
+      this.disabled = true;
+      generarRegaloTransitos(d.token);
+    };
+  }catch(e){ /* sin regalo: no se muestra nada */ }
+}
+async function generarRegaloTransitos(token){
+  const nombre = document.getElementById('nombre')?.value?.trim() || '';
+  if(!cartaData){ mostrarMensaje('error-transitos','Primero calculá tu carta natal arriba.'); document.getElementById('btn-regalo-transitos')?.removeAttribute('disabled'); return; }
+  promoToken['transitos'] = token;   // el worker lo acepta solo para Tránsitos, una vez
+  await generarYEnviarLectura('transitos', nombre, {}, true);
+  if(document.getElementById('card-lectura-transitos')?.querySelector('[id^="texto-lectura-"]')) document.getElementById('card-regalo-transitos')?.remove();
+  else document.getElementById('btn-regalo-transitos')?.removeAttribute('disabled');
 }
 
 // ── CAPTURA DE LEADS (paso 2) ──
@@ -2773,10 +2830,11 @@ function reiniciar(){
 // tarjeta del producto ofrecido (?oferta=, cross-sell) o a Tránsitos por defecto,
 // con el email precargado. Si el lead es viejo (sin carta) o el token no existe,
 // no hace nada y queda el formulario normal.
-async function cargarDesdeLead(token, oferta){
+async function cargarDesdeLead(token, oferta, bonus, regalo){
   try{
     const r = await fetch(`${WORKER_URL}/lead?token=${encodeURIComponent(token)}`);
     if(!r.ok) return;
+    _guardarLeadToken(token); // se recuerda: la URL se limpia más abajo y el pago lo necesita
     const d = await r.json();
     if(!d || !d.cartaNatal || !d.cartaNatal.subject) return;
     cartaData = { chart_data: d.cartaNatal };            // carta ya calculada, sin re-gastar
@@ -2796,12 +2854,18 @@ async function cargarDesdeLead(token, oferta){
       'revolucion-solar': { form:'form-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
       'sinastria':        { form:'form-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
     };
-    const dest = DESTINOS[oferta] || DESTINOS['transitos'];
+    let dest = DESTINOS[oferta] || DESTINOS['transitos'];
+    // Aviso del regalo: solo si el worker confirma que el bonus sigue vigente (la URL no autoriza nada).
+    if(bonus==='transitos' && d.bonus && d.bonus.hasta){
+      const lim = new Date(d.bonus.hasta).toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',hour12:false});
+      dest = Object.assign({}, DESTINOS['carta-completa'], { msg:`✦ Tu regalo de Tránsitos Actuales está activo hasta el ${lim} hs (hora de Argentina): pedí tu Carta Completa y lo recibís sin costo.` });
+    }
     // El email ya no se precarga: el pago no lo necesita. Si la persona quiere una
     // copia por mail, la pide después, sobre la lectura ya generada.
     mostrarMensaje(dest.success, dest.msg);
     setTimeout(()=>{document.getElementById(dest.form)?.scrollIntoView({behavior:'smooth',block:'center'});},350);
     window.history.replaceState({},'',window.location.pathname); // limpiar el token de la URL
+    if(regalo) mostrarRegaloTransitos({token:regalo}); // link del mail "Tu regalo te espera"
   }catch(e){ /* fallback silencioso: queda el formulario normal */ }
 }
 
@@ -2813,7 +2877,7 @@ async function cargarDesdeLead(token, oferta){
 window.addEventListener('load',async ()=>{
   const params=new URLSearchParams(window.location.search);
   if(params.get('nombre')){const el=document.getElementById('nombre');if(el)el.value=decodeURIComponent(params.get('nombre'));}
-  if(params.get('lead')){ await cargarDesdeLead(params.get('lead'), params.get('oferta')); }
+  if(params.get('lead')){ await cargarDesdeLead(params.get('lead'), params.get('oferta'), params.get('bonus'), params.get('regalo')); }
   if(params.get('upgrade')==='lectura-profunda'){
     mostrar('upgrade-banner');
     const _upgNombre=params.get('nombre')||'';const _upgFecha=params.get('fecha')||'';const _upgHora=params.get('hora')||'';const _upgCiudad=params.get('ciudad')||'';const _upgPais=params.get('pais')||'Argentina';
@@ -2966,6 +3030,7 @@ window.addEventListener('load',async ()=>{
             }
             localStorage.removeItem('pendiente');
             await generarYEnviarLectura(pendienteData.producto, pendienteData.nombre, pendienteData.extras||{}, false, sessionId);
+            if(pendienteData.producto==='carta-completa') mostrarRegaloTransitos({pagoId:sessionId}); // regalo del mail 5, si corresponde
           } else {
             _placeholderCard.innerHTML = `<div class="section-title">Tu ${_prodDisplay}</div><p style="color:rgba(255,100,100,0.8);text-align:center;padding:24px 0;">No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com</p>`;
             mostrarMensaje('error-msg','No se pudo verificar el pago. Si ya pagaste, contactanos a contacto@espaciolibra.com');

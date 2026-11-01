@@ -476,7 +476,7 @@ var SECUENCIA_OFFSETS_MS = [2 * H_MS, 2 * D_MS, 4 * D_MS, 6 * D_MS, 8 * D_MS];
 // /probar-secuencia. Mientras un paso esté en false los leads esperan en ese paso (no se saltean).
 // Para activarlo, pasar a true y desplegar. Los pasos 3 y 4 tienen textos pendientes ({REVISAR} /
 // {PEGAR}): aun en true, un mail con un marcador sin completar NO se envía.
-var SECUENCIA_ACTIVOS = { 1: false, 2: false, 3: false, 4: false, 5: false };
+var SECUENCIA_ACTIVOS = { 1: true, 2: true, 3: false, 4: false, 5: false };
 // Separación mínima entre dos mails de la secuencia al mismo lead (evita ráfagas al reactivar un paso).
 var SECUENCIA_ESPACIADO_MS = 48 * H_MS;
 var BONUS_VENTANA_MS = 72 * H_MS;

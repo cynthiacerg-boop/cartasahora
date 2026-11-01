@@ -39,6 +39,8 @@
        appearance:none + min-width:0 lo obligan a comportarse como los inputs de texto. */
     input[type="date"] { -webkit-appearance: none; appearance: none; min-width: 0; max-width: 100%; color-scheme: dark; }
     select option { background: #1a1a2e; }
+    /* Fecha de nacimiento en tres desplegables: menos padding lateral para que "Septiembre" entre en 375px */
+    .sel-fecha { padding-left: 10px; padding-right: 6px; min-width: 0; }
     .btn-primary { width: 100%; margin-top: 24px; padding: 16px; background: linear-gradient(135deg, #82B366, #6a9652); border: none; border-radius: 10px; color: white; font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; cursor: pointer; transition: opacity 0.2s, transform 0.1s; box-shadow: 0 4px 20px rgba(130,179,102,0.3); }
     .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
@@ -88,7 +90,18 @@
     .interp-block { margin-bottom: 24px; }
     .interp-title { font-family: 'Playfair Display', serif; font-size: 19px; color: #82B366; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid rgba(130,179,102,0.15); letter-spacing: 0.03em; }
     .interp-text { font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.72); }
+    /* Texto borroso con candado (lectura esencial, bajo Sol / Luna / Ascendente) */
+    .texto-bloqueado { position: relative; margin-top: 6px; overflow: hidden; border-radius: 8px; cursor: pointer; min-height: 84px; }
+    .texto-bloqueado-relleno { margin: 0; filter: blur(5px); user-select: none; -webkit-user-select: none; pointer-events: none; font-family: 'Montserrat', sans-serif; font-size: 14px; line-height: 1.85; color: rgba(255,255,255,0.6); -webkit-mask-image: linear-gradient(to bottom, #000 25%, transparent 100%); mask-image: linear-gradient(to bottom, #000 25%, transparent 100%); }
+    .texto-bloqueado-chip { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: max-content; max-width: 92%; padding: 10px 16px; background: rgba(26,26,46,0.88); border: 1px solid rgba(130,179,102,0.5); border-radius: 999px; color: #fff; font-family: 'Montserrat', sans-serif; font-size: 12.5px; font-weight: 500; line-height: 1.35; text-align: center; letter-spacing: 0.02em; cursor: pointer; box-shadow: 0 4px 18px rgba(0,0,0,0.35); }
+    .texto-bloqueado:hover .texto-bloqueado-chip, .texto-bloqueado-chip:focus-visible { border-color: #82B366; background: rgba(130,179,102,0.22); }
     .productos-grid { display: grid; gap: 16px; margin-top: 8px; }
+    /* "¿Buscás otra lectura?": discreto y secundario, no compite con el botón de pago de Carta Completa */
+    .otras-lecturas-toggle { text-align: center; margin: 28px 0 8px; }
+    .otras-lecturas-titulo { font-family: 'Montserrat', sans-serif; font-size: 13.5px; color: rgba(255,255,255,0.55); margin-bottom: 12px; }
+    .btn-otras-lecturas { padding: 12px 22px; min-height: 44px; background: none; border: 1px solid rgba(255,255,255,0.18); border-radius: 10px; color: rgba(255,255,255,0.7); font-family: 'Montserrat', sans-serif; font-size: 13.5px; cursor: pointer; transition: color 0.2s, border-color 0.2s; }
+    .btn-otras-lecturas:hover { color: #fff; border-color: rgba(255,255,255,0.4); }
+    #otras-lecturas { margin-top: 20px; }
     .producto-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 14px; padding: 24px; transition: border-color 0.2s, background 0.2s; cursor: pointer; }
     .producto-card:hover { border-color: rgba(138,77,171,0.4); background: rgba(138,77,171,0.05); }
     .producto-card.destacado { border-color: rgba(138,77,171,0.35); background: linear-gradient(135deg, rgba(138,77,171,0.1), rgba(130,179,102,0.05)); }
@@ -206,8 +219,8 @@
 
   <div id="upgrade-banner" class="card hidden" style="border-color:rgba(138,77,171,0.4);background:linear-gradient(135deg,rgba(138,77,171,0.08),rgba(130,179,102,0.04));text-align:center;">
     <p style="font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;letter-spacing:0.2em;color:#8A4DAB;text-transform:uppercase;margin:0 0 10px;">✦ Upgrade disponible</p>
-    <p style="font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 6px;">Para completar tu upgrade a Lectura Profunda,</p>
-    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">calculá tu carta natal y pagá los USD 7 restantes.</p>
+    <p style="font-size:15px;color:rgba(255,255,255,0.8);margin:0 0 6px;">Tu siguiente paso: la Lectura Profunda,</p>
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0;">calculá tu carta natal para continuar.</p>
   </div>
 
   <div class="card" id="section-form">
@@ -216,9 +229,23 @@
         <label>Tu nombre</label>
         <input type="text" id="nombre" placeholder="¿Cómo te llamás?" />
       </div>
-      <div class="form-group">
+      <div class="form-group full">
         <label>Fecha de nacimiento</label>
-        <input type="date" id="fecha" />
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="fecha-dia" class="sel-fecha" style="flex:1;" onchange="syncFecha()" aria-label="Día de nacimiento">
+            <option value="">Día</option>
+            <!-- populated by JS -->
+          </select>
+          <select id="fecha-mes" class="sel-fecha" style="flex:1.8;" onchange="syncFecha()" aria-label="Mes de nacimiento">
+            <option value="">Mes</option>
+            <!-- populated by JS -->
+          </select>
+          <select id="fecha-anio" class="sel-fecha" style="flex:1.3;" onchange="syncFecha()" aria-label="Año de nacimiento">
+            <option value="">Año</option>
+            <!-- populated by JS -->
+          </select>
+        </div>
+        <input type="hidden" id="fecha" />
       </div>
       <div class="form-group">
         <label>Hora de nacimiento</label>
@@ -354,10 +381,6 @@
   <!-- UPSELL / PRODUCTOS -->
   <div class="card hidden" id="section-upsell">
 
-    <div class="section-title">Lecturas completas</div>
-    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:20px;line-height:1.6;">
-      Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla en unos minutos.
-    </p>
     <div class="productos-grid">
 
       <div class="producto-card destacado">
@@ -390,6 +413,20 @@
           <p class="paypal-note">Pago seguro · PayPal o MercadoPago · Entrega en menos de 5 min</p>
         </div>
       </div>
+
+    </div>
+
+    <!-- Otras lecturas: colapsadas por defecto. Carta Natal Completa es la única oferta visible. -->
+    <div id="bloque-otras-lecturas" class="otras-lecturas-toggle">
+      <div class="otras-lecturas-titulo">¿Buscás otra lectura?</div>
+      <button type="button" id="btn-otras-lecturas" class="btn-otras-lecturas" aria-expanded="false" aria-controls="otras-lecturas" onclick="alternarOtrasLecturas()">Ver otras lecturas</button>
+    </div>
+
+    <div id="otras-lecturas" class="hidden">
+    <p style="font-size:14px;color:rgba(255,255,255,0.5);margin:0 0 20px;line-height:1.6;">
+      Elegí la lectura que más te resuena. Pagás o aplicás tu código — la lectura aparece en pantalla en unos minutos.
+    </p>
+    <div class="productos-grid">
 
       <div class="producto-card">
         <div class="producto-header">
@@ -565,6 +602,8 @@
       </div>
     </div>
 
+    </div><!-- /#otras-lecturas -->
+
     <!-- GUARDAR LECTURA GRATIS POR MAIL (acción secundaria, fuera del camino de compra) -->
     <div class="lectura-acciones" id="bloque-guardar-esencial" style="margin-top:32px;padding-top:24px;border-top:1px solid rgba(255,255,255,0.06);">
       <div class="lectura-acciones-btns">
@@ -700,9 +739,7 @@ function ga4Once(key, event, params){
 // Precio/moneda/items reales de un producto según la pasarela ('mercado-pago' → ARS, 'paypal' → USD).
 function ga4DatosPago(producto, metodo){
   const esPP = metodo==='paypal';
-  let precio = esPP ? GA4_PRECIOS_USD[producto] : GA4_PRECIOS_ARS[producto];
-  // Upgrade de Lectura Profunda: USD 7 solo por PayPal.
-  try{ if(esPP && producto==='lectura-profunda' && new URLSearchParams(location.search).get('upgrade')==='lectura-profunda') precio = 7; }catch(e){}
+  const precio = esPP ? GA4_PRECIOS_USD[producto] : GA4_PRECIOS_ARS[producto];
   return { payment_type: metodo, value: precio, currency: esPP ? 'USD' : 'ARS',
     items: [{ item_id: producto, item_name: GA4_NOMBRES[producto]||producto, price: precio, quantity: 1 }] };
 }
@@ -742,7 +779,9 @@ document.addEventListener('click', function(e){
 // ── PREGUNTA OPCIONAL "¿Qué te gustaría comprender mejor?" (buyer need) ──
 // Solo medición. Guarda únicamente el valor interno (no sensible) en sessionStorage y lo
 // conserva durante la sesión para sumarlo a view_item / begin_checkout / purchase cuando exista.
-function getNeedCategory(){ try{ return sessionStorage.getItem('buyer_need')||''; }catch(e){ return ''; } }
+// _needMem: respaldo en memoria por si sessionStorage no está disponible (modo privado estricto).
+let _needMem='';
+function getNeedCategory(){ try{ return sessionStorage.getItem('buyer_need')||_needMem; }catch(e){ return _needMem; } }
 // Devuelve { need_category } solo si hay respuesta; si no, {} (no ensucia los eventos).
 function _needParams(){ const n=getNeedCategory(); return n ? { need_category:n } : {}; }
 // Normaliza el método de pago a los valores pedidos ('mercado_pago' | 'paypal').
@@ -751,6 +790,7 @@ function _pmNorm(m){ return (String(m||'').toLowerCase().indexOf('paypal')>=0) ?
 // en compras reales queda false. Se incluye para que el esquema esté presente en GA4.
 function _esTest(producto){ try{ return (typeof promoAplicada!=='undefined' && promoAplicada[producto]===true); }catch(e){ return false; } }
 function seleccionarNecesidad(valor, btn){
+  _needMem=valor;
   try{ sessionStorage.setItem('buyer_need', valor); }catch(e){}
   // Marca visual (un solo elemento activo). Cambiar la respuesta re-marca y vuelve a emitir.
   try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b===btn); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
@@ -765,9 +805,10 @@ function _restaurarNecesidad(){
   try{ document.querySelectorAll('#buyer-need-opciones .need-chip').forEach(function(b){ const on=(b.getAttribute('data-need')===n); b.classList.toggle('need-chip-active',on); b.setAttribute('aria-pressed', on?'true':'false'); }); }catch(e){}
 }
 _restaurarNecesidad();
-// Ventana emergente de la pregunta: se abre al calcular (no bloquea el cálculo). Si la persona ya
-// respondió en esta sesión no se vuelve a abrir. Cerrarla (Saltear / X / afuera / Esc) NO emite
-// ningún evento: solo elegir una opción dispara buyer_need_selected (vía seleccionarNecesidad).
+// Ventana emergente de la pregunta: se abre al calcular (no bloquea el cálculo, pero la lectura
+// esencial espera la respuesta, ver esperarNecesidad). Si la persona ya respondió en esta sesión no
+// se vuelve a abrir. Cerrarla sin elegir (Saltear / X / afuera / Esc) registra 'skip' (y emite
+// buyer_need_selected con need_category='skip'), así no reaparece en la misma sesión.
 function abrirModalNecesidad(){
   if(getNeedCategory()) return;
   const m=document.getElementById('modal-necesidad'); if(!m) return;
@@ -775,17 +816,36 @@ function abrirModalNecesidad(){
   m.classList.remove('hidden');
   document.body.style.overflow='hidden'; // bloquea el scroll del fondo
 }
-function cerrarModalNecesidad(){
+// salteado=false: cierre interno (elección de un chip o error de cálculo) → no registra 'skip'.
+// Cualquier otro cierre con el modal abierto y sin respuesta previa se registra como 'skip'.
+function cerrarModalNecesidad(salteado){
   const m=document.getElementById('modal-necesidad'); if(!m) return;
+  const estabaAbierto=!m.classList.contains('hidden');
   m.classList.add('hidden');
   document.body.style.overflow='';
+  if(estabaAbierto && salteado!==false && !getNeedCategory()) seleccionarNecesidad('skip', null);
+  _liberarEsperaNecesidad();
+}
+// La lectura esencial se genera recién cuando el modal se resuelve (o a los maxMs). Si ya hay
+// respuesta, o el modal no está abierto (retorno de pago / upgrade), no espera. Devuelve el valor
+// guardado ('' si venció el tiempo sin respuesta).
+let _needWaiters=[];
+function _liberarEsperaNecesidad(){ const w=_needWaiters; _needWaiters=[]; w.forEach(function(f){ f(); }); }
+function esperarNecesidad(maxMs){
+  const m=document.getElementById('modal-necesidad');
+  if(getNeedCategory() || !m || m.classList.contains('hidden')) return Promise.resolve(getNeedCategory());
+  return new Promise(function(resolve){
+    const t=setTimeout(function(){ _needWaiters=_needWaiters.filter(function(f){ return f!==fin; }); resolve(getNeedCategory()); }, maxMs);
+    function fin(){ clearTimeout(t); resolve(getNeedCategory()); }
+    _needWaiters.push(fin);
+  });
 }
 // La carta terminó con la ventana abierta: no se cierra sola, solo avisa.
 function avisarCartaListaEnModal(){
   const m=document.getElementById('modal-necesidad');
   if(m && !m.classList.contains('hidden')) document.getElementById('modal-necesidad-listo')?.classList.remove('hidden');
 }
-document.addEventListener('keydown', function(e){ if(e.key==='Escape') cerrarModalNecesidad(); });
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') cerrarModalNecesidad(true); });
 // Flujo normal: la Carta Natal Completa (mismo nodo, un solo #form-carta-completa) sube a los
 // resultados justo después de la lectura esencial, con los temas bloqueados adentro, y reemplaza
 // a la tarjeta de transición. En el retorno por lead no se llama: la tarjeta queda en la grilla.
@@ -811,7 +871,7 @@ function reubicarCartaCompleta(){
 }
 // carta_form_started: primera interacción con el formulario gratuito (una vez por sesión).
 (function(){
-  const campos = ['nombre','fecha','hora-hh','hora-mm','ciudad','provincia','pais'];
+  const campos = ['nombre','fecha-dia','fecha-mes','fecha-anio','hora-hh','hora-mm','ciudad','provincia','pais'];
   function first(){
     ga4Once('ga4_form_started','carta_form_started');
     campos.forEach(id=>{ const el=document.getElementById(id); if(el){ el.removeEventListener('input',first); el.removeEventListener('change',first); } });
@@ -896,6 +956,40 @@ function setHora(val) {
   if (hhSel) hhSel.value = (hh||'').padStart(2,'0');
   if (mmSel) mmSel.value = (mm||'').padStart(2,'0');
   syncHora();
+}
+// ── Fecha de nacimiento en tres desplegables ──
+// #fecha (hidden) sigue guardando 'YYYY-MM-DD' como antes: todo el resto del código lo lee igual.
+// Queda vacío mientras la fecha esté incompleta o no exista.
+const MESES_ES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+(function fillFechaDropdowns(){
+  const dia=document.getElementById('fecha-dia'), mes=document.getElementById('fecha-mes'), anio=document.getElementById('fecha-anio');
+  if(!dia||!mes||!anio) return;
+  for(let d=1; d<=31; d++){ const o=document.createElement('option'); o.value=String(d).padStart(2,'0'); o.textContent=String(d); dia.appendChild(o); }
+  MESES_ES.forEach(function(n,i){ const o=document.createElement('option'); o.value=String(i+1).padStart(2,'0'); o.textContent=n; mes.appendChild(o); });
+  for(let y=new Date().getFullYear(); y>=1930; y--){ const o=document.createElement('option'); o.value=String(y); o.textContent=String(y); anio.appendChild(o); }
+})();
+function _fechaExiste(y,m,d){ const dt=new Date(y,m-1,d); return dt.getFullYear()===y && dt.getMonth()===m-1 && dt.getDate()===d; }
+function syncFecha(){
+  const d=document.getElementById('fecha-dia').value, m=document.getElementById('fecha-mes').value, y=document.getElementById('fecha-anio').value;
+  document.getElementById('fecha').value = (d&&m&&y&&_fechaExiste(+y,+m,+d)) ? `${y}-${m}-${d}` : '';
+}
+// Carga una fecha 'YYYY-MM-DD' (retorno por lead, upgrade, retorno de pago) en los desplegables.
+function setFecha(val){
+  const mt=String(val||'').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); if(!mt) return;
+  const y=mt[1], m=mt[2].padStart(2,'0'), d=mt[3].padStart(2,'0');
+  const anio=document.getElementById('fecha-anio');
+  if(anio && ![...anio.options].some(function(o){ return o.value===y; })){ const o=document.createElement('option'); o.value=y; o.textContent=y; anio.appendChild(o); } // años fuera de la lista (antes de 1930)
+  document.getElementById('fecha-dia').value=d; document.getElementById('fecha-mes').value=m; anio.value=y;
+  syncFecha();
+}
+// '' si está todo bien o todavía vacío (lo cubre el chequeo genérico de campos); si no, el mensaje a mostrar.
+function validarFechaNacimiento(){
+  const d=document.getElementById('fecha-dia').value, m=document.getElementById('fecha-mes').value, y=document.getElementById('fecha-anio').value;
+  if(!d && !m && !y) return '';
+  if(!d || !m || !y) return 'Completá día, mes y año de nacimiento.';
+  if(!_fechaExiste(+y,+m,+d)) return `El ${+d} de ${MESES_ES[+m-1].toLowerCase()} de ${y} no existe. Revisá el día y el mes.`;
+  if(new Date(+y,+m-1,+d) > new Date()) return 'La fecha de nacimiento no puede ser futura.';
+  return '';
 }
 // (Stripe eliminado — se usa PayPal y MercadoPago)
 // El código promo ya no vive acá: se valida del lado del servidor (/validar-promo)
@@ -1553,36 +1647,78 @@ NO atribuís heridas, traumas, mecanismos de defensa, causas biográficas ni car
 
 Cada afirmación se apoya en un dato astrológico concreto (planeta + signo + casa, o un aspecto calculado que se te da). No inventás datos ni relaciones que no estén en la carta.
 
-Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.`;
+Usás títulos de sección entre dobles asteriscos en línea propia. Nunca mencionás autores, escuelas ni metodologías, ni el nombre técnico de los aspectos.
+
+LENGUAJE NEUTRO OBLIGATORIO: nunca uses adjetivos o participios con género referidos a la persona (viva, interesada, orientada, cansado, único/a, vos misma/mismo). Reformulá con verbos o sustantivos: 'sentís que estás viva' → 'sentís vitalidad'; 'vos misma' → 'vos'. Palabras prohibidas referidas a la persona: segura/seguro, serena/sereno, tranquila/tranquilo, sola/solo, lista/listo, cansada/cansado, viva/vivo, interesada/interesado, orientada/orientado, única/único, misma/mismo. Reemplazos: 'sentirte segura' → 'sentir seguridad'; 'te presentás serena' → 'transmitís serenidad'. Revisá el texto final antes de entregarlo.`;
 
 // ── PROMPT BÁSICO (lectura gratuita) ──
-function buildPromptBasico(nombre, chartData) {
+function buildPromptBasico(nombre, chartData, need) {
   const subject=chartData?.chart_data?.subject||{};
   const sol=subject.sun,luna=subject.moon,asc=subject.first_house||subject.ascendant||subject.asc||null;
   const solSign=SIGN_MAP[sol?.sign]||sol?.sign||'?',lunaSign=SIGN_MAP[luna?.sign]||luna?.sign||'?';
   const solHouse=HOUSE_MAP[sol?.house]||'?',lunaHouse=HOUSE_MAP[luna?.house]||'?';
   const ascSign=asc?(SIGN_MAP[asc?.sign]||asc?.sign):'?';
-  // Aspectos calculados ENTRE Sol, Luna y Ascendente (la tríada de la esencial). La integración
-  // final se basa exclusivamente en esto; si no hay, se lo decimos al modelo para que no invente.
-  const _esTriada=n=>/^(sun|moon|ascendant|first_house|asc)$/i.test(n||'');
-  const _nomTri=n=>/^(ascendant|first_house|asc)$/i.test(n)?'Ascendente':(n==='Sun'?'Sol':(n==='Moon'?'Luna':n));
-  const _aspTri=(chartData?.chart_data?.aspects||[])
-    .filter(a=>['conjunction','opposition','trine','square','sextile'].includes(a.aspect))
-    .filter(a=>_esTriada(a.p1_name)&&_esTriada(a.p2_name))
-    .map(a=>`${_nomTri(a.p1_name)} ${ASPECT_ES[a.aspect]||a.aspect} ${_nomTri(a.p2_name)} (orbe ${Math.abs(a.orbit||0).toFixed(1)})`);
-  const aspTriadaStr=_aspTri.length?_aspTri.join(', '):'(sin aspectos directos calculados entre Sol, Luna y Ascendente)';
+  // ── Datos extra SOLO para la sección 4 (el gancho), según la necesidad elegida en el modal ──
+  // Insumo interno del modelo: esa sección nunca los nombra. Todo sale de chart_data.subject/houses/aspects.
+  const grupo = need==='purpose_direction'?'proposito' : need==='relationships'?'vinculo' : need==='work_money'?'trabajo' : need==='current_change'?'cambio' : 'patron';
+  const TITULO_GANCHO = {
+    proposito:'Lo que tu carta dice sobre tu dirección',
+    vinculo:'Lo que tu carta dice sobre cómo amás',
+    trabajo:'Lo que tu carta dice sobre tu trabajo',
+    cambio:'Lo que tu carta dice sobre este cambio',
+    patron:'Un patrón que se repite en vos'
+  }[grupo];
+  const _hs=chartData?.chart_data?.houses||{};
+  const _signoDe=p=>p?(SIGN_MAP[p.sign]||p.sign||'?'):'?';
+  const _ptxt=(nom,p)=>p?`${nom} en ${_signoDe(p)}, casa ${HOUSE_MAP[p.house]||'?'}`:null;
+  const _cuspide=(num,k)=>{const c=_hs[k]||subject[k];return c?.sign?`Casa ${num} en ${SIGN_MAP[c.sign]||c.sign}`:null;};
+  const _aspMin=(A,B)=>{
+    const ok=(n,L)=>L.includes(String(n||'').toLowerCase());
+    let best=null;
+    (chartData?.chart_data?.aspects||[]).forEach(a=>{
+      if(!['conjunction','opposition','trine','square','sextile'].includes(a.aspect)) return;
+      if(!((ok(a.p1_name,A)&&ok(a.p2_name,B))||(ok(a.p2_name,A)&&ok(a.p1_name,B)))) return;
+      const o=Math.abs(a.orbit||0);
+      if(!best||o<best.o) best={a,o};
+    });
+    return best;
+  };
+  const _nomP=n=>PLANET_ES[n]||n;
+  const _txtAsp=b=>`${_nomP(b.a.p1_name)} ${ASPECT_ES[b.a.aspect]||b.a.aspect} ${_nomP(b.a.p2_name)} (orbe ${b.o.toFixed(1)})`;
+  const _posPlaneta=n=>_ptxt(_nomP(n),subject[String(n||'').toLowerCase()]);
+  const PERSONALES=['sun','moon','mercury','venus','mars'];
+  let extra=[];
+  if(grupo==='proposito'){
+    extra=[_ptxt('Nodo Norte',subject.true_north_lunar_node),_cuspide(10,'tenth_house')];
+  }else if(grupo==='vinculo'){
+    const b=_aspMin(['venus'],['mars','saturn','pluto']);
+    extra=[_ptxt('Venus',subject.venus),b?`Aspecto más cerrado de Venus: ${_txtAsp(b)}`:'(Venus no tiene aspecto directo con Marte, Saturno ni Plutón)'];
+  }else if(grupo==='trabajo'){
+    extra=[_ptxt('Saturno',subject.saturn),_cuspide(2,'second_house'),_cuspide(10,'tenth_house')];
+  }else if(grupo==='cambio'){
+    const b=_aspMin(['saturn'],PERSONALES);
+    extra=[_ptxt('Saturno',subject.saturn),b?`Aspecto más cerrado de Saturno con un planeta personal: ${_txtAsp(b)}`:'(Saturno no tiene aspecto directo con un planeta personal)'];
+  }else{
+    const b=_aspMin(['mercury','venus','mars'],['saturn','pluto']);
+    extra=b
+      ? [`Aspecto de menor orbe: ${_txtAsp(b)}`,_posPlaneta(b.a.p1_name),_posPlaneta(b.a.p2_name)]
+      : [_ptxt('Mercurio',subject.mercury)];
+  }
+  const extraStr=extra.filter(Boolean).map(l=>'- '+l).join('\n') || '- (sin datos extra disponibles: apoyate en Sol, Luna y Ascendente, sin inventar)';
 
   return `La persona se llama ${nombre}. Su carta natal tiene estos datos:
 - Sol en ${solSign}, casa ${solHouse}
 - Luna en ${lunaSign}, casa ${lunaHouse}
 - Ascendente en ${ascSign}
-- Aspectos calculados entre Sol, Luna y Ascendente: ${aspTriadaStr}
+
+DATOS EXTRA, SOLO PARA LA SECCIÓN 4 (insumo interno: nunca los nombres en el texto):
+${extraStr}
 
 Escribí una LECTURA ESENCIAL GRATUITA para ${nombre} con EXACTAMENTE estas CUATRO secciones, en este orden. Cada título va entre dobles asteriscos en una línea propia.
 
 FUNCIÓN: es la puerta de entrada, no un informe. Es una lectura NATAL DESCRIPTIVA y cálida —NO evolutiva, terapéutica ni predictiva—, válida para cualquier carta. Tiene que hacer sentir a ${nombre} que la carta se calculó específicamente para ella, darle una comprensión breve pero valiosa y generar identificación. Se siente COMPLETA como experiencia gratuita, pero es claramente INICIAL: no entregues la profundidad del producto pago.
 
-TONO: describí con matices, nunca con juicios. NO uses calificativos negativos sobre la persona. Las preguntas o puertas abiertas NO deben presuponer un problema, una carencia ni una dificultad: abren curiosidad, no señalan algo "a corregir".
+TONO: describí con matices, nunca con juicios. NO uses calificativos negativos sobre la persona. Las preguntas o puertas abiertas NO deben presuponer un problema, una carencia ni una dificultad: abren curiosidad, no señalan algo "a corregir". Esta regla aplica a las secciones 1 a 3. La sección 4 describe una fricción a propósito: ahí sí se nombra una tensión, siempre como patrón a comprender, nunca como defecto ni condena.
 
 VOZ: segunda persona, "vos", directo a ${nombre}. Voseo rioplatense cálido y natural (sos, tenés, sentís, buscás, podés). Nunca tú/eres/tienes ni "a ti/para ti/contigo". Nunca "este Sol"/"esa Luna": decí "tu Sol", "tu Luna", "tenés".
 
@@ -1598,26 +1734,72 @@ PROHIBIDO (respetar el sentido, no solo las palabras):
 - Nombrar o interpretar Nodos, Quirón, Lilith ni procesos evolutivos profundos.
 - Jerga de aspectos: "cuadratura", "oposición", "trígono", "sextil", "conjunción", "orbe".
 - Desarrollar Mercurio, Venus, Marte, Júpiter o Saturno (son del producto pago).
+- EXCEPCIÓN ÚNICA: los "DATOS EXTRA, SOLO PARA LA SECCIÓN 4" (planetas, Nodo, casas, aspecto) se usan SOLO como insumo interno de la sección 4, para describir una experiencia concreta. Nunca los nombres ni los desarrolles: ni planetas, ni nodos, ni signos de esos datos, ni números de casa, ni tipos de aspecto.
 - Interpretar elementos o modalidades: nada de fuego/tierra/aire/agua, cardinal/fijo/mutable, predominio, carencia ni "balance".
 - Cualquier texto comercial o invitación a comprar DENTRO de la lectura.
+- PROHIBIDO usar la frase "Y hay algo más en cómo vivís esto".
 Interpretá la combinación real signo + casa (no el signo genérico). No inventes datos que no estén acá. Neutralidad de género: sin "/a" ni duplicaciones; reformulá natural.
-REDACCIÓN NATURAL: usá construcciones correctas — "que tenga sustancia" (nunca "que sienta sustancia"); "te mostrás" o "te presentás" (nunca "te muestran"). Voseo reflexivo siempre.
+REDACCIÓN NATURAL: usá construcciones correctas — "que tenga sustancia" (nunca "que sienta sustancia"); "te mostrás" o "te presentás" (nunca "te muestran"). Voseo reflexivo siempre. Cada oración que empiece con "Tu Sol…", "Tu Luna…" o "Tu Ascendente…" sigue en tercera persona ("Tu Ascendente te presenta…"), nunca "te presentás".
 
 FORMATO: empezá directo con "**Tu esencia solar**". Sin encabezado general, sin "#", sin "---". Usá EXACTAMENTE estos cuatro títulos, cada uno entre ** en su propia línea:
 
 **Tu esencia solar**
-Nombrá tu Sol en ${solSign} (casa ${solHouse}). Explicá brevemente su recurso central y qué necesita para expresarse. Entre 55 y 75 palabras.
+Nombrá tu Sol en ${solSign} (casa ${solHouse}). Idea: su recurso central y qué necesita para expresarse. Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. EXACTAMENTE 3 oraciones. La tercera oración es una frase breve que deja abierto que hay más sobre esta energía y termina en puntos suspensivos. Cada sección debe usar una frase de cierre DISTINTA y propia de esa energía (no repitas estructura entre secciones). No cortes una frase a la mitad.
 
 **Tu mundo emocional**
-Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Explicá una necesidad emocional central y qué te ayuda a sentirte en contacto con vos, en tono descriptivo y cálido (sin calificativos negativos). Entre 55 y 75 palabras.
+Nombrá tu Luna en ${lunaSign} (casa ${lunaHouse}). Idea: una necesidad emocional central y qué te ayuda a sentirte en contacto con vos, en tono descriptivo y cálido (sin calificativos negativos). Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. EXACTAMENTE 3 oraciones. La tercera oración es una frase breve que deja abierto que hay más sobre esta energía y termina en puntos suspensivos. Cada sección debe usar una frase de cierre DISTINTA y propia de esa energía (no repitas estructura entre secciones). No cortes una frase a la mitad.
 
 **Tu manera de entrar al mundo**
-Nombrá tu Ascendente en ${ascSign}. Explicá cómo iniciás, te mostrás o te vinculás con el entorno. Entre 45 y 65 palabras.
+Nombrá tu Ascendente en ${ascSign}. Idea: cómo iniciás, te mostrás o te vinculás con el entorno. Una sola idea completa y certera sobre cómo se vive esta energía, sin relacionarla con las otras dos. EXACTAMENTE 3 oraciones. La tercera oración es una frase breve que deja abierto que hay más sobre esta energía y termina en puntos suspensivos. Cada sección debe usar una frase de cierre DISTINTA y propia de esa energía (no repitas estructura entre secciones). No cortes una frase a la mitad.
 
-**La combinación que te hace único/a**
-Cerrá integrando tu Sol, tu Luna y tu Ascendente basándote EXCLUSIVAMENTE en los "Aspectos calculados entre Sol, Luna y Ascendente" de los datos de arriba. Si hay un aspecto entre dos de ellos, describí en lenguaje cotidiano (sin nombrar el tipo técnico) cómo se relacionan esas dos partes —si conviven con facilidad y se potencian, o si conviven con cierta fricción, siempre como matiz y nunca como defecto—. Si NO hay aspectos directos entre ellos, describí que funcionan de manera más independiente, cada uno con su registro, sin inventar una tensión. Dejá una tensión abierta —lo que todavía queda por descubrir de cómo estas piezas dialogan con el resto de tu carta— que invite a seguir explorando, sin resolverla y sin presuponer un problema. NO expliques cómo funciona todo junto (eso es del producto pago). Entre 80 y 110 palabras.
+**${TITULO_GANCHO}**
+Esta sección muestra UNA tensión concreta que la persona vive en el área elegida: algo que le pasa, que se repite y que le cuesta entender. No describas virtudes ni capacidades: describí la fricción. Basala en los DATOS EXTRA (por ejemplo, una necesidad que choca con otra, o algo que busca pero que su propia forma de ser le complica).
+Estructura obligatoria: EXACTAMENTE 4 oraciones: situación cotidiana, contradicción, frase puente ("La explicación está en una parte de tu carta que todavía no se abrió.") y pregunta final.
+- 1 frase con la situación cotidiana reconocible y específica de esta carta, que empiece con "Es posible que te pase que…" o similar.
+- 1 frase que nombre la contradicción interna, sin explicar de dónde viene.
+- 1 frase puente corta: "La explicación está en una parte de tu carta que todavía no se abrió."
+- Cierre: una pregunta que la persona NO pueda responder sola, del tipo "¿por qué…?" o "¿qué es lo que…?". Prohibido cerrar con "¿te reconocés…?", "¿sentís que…?" o cualquier pregunta que se conteste con sí o no.
+Nunca halagues ni resuelvas la tensión. No nombres planetas, nodos, signos, casas ni tipos de aspecto. Nada de fatalismo: la tensión es un patrón a comprender, no un defecto. Sin texto comercial, sin mencionar informes ni compras. Entre 45 y 60 palabras.
 
-EXTENSIÓN TOTAL: entre 260 y 340 palabras (máximo absoluto 380). No rellenes. Terminá dejando la tensión abierta de la última sección (curiosidad genuina, no un problema), sin texto comercial ni despedida.`;
+EJEMPLO DE TONO Y ESTRUCTURA (para un vínculo). Es solo una referencia: NO lo copies ni repitas sus frases; escribí una tensión propia, basada en los DATOS EXTRA de esta carta:
+"Es posible que te pase que, cuando alguien empieza a necesitarte más, sentís ganas de tomar distancia. Buscás cercanía, pero cuando llega, algo en vos se incomoda. La explicación está en una parte de tu carta que todavía no se abrió. ¿Qué es lo que se activa en vos justo cuando el vínculo se vuelve más profundo?"
+Si el área elegida es vínculos, NO uses la situación del ejemplo (distancia cuando el otro necesita más). Buscá otra tensión que surja de los datos de esta carta.
+
+EXTENSIÓN TOTAL: entre 165 y 210 palabras (máximo absoluto 230). No rellenes. Terminá con la pregunta final de la última sección, sin texto comercial ni despedida.`;
+}
+
+// ── TEXTO BORROSO CON CANDADO — SOLO Lectura Esencial gratuita ──
+// Se agrega al DOM ya renderizado (no toca el texto, ni la caché, ni _lecturaContexto): debajo de las
+// secciones 1, 2 y 3 (Sol, Luna, Ascendente), nunca debajo de la última (el gancho). Relleno genérico,
+// aria-hidden y no seleccionable. Un solo chip (sobre el último borroso); chip y bloques llevan a la Carta Natal Completa.
+const _RELLENO_BLOQUEADO = {
+  sol:'Esta cualidad se combina con otras partes de tu carta y cambia por completo la forma en que aparece en tu día a día, en las decisiones que tomás y en lo que elegís mostrar de vos.',
+  luna:'Hay un matiz más profundo en la manera en que esta necesidad se cruza con el resto de tu mundo interno, y se nota sobre todo en los momentos en que buscás sentirte en calma y en casa.',
+  ascendente:'Detrás de esta primera impresión hay otra capa que aparece cuando el vínculo se vuelve más cercano, y que explica por qué a veces te mostrás distinto de lo que sentís.'
+};
+function agregarBloquesBloqueados(containerId){
+  const c=document.getElementById(containerId); if(!c) return;
+  const bloques=Array.from(c.querySelectorAll('.interp-block'));
+  // renderInterp abre un bloque nuevo si hay línea en blanco entre el título y el texto, así que una
+  // sección puede ser varios bloques. Se agrupa por títulos: cada sección termina donde empieza el próximo título.
+  const titulos=[]; bloques.forEach(function(b,i){ if(b.querySelector('.interp-title')) titulos.push(i); });
+  const secciones=['sol','luna','ascendente'];
+  const n=Math.min(3, titulos.length-1);   // nunca la última sección (el gancho)
+  for(let k=0;k<n;k++){
+    const sec=secciones[k];
+    const fin=(titulos[k+1]!==undefined ? titulos[k+1] : bloques.length)-1;
+    const w=document.createElement('div'); w.className='texto-bloqueado'; w.setAttribute('data-section',sec);
+    const fake=document.createElement('p'); fake.className='texto-bloqueado-relleno'; fake.setAttribute('aria-hidden','true');
+    fake.textContent=_RELLENO_BLOQUEADO[sec];
+    w.appendChild(fake);
+    if(k===n-1){   // un solo chip, sobre el último párrafo borroso
+      const chip=document.createElement('button'); chip.type='button'; chip.className='texto-bloqueado-chip';
+      chip.textContent='🔒 Seguí leyendo';
+      w.appendChild(chip);
+    }
+    w.addEventListener('click', function(){ ga4('click_texto_bloqueado', { section: sec }); irACartaCompleta(); });
+    bloques[fin].appendChild(w);
+  }
 }
 
 // ── POSTPROCESO DETERMINÍSTICO — SOLO Lectura Esencial gratuita ──
@@ -2144,7 +2326,6 @@ let _ofertaEclipse = false;
 function _extrasEclipse(producto){ return (_ofertaEclipse && producto==='transitos') ? {oferta:'eclipse'} : {}; }
 
 async function procesarCompra(producto, precio) {
-  if(producto==='lectura-profunda' && new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda') precio=7;
   const errorId=`error-${producto}`;
   const nombre=document.getElementById('nombre').value.trim();
   const esPrueba=promoAplicada[producto]===true;
@@ -2223,7 +2404,7 @@ async function pagarConPaypal(producto, precio) {
   if(promoAplicada[producto]===true){ await procesarCompra(producto, precio); return; }
   const errorId = `error-${producto}`;
   mostrarMensaje(errorId, '');
-  // Importe/moneda EXACTOS que van a la pasarela (ga4DatosPago ya contempla el upgrade USD 7).
+  // Importe/moneda EXACTOS que van a la pasarela (ga4DatosPago).
   const _datosPP = ga4DatosPago(producto,'paypal');
   ga4('begin_checkout', Object.assign({}, _datosPP, { payment_method:'paypal', is_test:_esTest(producto) }, _needParams())); // presionó PayPal
   const btn = document.getElementById(`btn-paypal-${producto}`);
@@ -2567,6 +2748,7 @@ async function mostrarRegaloTransitos(ref){
 async function generarRegaloTransitos(token){
   const nombre = document.getElementById('nombre')?.value?.trim() || '';
   if(!cartaData){ mostrarMensaje('error-transitos','Primero calculá tu carta natal arriba.'); document.getElementById('btn-regalo-transitos')?.removeAttribute('disabled'); return; }
+  try{ abrirOtrasLecturas('regalo'); }catch(e){}   // la tarjeta de Tránsitos vive en el bloque colapsado: así se ve el progreso o el error
   promoToken['transitos'] = token;   // el worker lo acepta solo para Tránsitos, una vez
   await generarYEnviarLectura('transitos', nombre, {}, true);
   if(document.getElementById('card-lectura-transitos')?.querySelector('[id^="texto-lectura-"]')) document.getElementById('card-regalo-transitos')?.remove();
@@ -2717,6 +2899,7 @@ function descargarPDF(producto) {
 let cartaData=null;
 
 async function calcularCarta(origen) {
+  const _errFecha=validarFechaNacimiento(); if(_errFecha){mostrarMensaje('error-msg',_errFecha);return;}
   const nombre=document.getElementById('nombre').value.trim(),fecha=document.getElementById('fecha').value,hora=document.getElementById('hora').value,ciudad=document.getElementById('ciudad').value.trim(),provincia=document.getElementById('provincia')?.value.trim()||'',pais=document.getElementById('pais').value.trim()||'Argentina';
   if(!nombre||!fecha||!ciudad){mostrarMensaje('error-msg','Completá nombre, fecha y ciudad para continuar.');return;}
   ocultarMsg('error-msg'); mostrar('section-loader'); ocultar('section-form');
@@ -2743,21 +2926,18 @@ async function calcularCarta(origen) {
     // sessionStorage: evita duplicados por refresco o por re-ver el mismo resultado, pero
     // NO es permanente: si la persona vuelve en otra sesión y genera de nuevo, sí se cuenta
     // (una sesión nueva, o una carta con otros datos, vuelve a disparar el evento).
+    // Necesidad elegida en el modal: se espera hasta 20 s (o a que elija / saltee / cierre). La carta ya
+    // está en pantalla; solo la lectura esencial y carta_generada (que lleva need_category) esperan.
+    const needSel=await esperarNecesidad(20000);
     const _cgKey = cacheKey('carta_generada', fecha, hora, ciudad);
     let _cgSent=false; try{ _cgSent=!!sessionStorage.getItem(_cgKey); }catch(e){}
     if(!_cgSent){
-      ga4('carta_generada'); // solo a GA4 (evento de embudo, no conversión de Ads)
+      ga4('carta_generada', { need_category: needSel||'none' }); // solo a GA4 (evento de embudo, no conversión de Ads)
       try{ sessionStorage.setItem(_cgKey,'1'); }catch(e){}
     }
     if(new URLSearchParams(window.location.search).get('upgrade')==='lectura-profunda'){
-      const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');
-      if(precioEl)precioEl.textContent='USD 7';
-      const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');
-      if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';
-      // Upgrade es USD 7 solo por PayPal: ocultar MP para no mostrar el precio completo al lado.
-      const btnMpUpg=document.querySelector('#form-lectura-profunda .btn-mp');
-      if(btnMpUpg)btnMpUpg.style.display='none';
-      setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');},600);
+      abrirOtrasLecturas('deeplink'); // Lectura Profunda está en el bloque colapsado
+      setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});mostrarMensaje('success-lectura-profunda','✦ Tu siguiente paso: la Lectura Profunda, para comprender los patrones que marcan tu historia.');},600);
     }
     // (Campaña del Eclipse retirada: ya no hay scroll ni mensaje automático hacia Tránsitos.)
     // ── Lectura Esencial gratuita: solo se genera si el interruptor está activo ──
@@ -2765,9 +2945,9 @@ async function calcularCarta(origen) {
     // aplicarModoSoloPilares() ya dejó la vista en carta + Sol/Luna/Ascendente + oferta.
     if(LECTURA_ESENCIAL_ACTIVA){
       setLoaderText('escribiendo tu lectura esencial...');
-      const prompt=buildPromptBasico(nombre,chartData);
+      const prompt=buildPromptBasico(nombre,chartData,needSel);
       try{
-        const esencialKey=cacheKey('cartaEsencial',fecha,hora,ciudad);
+        const esencialKey=cacheKey('cartaEsencialV5',fecha,hora,ciudad)+'_'+(needSel||'none');
         const esencialCached=localStorage.getItem(esencialKey);
         let interpBasica;
         if(esencialCached){interpBasica=esencialCached;}
@@ -2775,12 +2955,13 @@ async function calcularCarta(origen) {
         interpBasica=limpiarEsencial(interpBasica);                 // postproceso determinístico, SOLO esencial
         if(!esencialCached){try{localStorage.setItem(esencialKey,interpBasica);}catch(e){}}
         renderInterp(interpBasica,'interpretacion-basica');
+        agregarBloquesBloqueados('interpretacion-basica');
         _lecturaContexto['esencial']={nombre,productoNombre:'Lectura Esencial Gratuita',texto:interpBasica,codigoPromo:'',fecha,hora,ciudad,pais};
       }
       catch(claudeErr){console.error('Error Claude:',claudeErr);document.getElementById('interpretacion-basica').innerHTML='<p class="interp-text" style="color:rgba(255,255,255,0.4);text-align:center;padding:20px 0;">No se pudo cargar la lectura en este momento. Tu carta natal calculada es correcta.</p>';}
     }
     const params=new URLSearchParams(window.location.search);
-  }catch(err){_stopCalc();cerrarModalNecesidad();ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
+  }catch(err){_stopCalc();cerrarModalNecesidad(false);ocultar('section-loader');mostrar('section-form');mostrarMensaje('error-msg',err.message||'Ocurrió un error. Intentá de nuevo.');}
 }
 
 // ── UTILIDADES ──
@@ -2791,9 +2972,31 @@ function irACartaCompleta(){
   const card=document.getElementById('form-carta-completa')?.closest('.producto-card');
   if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
 }
+// ── Otras lecturas (colapsadas por defecto bajo la Carta Natal Completa) ──
+// abrirOtrasLecturas es idempotente: ver_otras_lecturas se emite solo al pasar de cerrado a abierto.
+// origen: 'boton' | 'deeplink' (?upgrade=, ?lead=&oferta=) | 'post_compra' (botón tras la Carta Completa).
+function abrirOtrasLecturas(origen){
+  const cont=document.getElementById('otras-lecturas'); if(!cont) return;
+  const btn=document.getElementById('btn-otras-lecturas');
+  const yaAbierta=!cont.classList.contains('hidden');
+  cont.classList.remove('hidden');
+  if(btn){ btn.textContent='Ocultar otras lecturas'; btn.setAttribute('aria-expanded','true'); }
+  if(!yaAbierta) ga4('ver_otras_lecturas', { origen: origen||'boton' });
+}
+function cerrarOtrasLecturas(){
+  const cont=document.getElementById('otras-lecturas'); if(!cont) return;
+  const btn=document.getElementById('btn-otras-lecturas');
+  cont.classList.add('hidden');
+  if(btn){ btn.textContent='Ver otras lecturas'; btn.setAttribute('aria-expanded','false'); }
+}
+function alternarOtrasLecturas(){
+  const cont=document.getElementById('otras-lecturas'); if(!cont) return;
+  if(cont.classList.contains('hidden')) abrirOtrasLecturas('boton'); else cerrarOtrasLecturas();
+}
 // Desde la transición al final de la Carta Completa: scroll suave a Lectura Profunda. NO inicia pago.
 function irALecturaProfunda(){
   ga4('select_item', { item_list_name:'post-carta-completa', origen:'post-carta-completa', item_id:'lectura-profunda', items:[{ item_id:'lectura-profunda', item_name:(typeof GA4_NOMBRES!=='undefined'?GA4_NOMBRES['lectura-profunda']:'Lectura Profunda'), quantity:1 }] });
+  abrirOtrasLecturas('post_compra'); // Lectura Profunda vive en el bloque colapsado
   const card=document.getElementById('form-lectura-profunda')?.closest('.producto-card');
   if(card) card.scrollIntoView({behavior:'smooth', block:'center'});
 }
@@ -2812,7 +3015,7 @@ const MSG_CALC = ['Calculando tus posiciones planetarias…','Identificando tu S
 const MSG_COMPLETA = ['Integrando tus planetas personales…','Revisando las áreas más activadas de tu carta…','Traduciendo tus patrones a un lenguaje claro…','Preparando tu síntesis personal…'];
 function setLoaderText(txt){document.getElementById('loader-text').textContent=txt;}
 function reiniciar(){
-  ocultar('section-result');ocultar('section-upsell');ocultar('detalles-tecnicos');mostrar('section-form');
+  ocultar('section-result');ocultar('section-upsell');ocultar('detalles-tecnicos');mostrar('section-form');cerrarOtrasLecturas();
   const _det=document.getElementById('detalles-tecnicos');if(_det)_det.open=false; // acordeón cerrado en la próxima
   cartaData=null;preguntaSeleccionada=null;
   // Limpiar las lecturas pagas ya inyectadas: sin esto la consulta anterior queda colgada bajo la nueva.
@@ -2827,7 +3030,7 @@ function reiniciar(){
 
 // ── RETORNO DEL MAIL (?lead=token): precargar la carta guardada ──
 // Reusa la carta natal ya calculada (no re-gasta /carta) y lleva directo a la
-// tarjeta del producto ofrecido (?oferta=, cross-sell) o a Tránsitos por defecto,
+// tarjeta del producto ofrecido (?oferta=, cross-sell) o a Carta Natal Completa por defecto,
 // con el email precargado. Si el lead es viejo (sin carta) o el token no existe,
 // no hace nada y queda el formulario normal.
 async function cargarDesdeLead(token, oferta, bonus, regalo){
@@ -2840,21 +3043,23 @@ async function cargarDesdeLead(token, oferta, bonus, regalo){
     cartaData = { chart_data: d.cartaNatal };            // carta ya calculada, sin re-gastar
     const nac = d.nacimiento || {};
     if(d.nombre){ const el=document.getElementById('nombre'); if(el) el.value=d.nombre; }
-    if(nac.fecha){ const el=document.getElementById('fecha'); if(el) el.value=nac.fecha; }
+    if(nac.fecha) setFecha(nac.fecha);
     if(nac.hora) setHora(nac.hora);
     if(nac.ciudad){ const el=document.getElementById('ciudad'); if(el) el.value=nac.ciudad; }
     if(nac.pais){ const el=document.getElementById('pais'); if(el) el.value=nac.pais; }
     ocultar('section-form');
     mostrar('section-upsell');
     ga4VerListaProductos(); // view_item_list: "Lecturas completas" a la vista (retorno por lead)
-    // Producto destino: el del cross-sell (?oferta=) o Tránsitos por defecto.
+    // Producto destino: el del cross-sell (?oferta=) o Carta Natal Completa por defecto (sin oferta o valor desconocido).
     const DESTINOS = {
       'transitos':        { form:'form-transitos',        success:'success-transitos',        msg:'✦ Tu carta ya está lista. Mirá qué están activando los planetas en tu carta ahora mismo.' },
       'carta-completa':   { form:'form-carta-completa',   success:'success-carta-completa',   msg:'✦ Tu carta ya está lista. Desbloqueá tu informe completo con todo el detalle de tu carta.' },
       'revolucion-solar': { form:'form-revolucion-solar', success:'success-revolucion-solar', msg:'✦ Tu carta ya está lista. Descubrí tu año con la Revolución Solar.' },
       'sinastria':        { form:'form-sinastria',        success:'success-sinastria',        msg:'✦ Tu carta ya está lista. Descubrí tu compatibilidad con la Sinastría.' },
     };
-    let dest = DESTINOS[oferta] || DESTINOS['transitos'];
+    const _claveDest = DESTINOS[oferta] ? oferta : 'carta-completa';
+    let dest = DESTINOS[_claveDest];
+    if(_claveDest!=='carta-completa') abrirOtrasLecturas('deeplink'); // el resto de las lecturas está en el bloque colapsado
     // Aviso del regalo: solo si el worker confirma que el bonus sigue vigente (la URL no autoriza nada).
     if(bonus==='transitos' && d.bonus && d.bonus.hasta){
       const lim = new Date(d.bonus.hasta).toLocaleString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',hour12:false});
@@ -2882,12 +3087,12 @@ window.addEventListener('load',async ()=>{
     mostrar('upgrade-banner');
     const _upgNombre=params.get('nombre')||'';const _upgFecha=params.get('fecha')||'';const _upgHora=params.get('hora')||'';const _upgCiudad=params.get('ciudad')||'';const _upgPais=params.get('pais')||'Argentina';
     if(_upgNombre)document.getElementById('nombre').value=decodeURIComponent(_upgNombre);
-    if(_upgFecha)document.getElementById('fecha').value=_upgFecha;
+    if(_upgFecha)setFecha(_upgFecha);
     if(_upgHora)setHora(_upgHora);
     if(_upgCiudad)document.getElementById('ciudad').value=decodeURIComponent(_upgCiudad);
     document.getElementById('pais').value=decodeURIComponent(_upgPais);
     if(_upgNombre&&_upgFecha&&_upgCiudad){calcularCarta('upgrade');}
-    else{ocultar('section-form');mostrar('section-upsell');const precioEl=document.querySelector('#form-lectura-profunda')?.closest('.producto-card')?.querySelector('.producto-precio');if(precioEl)precioEl.textContent='USD 7';const btnUpgrade=document.querySelector('#form-lectura-profunda .btn-paypal');if(btnUpgrade)btnUpgrade.textContent='✦ Obtener mi lectura · USD 7';mostrarMensaje('success-lectura-profunda','✦ Para completar tu upgrade a Lectura Profunda, ingresá tu email y pagá los USD 7 restantes.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
+    else{ocultar('section-form');mostrar('section-upsell');abrirOtrasLecturas('deeplink');mostrarMensaje('success-lectura-profunda','✦ Tu siguiente paso: la Lectura Profunda, para comprender los patrones que marcan tu historia.');setTimeout(()=>{document.getElementById('form-lectura-profunda')?.scrollIntoView({behavior:'smooth',block:'center'});},200);}
   }
   if(params.get('lectura')==='ok'){
     // Soporta PayPal (order_id o token), MercadoPago (payment_id) y legacy Stripe (session_id)
@@ -2920,7 +3125,7 @@ window.addEventListener('load',async ()=>{
     }
     if(pendienteData && pendienteData.fecha && pendienteData.ciudad){
       document.getElementById('nombre').value = pendienteData.nombre||'';
-      document.getElementById('fecha').value = pendienteData.fecha||'';
+      setFecha(pendienteData.fecha||'');
       if(pendienteData.hora) setHora(pendienteData.hora);
       document.getElementById('ciudad').value = pendienteData.ciudad||'';
       document.getElementById('pais').value = pendienteData.pais||'Argentina';

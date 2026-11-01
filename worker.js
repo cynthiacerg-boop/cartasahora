@@ -1272,7 +1272,7 @@ var worker_default = {
             "anthropic-beta": "prompt-caching-2024-07-31"
           },
           body: JSON.stringify({
-            model: esEsencial ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+            model: "claude-sonnet-4-6",
             // 8000 es un techo, no una meta: las lecturas terminan solas mucho antes.
             // Con 4000 las cartas completas con muchos aspectos se cortaban a la mitad.
             max_tokens: esEsencial ? 1500 : 8e3,
@@ -1365,7 +1365,7 @@ var worker_default = {
               "anthropic-beta": "prompt-caching-2024-07-31"
             },
             body: JSON.stringify({
-              model: esEsencial ? "claude-haiku-4-5-20251001" : "claude-sonnet-4-6",
+              model: "claude-sonnet-4-6",
               max_tokens: esEsencial ? 1500 : 8e3,
               system: body.system ? [{ type: "text", text: body.system, cache_control: { type: "ephemeral" } }] : void 0,
               messages: [{ role: "user", content: lectura }]
@@ -1445,9 +1445,9 @@ var worker_default = {
     </div>
     ${producto === "carta-completa" ? `<div style="background:#f9f7f4;padding:32px;text-align:center;border-top:1px solid #e8e4de;">
       <p style="font-size:14px;color:#5a5a5a;margin:0 0 8px;">\xBFQuer\xE9s ir m\xE1s profundo?</p>
-      <p style="font-size:13px;color:#888;margin:0 0 20px;">An\xE1lisis completo de todos tus aspectos + coaching evolutivo \xB7 Solo USD 7 m\xE1s</p>
-      <a href="https://cartasahora.espaciolibra.com?upgrade=lectura-profunda&nombre=${encodeURIComponent(nombre || "")}&fecha=${encodeURIComponent(fecha || "")}&hora=${encodeURIComponent(hora || "")}&ciudad=${encodeURIComponent(ciudad || "")}&pais=${encodeURIComponent(pais || "Argentina")}" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">\u2726 Quiero mi lectura profunda \xB7 USD 7</a>
-      <p style="font-size:11px;color:#aaa;margin:12px 0 0;">Pago seguro v\xEDa PayPal \xB7 Entrega en menos de 5 min</p>
+      <p style="font-size:13px;color:#888;margin:0 0 20px;">An\xE1lisis completo de todos tus aspectos + coaching evolutivo</p>
+      <a href="https://cartasahora.espaciolibra.com?upgrade=lectura-profunda&nombre=${encodeURIComponent(nombre || "")}&fecha=${encodeURIComponent(fecha || "")}&hora=${encodeURIComponent(hora || "")}&ciudad=${encodeURIComponent(ciudad || "")}&pais=${encodeURIComponent(pais || "Argentina")}" style="display:inline-block;padding:14px 32px;background:#8A4DAB;color:white;text-decoration:none;border-radius:8px;font-size:13px;letter-spacing:0.1em;">\u2726 Quiero mi lectura profunda</a>
+      <p style="font-size:11px;color:#aaa;margin:12px 0 0;">Pago seguro con Mercado Pago o PayPal. Entrega en menos de 5 min</p>
     </div>` : ""}
     <div style="padding:28px 32px;text-align:center;background:#0a0a12;">
       ${ultimaNota ? `<p style="margin:0 0 18px;font-family:Georgia,serif;"><span style="font-size:12px;color:rgba(255,255,255,0.45);">\u{1F4D6} Mi \xFAltima nota:</span> <a href="${ultimaNota.link}" style="color:#A5D96F;text-decoration:none;font-size:13px;">${esc(ultimaNota.titulo)}</a></p>` : ""}

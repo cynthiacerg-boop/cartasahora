@@ -476,7 +476,7 @@ var SECUENCIA_OFFSETS_MS = [2 * H_MS, 2 * D_MS, 4 * D_MS, 6 * D_MS, 8 * D_MS];
 // /probar-secuencia. Mientras un paso esté en false los leads esperan en ese paso (no se saltean).
 // Para activarlo, pasar a true y desplegar. Los pasos 3 y 4 tienen textos pendientes ({REVISAR} /
 // {PEGAR}): aun en true, un mail con un marcador sin completar NO se envía.
-var SECUENCIA_ACTIVOS = { 1: true, 2: true, 3: false, 4: false, 5: false };
+var SECUENCIA_ACTIVOS = { 1: true, 2: true, 3: true, 4: true, 5: false };
 // Separación mínima entre dos mails de la secuencia al mismo lead (evita ráfagas al reactivar un paso).
 var SECUENCIA_ESPACIADO_MS = 48 * H_MS;
 var BONUS_VENTANA_MS = 72 * H_MS;
@@ -676,7 +676,7 @@ async function armarMailSecuencia(env, lead, paso, opts) {
     cuerpo = `<p>${saludo}:</p>
   <p>Mucha gente se acerca a la astrolog\xEDa con miedo a que le digan algo malo, o con la sospecha de que va a recibir frases gen\xE9ricas que le sirven a cualquiera.</p>
   <p>Yo trabajo desde otro lugar. Para m\xED, tu carta natal no es un destino escrito: es un mapa de tus recursos, de tus patrones y de lo que est\xE1s aprendiendo en esta vida. No predice qu\xE9 te va a pasar; te ayuda a entender por qu\xE9 reaccion\xE1s como reaccion\xE1s y qu\xE9 pod\xE9s hacer distinto.</p>
-  <p>Soy Cynthia, astr\xF3loga, y me form\xE9 en astrolog\xEDa evolutiva. {REVISAR: sumar una l\xEDnea de formaci\xF3n que quieras mostrar}. Dise\xF1\xE9 Cartas Ahora para que cada lectura siga esta misma mirada: sin fatalismo, sin tecnicismos y hablando de tu vida concreta.</p>
+  <p>Soy Cynthia, astr\xF3loga con certificaci\xF3n internacional, y me form\xE9 en astrolog\xEDa evolutiva y counseling astrol\xF3gico, para acompa\xF1ar procesos de transformaci\xF3n personal. Dise\xF1\xE9 Cartas Ahora para que cada lectura siga esta misma mirada: sin fatalismo, sin tecnicismos y hablando de tu vida concreta.</p>
   <p>Si tu lectura gratuita te reson\xF3, la Carta Completa es el paso siguiente.</p>
   ${botonMail(link, "Ver mi Carta Completa")}
   ${firma}`;
@@ -695,7 +695,7 @@ async function armarMailSecuencia(env, lead, paso, opts) {
     <li><strong>Los patrones que dominan tu carta</strong> y las \xE1reas de tu vida donde se juegan</li>
   </ul>
   <p>As\xED se lee un fragmento de una Carta Completa:</p>
-  <blockquote style="border-left:3px solid #8A4DAB;margin:16px 0;padding:4px 16px;color:#555;font-style:italic;">{PEGAR: 4–6 l\xEDneas reales de una Carta Completa de prueba, sin datos personales}</blockquote>
+  <blockquote style="border-left:3px solid #8A4DAB;margin:16px 0;padding:4px 16px;color:#555;font-style:italic;"><strong style="font-style:normal;color:#8A4DAB;">S\xEDntesis transformadora \xB7 Tres recursos centrales de tu carta</strong><br><br>- Una mente que conecta, articula y busca el matiz justo: la palabra es un terreno donde pod\xE9s brillar.<br><br>- Una capacidad de sentir con intensidad y de pensar con profundidad, dos registros que en vos conviven y pueden potenciarse.<br><br>- Una energ\xEDa expansiva y generosa en los v\xEDnculos, que busca encuentro real y reciprocidad genuina.</blockquote>
   <p>La recib\xEDs en el momento, en pantalla y en tu mail. No hace falta saber astrolog\xEDa.</p>
   ${PRECIO_CARTA_HTML}
   ${botonMail(link, "Quiero mi Carta Completa")}

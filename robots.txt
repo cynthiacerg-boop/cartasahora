@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://cartasahora.espaciolibra.com/sitemap.xml

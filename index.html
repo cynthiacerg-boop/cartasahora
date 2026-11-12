@@ -12,7 +12,52 @@
     gtag('config', 'AW-18034331388');
     gtag('config', 'G-639MKD7LWG');
   </script>
-  <title>Cartas Ahora · Espacio Libra</title>
+  <title>Carta Natal Online e Interpretación | Cartas Ahora</title>
+  <meta name="description" content="Calculá tu carta natal y descubrí qué revelan tus planetas, aspectos y vínculos. Lectura esencial gratuita e informes personalizados." />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <link rel="canonical" href="https://cartasahora.espaciolibra.com/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Cartas Ahora · Espacio Libra" />
+  <meta property="og:locale" content="es_AR" />
+  <meta property="og:title" content="Carta Natal Online e Interpretación | Cartas Ahora" />
+  <meta property="og:description" content="Calculá tu carta natal y descubrí qué revelan tus planetas, aspectos y vínculos. Lectura esencial gratuita e informes personalizados." />
+  <meta property="og:url" content="https://cartasahora.espaciolibra.com/" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Carta Natal Online e Interpretación | Cartas Ahora" />
+  <meta name="twitter:description" content="Calculá tu carta natal y descubrí qué revelan tus planetas, aspectos y vínculos. Lectura esencial gratuita e informes personalizados." />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://espaciolibra.com/#organization",
+        "name": "Espacio Libra",
+        "url": "https://espaciolibra.com/"
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://cartasahora.espaciolibra.com/#website",
+        "url": "https://cartasahora.espaciolibra.com/",
+        "name": "Cartas Ahora",
+        "inLanguage": "es",
+        "publisher": { "@id": "https://espaciolibra.com/#organization" }
+      },
+      {
+        "@type": "WebApplication",
+        "@id": "https://cartasahora.espaciolibra.com/#app",
+        "name": "Cartas Ahora",
+        "url": "https://cartasahora.espaciolibra.com/",
+        "description": "Calculadora de carta natal online con lectura esencial gratuita e informes personalizados de astrología evolutiva.",
+        "applicationCategory": "LifestyleApplication",
+        "operatingSystem": "Web",
+        "inLanguage": "es",
+        "isPartOf": { "@id": "https://cartasahora.espaciolibra.com/#website" },
+        "publisher": { "@id": "https://espaciolibra.com/#organization" }
+      }
+    ]
+  }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
@@ -24,8 +69,12 @@
     .container { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; padding: 48px 20px 80px; }
     .header { text-align: center; margin-bottom: 48px; }
     .brand { font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.35em; color: #82B366; text-transform: uppercase; margin-bottom: 14px; opacity: 0.9; }
-    h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px, 7vw, 58px); font-weight: 400; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
+    h1 { font-family: 'Playfair Display', serif; font-size: clamp(30px, 6vw, 46px); font-weight: 400; color: #f0ede8; line-height: 1.1; letter-spacing: 0.02em; margin-bottom: 14px; }
     .subtitle { font-family: 'Playfair Display', serif; font-size: 17px; color: rgba(255,255,255,0.45); font-style: italic; line-height: 1.6; }
+    .subtitle + .subtitle { margin-top: 12px; }
+    .info-seo h2 { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 400; color: #f0ede8; margin: 0 0 16px; line-height: 1.3; }
+    .info-seo h3 { font-family: 'Montserrat', sans-serif; font-size: 14px; font-weight: 600; color: #82B366; margin: 20px 0 6px; letter-spacing: 0.02em; }
+    .info-seo p { font-size: 14.5px; color: rgba(255,255,255,0.72); line-height: 1.7; margin: 0 0 8px; }
     .divider { width: 48px; height: 1px; background: linear-gradient(90deg, transparent, #82B366, transparent); margin: 20px auto 0; }
     .card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 36px 32px; backdrop-filter: blur(10px); margin-bottom: 20px; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
@@ -214,8 +263,9 @@
 
   <div class="header">
     <div class="brand">Espacio Libra</div>
-    <h1>Tu Carta Natal</h1>
-    <p class="subtitle">Descubrí lo que el cielo tenía preparado<br>para el momento exacto de tu llegada.</p>
+    <h1>Tu carta natal, una nueva manera de conocerte</h1>
+    <p class="subtitle">Calculá tu carta natal online con tus datos de nacimiento. Descubrí tu Sol, tu Luna y tu Ascendente, y explorá cómo se relacionan las distintas energías de tu carta.</p>
+    <p class="subtitle">Una lectura desde la astrología evolutiva para comprender tus recursos, desafíos y patrones personales.</p>
     <div class="divider"></div>
   </div>
 
@@ -646,6 +696,29 @@
       <table class="aspects-table"><tbody id="tabla-aspectos"></tbody></table>
     </div>
   </details>
+
+  <!-- INFORMACIÓN VISIBLE (SEO / buscadores con IA): productos y preguntas frecuentes. Solo texto, sin lógica. -->
+  <section class="card info-seo" id="que-incluye" aria-labelledby="info-productos-titulo">
+    <h2 id="info-productos-titulo">Qué incluye cada lectura</h2>
+    <h3>Lectura Esencial (gratuita)</h3>
+    <p>Al calcular tu carta natal ves tu rueda natal, tus tres energías principales (Sol, Luna y Ascendente) y una lectura esencial gratuita que aparece en pantalla. Si querés, podés enviártela por mail.</p>
+    <h3>Carta Natal Completa</h3>
+    <p>Un informe integral de tu carta: tus planetas personales en profundidad, tus patrones y aspectos más importantes, las áreas de vida más activadas, tus recursos, desafíos y tendencias, y una síntesis evolutiva.</p>
+    <h3>Lectura Profunda</h3>
+    <p>Una lectura de tus heridas, sombras, dones y aprendizajes, con la dirección evolutiva de tu camino, herramientas de coaching y tres preguntas personalizadas para trabajar.</p>
+  </section>
+
+  <section class="card info-seo" id="preguntas-frecuentes" aria-labelledby="info-faq-titulo">
+    <h2 id="info-faq-titulo">Preguntas frecuentes</h2>
+    <h3>¿Qué es una carta natal?</h3>
+    <p>Es el mapa del cielo en el momento y el lugar exactos de tu nacimiento: muestra en qué signo y casa estaban el Sol, la Luna y los planetas, cuál es tu Ascendente y qué aspectos (relaciones) se forman entre ellos. Desde la astrología evolutiva se lee como una herramienta de autoconocimiento, para comprender recursos, desafíos y patrones personales.</p>
+    <h3>¿Qué datos necesito para calcularla?</h3>
+    <p>Tu nombre, tu fecha de nacimiento, tu ciudad de nacimiento (con provincia o estado y país) y, si la sabés, tu hora de nacimiento. La hora exacta es importante porque de ella dependen el Ascendente y las casas.</p>
+    <h3>¿Qué diferencia hay entre la Lectura Esencial y la Carta Natal Completa?</h3>
+    <p>La Lectura Esencial es gratuita y se centra en tus tres energías principales: Sol, Luna y Ascendente. La Carta Natal Completa es un informe pago que integra toda tu carta: planetas personales, patrones y aspectos, áreas de vida más activadas y una síntesis evolutiva.</p>
+    <h3>¿Cómo recibo mi interpretación?</h3>
+    <p>La lectura esencial aparece en pantalla apenas se calcula tu carta. Las lecturas pagas se habilitan tras el pago (Mercado Pago o PayPal) y también aparecen en pantalla en unos minutos. En ambos casos podés pedir una copia por mail.</p>
+  </section>
 
 </div>
 

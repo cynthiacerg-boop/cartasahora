@@ -20,3 +20,10 @@ index.anterio.html.txt
 
 # Nota interna de infraestructura (no publicar)
 NOTAS-INFRAESTRUCTURA.md
+
+# Respaldo del Astrocalendario: código de cobros, SQL con códigos de regalo y zip de ventas. NUNCA subir al repo público
+Astrocalendario_2027_Respaldo/
+
+# Codigo del Worker de Cartas Ahora: vive en el repo PRIVADO cartasahora-worker, no se publica
+worker.js
+wrangler.toml

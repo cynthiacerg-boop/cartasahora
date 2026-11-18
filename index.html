@@ -376,6 +376,14 @@
       <p id="pilares-nota" class="hidden" style="font-size:14px;color:rgba(255,255,255,0.7);line-height:1.7;margin:16px 0 0;">Estos son los tres pilares principales de tu carta natal. Para descubrir cómo se combinan en vos, accedé a tu Carta Natal Completa.</p>
     </div>
 
+    <!-- CTA temprano: botón visible justo después de Sol/Luna/Ascendente, antes de la lectura larga.
+         Lleva a la tarjeta de la Carta Natal Completa. Se oculta en modo "solo pilares" (ahí ya hay otro CTA). -->
+    <div class="card" id="cta-temprano-completa" style="text-align:center;">
+      <p style="font-size:14px;color:rgba(255,255,255,0.72);line-height:1.6;margin:0 0 14px;">Esto es solo la base. Tu Carta Natal Completa muestra cómo funciona todo junto.</p>
+      <button type="button" class="btn-primary" style="margin-top:0;" onclick="onCtaTemprano()">Ver mi Carta Natal Completa · $10.000</button>
+      <p style="font-size:12.5px;color:rgba(255,255,255,0.5);margin:10px 0 0;">Entrega en menos de 5 min</p>
+    </div>
+
     <div class="card" id="card-lectura-esencial">
       <div class="section-title">Tu lectura esencial · Gratis</div>
       <div id="interpretacion-basica">
@@ -828,6 +836,28 @@ function onTemasBloqueados(){
   ga4('click_comprar_informe', { item_id:'carta-completa', origen:'temas-bloqueados' });
   irACartaCompleta();
 }
+// CTA temprano (bajo Sol/Luna/Ascendente): mismo recorrido que los temas bloqueados, con origen propio.
+function onCtaTemprano(){
+  ga4Once('ga4_select_item_carta-completa','select_item', Object.assign({ item_list_name:'cta-temprano', items:[{ item_id:'carta-completa', item_name:GA4_NOMBRES['carta-completa'], price:GA4_PRECIOS_ARS['carta-completa'], quantity:1 }] }, _needParams()));
+  ga4('click_comprar_informe', { item_id:'carta-completa', origen:'cta-temprano' });
+  irACartaCompleta();
+}
+// carta_completa_visible: la tarjeta de compra de la Carta Natal Completa entró en pantalla (≥40 % visible).
+// Una vez por sesión. Sirve para separar "no llegan hasta la oferta" de "la ven y no compran".
+(function(){
+  if(!('IntersectionObserver' in window)) return;
+  const card=document.getElementById('form-carta-completa')?.closest('.producto-card');
+  if(!card) return;
+  const io=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        ga4Once('ga4_carta_completa_visible','carta_completa_visible', _needParams());
+        io.disconnect();
+      }
+    });
+  },{ threshold:0.4 });
+  io.observe(card);
+})();
 // "Lecturas completas" a la vista (view_item_list, una vez por sesión).
 // NO se dispara view_item por cada producto: la grilla se muestra toda junta y no hay vista
 // individual real de producto; hacerlo inflaría artificialmente las visualizaciones. La vista
@@ -993,6 +1023,7 @@ function aplicarModoSoloPilares(){
   const p1 = document.getElementById('transicion-p1');
   if(p1) p1.textContent = 'Tu Sol, tu Luna y tu Ascendente son solo el comienzo. En tu Carta Natal Completa vas a descubrir cómo pensás, sentís, amás, actuás y construís tu camino.';
   ocultarEl('transicion-p2');
+  ocultarEl('cta-temprano-completa');   // en este modo ya existe el CTA de la transición
   mostrarEl('cta-desbloquear-completa');
 }
 
